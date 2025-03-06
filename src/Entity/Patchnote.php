@@ -7,19 +7,27 @@ use App\Config\PatchNoteImportance;
 use App\Repository\PatchnoteRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\Post;
+
 use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Post;
 use App\DataPersister\PatchnotePersister;
 use Symfony\Component\Serializer\Attribute\Groups;
+// Todo : check security
 
 #[ORM\Entity(repositoryClass: PatchnoteRepository::class)]
 #[ApiResource(
-    new Post(security: "is_granted('ROLE_USER')",
-        denormalizationContext: ['groups' => ['patchnote:write']],
-        processor: PatchnotePersister::class
-    ),
-    new Delete(security: "is_granted('ROLE_ADMIN')"),
+    operations: [
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            denormalizationContext: ['groups' => ['patchnote:write']],
+            processor: PatchnotePersister::class
+        ),
+        new Delete(
+            security: "is_granted('ROLE_ADMIN')"
+        ),
+    ]
 )]
+
 class Patchnote
 {
     #[ORM\Id]
