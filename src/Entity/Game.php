@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\GameRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -55,6 +57,17 @@ class Game
     #[ORM\Column(nullable: true)]
     #[Groups('game:read')]
     private ?\DateTimeImmutable $lastUpdatedAt = null;
+
+    /**
+     * @var Collection<int, Extension>
+     */
+    #[ORM\OneToMany(targetEntity: Extension::class, mappedBy: 'game', orphanRemoval: true)]
+    private Collection $extensions;
+
+    public function __construct()
+    {
+        $this->extensions = new ArrayCollection();
+    }
 
 
     public function getId(): ?int
@@ -142,6 +155,36 @@ class Game
     public function setLastUpdatedAt(?\DateTimeImmutable $lastUpdatedAt): static
     {
         $this->lastUpdatedAt = $lastUpdatedAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Extension>
+     */
+    public function getExtensions(): Collection
+    {
+        return $this->extensions;
+    }
+
+    public function addExtension(Extension $extension): static
+    {
+        if (!$this->extensions->contains($extension)) {
+            $this->extensions->add($extension);
+            $extension->setGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExtension(Extension $extension): static
+    {
+        if ($this->extensions->removeElement($extension)) {
+            // set the owning side to null (unless already changed)
+            if ($extension->getGame() === $this) {
+                $extension->setGame(null);
+            }
+        }
 
         return $this;
     }
