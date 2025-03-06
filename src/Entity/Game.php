@@ -11,15 +11,21 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use App\State\Provider\GameExtensionsProvider;
 
 // Todo : Get specific collections (last updated, top rated etc...)
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 #[ApiResource(
-//    normalizationContext: ['groups' => ['game:read']],
     operations: [
         new Get(),
         new GetCollection(),
+        new Get(
+            name: 'getExtensions',
+            uriTemplate: '/games/{id}/extensions',
+            normalizationContext: ['groups' => ['game:read','extension:read']],
+            provider: GameExtensionsProvider::class
+        )
     ]
 )]
 class Game
@@ -39,7 +45,7 @@ class Game
     private ?int $apiId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('game:read')]
+    #[Groups('game:read', 'extension:read')]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -62,6 +68,7 @@ class Game
      * @var Collection<int, Extension>
      */
     #[ORM\OneToMany(targetEntity: Extension::class, mappedBy: 'game', orphanRemoval: true)]
+    #[Groups('game:read', 'extension:read')]
     private Collection $extensions;
 
     public function __construct()
