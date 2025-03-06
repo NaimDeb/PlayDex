@@ -45,7 +45,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         
             denormalizationContext: ['groups' => ['user:update']],
             normalizationContext: ['groups' => ['user:read']],
-            security: "is_granted('USER_EDIT', object)",
+            security: "is_granted('ROLE_USER') and object == user",
             processor: UserUpdateDataPersister::class,
             securityMessage: "Vous ne pouvez modifier que votre propre compte",
         )
