@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -93,6 +95,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::BIGINT)]
     #[Groups(['user:read'])]
     private ?string $reputation = null;
+
+    /**
+     * @var Collection<int, Patchnote>
+     */
+    #[ORM\OneToMany(targetEntity: Patchnote::class, mappedBy: 'createdBy')]
+    private Collection $patchnotes;
+
+    public function __construct()
+    {
+        $this->patchnotes = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -201,6 +214,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setReputation(string $reputation): static
     {
         $this->reputation = $reputation;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Patchnote>
+     */
+    public function getPatchnotes(): Collection
+    {
+        return $this->patchnotes;
+    }
+
+    public function addPatchnote(Patchnote $patchnote): static
+    {
+        if (!$this->patchnotes->contains($patchnote)) {
+            $this->patchnotes->add($patchnote);
+            $patchnote->setCreatedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removePatchnote(Patchnote $patchnote): static
+    {
+        if ($this->patchnotes->removeElement($patchnote)) {
+            // set the owning side to null (unless already changed)
+            if ($patchnote->getCreatedBy() === $this) {
+                $patchnote->setCreatedBy(null);
+            }
+        }
 
         return $this;
     }
