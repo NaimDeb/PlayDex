@@ -7,9 +7,19 @@ use App\Config\PatchNoteImportance;
 use App\Repository\PatchnoteRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
+use App\DataPersister\PatchnotePersister;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: PatchnoteRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    new Post(security: "is_granted('ROLE_USER')",
+        denormalizationContext: ['groups' => ['patchnote:write']],
+        processor: PatchnotePersister::class
+    ),
+    new Delete(security: "is_granted('ROLE_ADMIN')"),
+)]
 class Patchnote
 {
     #[ORM\Id]
@@ -18,12 +28,15 @@ class Patchnote
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['patchnote:write'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['patchnote:write'])]
     private ?string $content = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['patchnote:write'])]
     private ?\DateTimeImmutable $releasedAt = null;
 
     #[ORM\Column]
@@ -33,6 +46,7 @@ class Patchnote
     private ?User $createdBy = null;
 
     #[ORM\Column(nullable: true, enumType: PatchNoteImportance::class)]
+    #[Groups(['patchnote:write'])]
     private ?PatchNoteImportance $importance = null;
 
     public function getId(): ?int
