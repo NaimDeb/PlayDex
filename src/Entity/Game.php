@@ -84,10 +84,34 @@ class Game
     #[ORM\OneToMany(targetEntity: Patchnote::class, mappedBy: 'game', orphanRemoval: true)]
     private Collection $patchnotes;
 
+    /**
+     * @var Collection<int, Company>
+     */
+    #[ORM\ManyToMany(targetEntity: Company::class, mappedBy: 'game')]
+    private Collection $companies;
+
+    #[ORM\ManyToOne(inversedBy: 'game')]
+    private ?Status $status = null;
+
+    /**
+     * @var Collection<int, Genre>
+     */
+    #[ORM\ManyToMany(targetEntity: Genre::class, mappedBy: 'games')]
+    private Collection $genres;
+
+    /**
+     * @var Collection<int, Link>
+     */
+    #[ORM\OneToMany(targetEntity: Link::class, mappedBy: 'game', orphanRemoval: true)]
+    private Collection $links;
+
     public function __construct()
     {
         $this->extensions = new ArrayCollection();
         $this->patchnotes = new ArrayCollection();
+        $this->companies = new ArrayCollection();
+        $this->genres = new ArrayCollection();
+        $this->links = new ArrayCollection();
     }
 
 
@@ -234,6 +258,102 @@ class Game
             // set the owning side to null (unless already changed)
             if ($patchnote->getGame() === $this) {
                 $patchnote->setGame(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Company>
+     */
+    public function getCompanies(): Collection
+    {
+        return $this->companies;
+    }
+
+    public function addCompany(Company $company): static
+    {
+        if (!$this->companies->contains($company)) {
+            $this->companies->add($company);
+            $company->addGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCompany(Company $company): static
+    {
+        if ($this->companies->removeElement($company)) {
+            $company->removeGame($this);
+        }
+
+        return $this;
+    }
+
+    public function getStatus(): ?Status
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?Status $status): static
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Genre>
+     */
+    public function getGenres(): Collection
+    {
+        return $this->genres;
+    }
+
+    public function addGenre(Genre $genre): static
+    {
+        if (!$this->genres->contains($genre)) {
+            $this->genres->add($genre);
+            $genre->addGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGenre(Genre $genre): static
+    {
+        if ($this->genres->removeElement($genre)) {
+            $genre->removeGame($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Link>
+     */
+    public function getLinks(): Collection
+    {
+        return $this->links;
+    }
+
+    public function addLink(Link $link): static
+    {
+        if (!$this->links->contains($link)) {
+            $this->links->add($link);
+            $link->setGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLink(Link $link): static
+    {
+        if ($this->links->removeElement($link)) {
+            // set the owning side to null (unless already changed)
+            if ($link->getGame() === $this) {
+                $link->setGame(null);
             }
         }
 

@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\DataPersister\ModificationPersister;
 use App\Repository\ModificationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -10,7 +11,22 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    operations: [
+        new \ApiPlatform\Metadata\Post(
+            uriTemplate: '/modifications',
+            denormalizationContext: ['groups' => ['modification:write']],
+            security: "is_granted('ROLE_USER')",
+            processor: ModificationPersister::class
+        ),
+        new \ApiPlatform\Metadata\Get(
+            uriTemplate: '/admin/modifications/{id}',
+            normalizationContext: ['groups' => ['modification:read']],
+            security: "is_granted('ROLE_ADMIN')"
+        )
+    ],
+)]
+
 class Modification
 {
     #[ORM\Id]
