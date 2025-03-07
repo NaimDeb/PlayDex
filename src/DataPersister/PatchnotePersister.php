@@ -18,7 +18,7 @@ class PatchnotePersister implements ProcessorInterface
         private readonly Security $security,
     ) {}
 
-    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): User
+    public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): Patchnote
     {
         if ($data instanceof Patchnote) {
 

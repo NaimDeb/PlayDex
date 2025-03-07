@@ -12,6 +12,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use App\State\Provider\GameExtensionsProvider;
+use App\State\Provider\GamePatchnotesProvider;
 
 // Todo : Get specific collections (last updated, top rated etc...)
 
@@ -25,6 +26,12 @@ use App\State\Provider\GameExtensionsProvider;
             uriTemplate: '/games/{id}/extensions',
             normalizationContext: ['groups' => ['game:read','extension:read']],
             provider: GameExtensionsProvider::class
+        ),
+        new Get(
+            name: 'getPatchnotes',
+            uriTemplate: '/games/{id}/patchnotes',
+            normalizationContext: ['groups' => ['game:read','patchnote:read']],
+            provider: GamePatchnotesProvider::class
         )
     ]
 )]
@@ -71,9 +78,16 @@ class Game
     #[Groups('game:read', 'extension:read')]
     private Collection $extensions;
 
+    /**
+     * @var Collection<int, Patchnote>
+     */
+    #[ORM\OneToMany(targetEntity: Patchnote::class, mappedBy: 'game', orphanRemoval: true)]
+    private Collection $patchnotes;
+
     public function __construct()
     {
         $this->extensions = new ArrayCollection();
+        $this->patchnotes = new ArrayCollection();
     }
 
 
@@ -190,6 +204,36 @@ class Game
             // set the owning side to null (unless already changed)
             if ($extension->getGame() === $this) {
                 $extension->setGame(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Patchnote>
+     */
+    public function getPatchnotes(): Collection
+    {
+        return $this->patchnotes;
+    }
+
+    public function addPatchnote(Patchnote $patchnote): static
+    {
+        if (!$this->patchnotes->contains($patchnote)) {
+            $this->patchnotes->add($patchnote);
+            $patchnote->setGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removePatchnote(Patchnote $patchnote): static
+    {
+        if ($this->patchnotes->removeElement($patchnote)) {
+            // set the owning side to null (unless already changed)
+            if ($patchnote->getGame() === $this) {
+                $patchnote->setGame(null);
             }
         }
 
