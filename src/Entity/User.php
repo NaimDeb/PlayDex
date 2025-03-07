@@ -114,11 +114,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: FollowedGames::class, mappedBy: 'user')]
     private Collection $followedGames;
 
+    /**
+     * @var Collection<int, Report>
+     */
+    #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reportedBy', orphanRemoval: true)]
+    private Collection $reports;
+
     public function __construct()
     {
         $this->patchnotes = new ArrayCollection();
         $this->modifications = new ArrayCollection();
         $this->followedGames = new ArrayCollection();
+        $this->reports = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -314,6 +321,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->followedGames->removeElement($followedGame)) {
             $followedGame->removeUser($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Report>
+     */
+    public function getReports(): Collection
+    {
+        return $this->reports;
+    }
+
+    public function addReport(Report $report): static
+    {
+        if (!$this->reports->contains($report)) {
+            $this->reports->add($report);
+            $report->setReportedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReport(Report $report): static
+    {
+        if ($this->reports->removeElement($report)) {
+            // set the owning side to null (unless already changed)
+            if ($report->getReportedBy() === $this) {
+                $report->setReportedBy(null);
+            }
         }
 
         return $this;
