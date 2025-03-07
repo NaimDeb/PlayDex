@@ -6,7 +6,7 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Repository\GameRepository;
 
-class GameExtensionsProvider implements ProviderInterface
+class GamePatchnotesProvider implements ProviderInterface
 {
     public function __construct(private GameRepository $gameRepository)
     {
@@ -17,6 +17,7 @@ class GameExtensionsProvider implements ProviderInterface
 
         /** @var ?Game $game */
         $game = $this->gameRepository->find($uriVariables['id']);
-        return $game ? $game->getExtensions() : [];
+
+        return $game ? $game->getPatchnotes() : [];
     }
 }
