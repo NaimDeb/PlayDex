@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Get;
 use App\DataPersister\PatchnotePersister;
 use Symfony\Component\Serializer\Attribute\Groups;
 // Todo : check security
@@ -25,6 +26,16 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Delete(
             security: "is_granted('ROLE_ADMIN')"
         ),
+        new Get(
+            security: "is_granted('ROLE_USER')",
+            normalizationContext: ['groups' => ['patchnote:read']]
+        ),
+        new Get(
+            uriTemplate: '/patchnotes/{id}/modifications',
+            name: 'getModifications',
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['patchnote:read','patchnote:admin']]
+        )
     ]
 )]
 
@@ -36,26 +47,40 @@ class Patchnote
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['patchnote:write'])]
+    #[Groups(['patchnote:write', 'patchnote:read'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['patchnote:write'])]
+    #[Groups(['patchnote:write', 'patchnote:read'])]
     private ?string $content = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['patchnote:write'])]
+    #[Groups(['patchnote:write', 'patchnote:read'])]
     private ?\DateTimeImmutable $releasedAt = null;
 
     #[ORM\Column]
+    #[Groups(['patchnote:admin'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'patchnotes')]
+    #[Groups(['patchnote:admin'])]
     private ?User $createdBy = null;
 
     #[ORM\Column(nullable: true, enumType: PatchNoteImportance::class)]
     #[Groups(['patchnote:write'])]
     private ?PatchNoteImportance $importance = null;
+
+    #[ORM\ManyToOne(inversedBy: 'patchnotes')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['patchnote:write'])]
+    private ?Game $game = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['patchnote:write', 'patchnote:read'])]
+    private ?string $smallDescription = null;
+
+    #[ORM\ManyToOne(inversedBy: 'patchnote')]
+    private ?Modification $modification = null;
 
     public function getId(): ?int
     {
@@ -130,6 +155,42 @@ class Patchnote
     public function setImportance(?PatchNoteImportance $importance): static
     {
         $this->importance = $importance;
+
+        return $this;
+    }
+
+    public function getGame(): ?Game
+    {
+        return $this->game;
+    }
+
+    public function setGame(?Game $game): static
+    {
+        $this->game = $game;
+
+        return $this;
+    }
+
+    public function getSmallDescription(): ?string
+    {
+        return $this->smallDescription;
+    }
+
+    public function setSmallDescription(?string $smallDescription): static
+    {
+        $this->smallDescription = $smallDescription;
+
+        return $this;
+    }
+
+    public function getModification(): ?Modification
+    {
+        return $this->modification;
+    }
+
+    public function setModification(?Modification $modification): static
+    {
+        $this->modification = $modification;
 
         return $this;
     }

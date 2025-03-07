@@ -102,9 +102,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Patchnote::class, mappedBy: 'createdBy')]
     private Collection $patchnotes;
 
+    /**
+     * @var Collection<int, Modification>
+     */
+    #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'user', orphanRemoval: false)]
+    private Collection $modifications;
+
     public function __construct()
     {
         $this->patchnotes = new ArrayCollection();
+        $this->modifications = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -242,6 +249,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($patchnote->getCreatedBy() === $this) {
                 $patchnote->setCreatedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Modification>
+     */
+    public function getModifications(): Collection
+    {
+        return $this->modifications;
+    }
+
+    public function addModification(Modification $modification): static
+    {
+        if (!$this->modifications->contains($modification)) {
+            $this->modifications->add($modification);
+            $modification->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeModification(Modification $modification): static
+    {
+        if ($this->modifications->removeElement($modification)) {
+            // set the owning side to null (unless already changed)
+            if ($modification->getUser() === $this) {
+                $modification->setUser(null);
             }
         }
 
