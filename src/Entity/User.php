@@ -108,10 +108,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'user', orphanRemoval: false)]
     private Collection $modifications;
 
+    /**
+     * @var Collection<int, FollowedGames>
+     */
+    #[ORM\ManyToMany(targetEntity: FollowedGames::class, mappedBy: 'user')]
+    private Collection $followedGames;
+
     public function __construct()
     {
         $this->patchnotes = new ArrayCollection();
         $this->modifications = new ArrayCollection();
+        $this->followedGames = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -280,6 +287,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($modification->getUser() === $this) {
                 $modification->setUser(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FollowedGames>
+     */
+    public function getFollowedGames(): Collection
+    {
+        return $this->followedGames;
+    }
+
+    public function addFollowedGame(FollowedGames $followedGame): static
+    {
+        if (!$this->followedGames->contains($followedGame)) {
+            $this->followedGames->add($followedGame);
+            $followedGame->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFollowedGame(FollowedGames $followedGame): static
+    {
+        if ($this->followedGames->removeElement($followedGame)) {
+            $followedGame->removeUser($this);
         }
 
         return $this;
