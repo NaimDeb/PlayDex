@@ -24,6 +24,9 @@ class Company
     #[ORM\ManyToMany(targetEntity: Game::class, inversedBy: 'companies')]
     private Collection $games;
 
+    #[ORM\Column]
+    private ?int $apiId = null;
+
     public function __construct()
     {
         $this->games = new ArrayCollection();
@@ -66,6 +69,18 @@ class Company
     public function removeGame(Game $game): static
     {
         $this->games->removeElement($game);
+
+        return $this;
+    }
+
+    public function getApiId(): ?int
+    {
+        return $this->apiId;
+    }
+
+    public function setApiId(int $apiId): static
+    {
+        $this->apiId = $apiId;
 
         return $this;
     }
