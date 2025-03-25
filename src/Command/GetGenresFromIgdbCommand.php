@@ -72,7 +72,6 @@ class GetGenresFromIgdbCommand extends Command
             //For i = 500, i < x-count, i += 500
             for ($i=500; $i < $xCount; $i+=500) {
                 
-                $io->text('Fetching genres ' . $i . ' to ' . ($i + 500) . ' from IGDB...');
                 $genres = $this->externalApiService->getIgdbGenres(500, $i);
                 
                 $this->storeIntoDatabase($genres, $progressBar);
