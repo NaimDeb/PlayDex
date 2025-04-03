@@ -90,8 +90,6 @@ class Game
     #[ORM\ManyToMany(targetEntity: Company::class, mappedBy: 'game')]
     private Collection $companies;
 
-    #[ORM\ManyToOne(inversedBy: 'game')]
-    private ?Status $status = null;
 
     /**
      * @var Collection<int, Genre>
@@ -291,17 +289,7 @@ class Game
         return $this;
     }
 
-    public function getStatus(): ?Status
-    {
-        return $this->status;
-    }
 
-    public function setStatus(?Status $status): static
-    {
-        $this->status = $status;
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Genre>
