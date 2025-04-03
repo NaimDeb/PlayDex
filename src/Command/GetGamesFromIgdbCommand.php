@@ -35,8 +35,8 @@ class GetGamesFromIgdbCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('arg1', InputArgument::OPTIONAL, 'Argument description')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description')
+            ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Offset for fetching games', 0)
+            ->addOption('fetchSize', null, InputOption::VALUE_OPTIONAL, 'Number of games to fetch per request', 500)
         ;
     }
 
@@ -48,10 +48,16 @@ class GetGamesFromIgdbCommand extends Command
         // if ($arg1) {
         //     $io->note(sprintf('You passed an argument: %s', $arg1));
         // }
+        $offset = $input->getOption('offset') || 0;
+        $fetchSize = $input->getOption('fetchSize') || 500;
 
-        // if ($input->getOption('option1')) {
-        //     // ...
-        // }
+
+        if ($input->getOption('offset')) {
+            $io->note (sprintf('You passed an offset: %s', $input->getOption('offset')));
+        }
+        if ($input->getOption('fetchSize')) {
+            $io->note (sprintf('You passed a fetch size: %s', $input->getOption('fetchSize')));
+        }
 
         // 4 requête / seconde
 
@@ -62,45 +68,49 @@ class GetGamesFromIgdbCommand extends Command
         $xCount = $this->externalApiService->getNumberOfIgdbGames();
         $io->text(sprintf('Number of games to check : %s', $xCount));
 
-        $games = $this->externalApiService->getIgdbGames(2);
+        // $games = $this->externalApiService->getIgdbGames(2);
 
 
 
 
-        $this->storeGamesIntoDatabase($games);
+        // $this->storeGamesIntoDatabase($games);
 
 
+
+        // return Command::SUCCESS;
+
+
+
+        // // Store into database
+        // $this->storeGamesIntoDatabase($games);
+
+
+        // For i = 500, i < x-count, i += 500
+        for ($i=0+$offset; $i < $xCount; $i+=500) { 
+
+            $games = $this->externalApiService->getIgdbGames(500, $i);
+
+            $this->storeGamesIntoDatabase($games);
+
+            usleep(250000); // 0.25 sec
+        }
+
+
+
+
+        $io->success('Games succesfully replicated in Database.');
 
         return Command::SUCCESS;
-
-
-
-        // Store into database
-        $this->storeGamesIntoDatabase($games);
-
-
-        //For i = 500, i < x-count, i += 500
-        // for ($i=500; $i < $xCount; $i+=500) { 
-
-        //     $games = $this->externalApiService->getIgdbGames(500, $i);
-
-        //     $this->storeGamesIntoDatabase($games);
-        // }
-
-        // return Command::SUCCESS;
-
-
-
-        // $io->success('Games succesfully replicated in Database.');
-
-        // return Command::SUCCESS;
     }
 
 
-
+    /**
+     * 
+     */
     private function storeGamesIntoDatabase(array $games)
     {
         // Increase memory limit
+        //! A voir si marche vraiment sur sous-fonctions
         ini_set('memory_limit', '1024M');
 
         // Get the DBAL connection
@@ -249,7 +259,7 @@ class GetGamesFromIgdbCommand extends Command
 
                 $gameId = $gameIdMap[$game['id']];
 
-                // Handle genre relationships
+                //! Handle genre relationships
                 if (isset($game['genres'])) {
                     $gameGenreIds = [];
                     // For each genre, get the corresponding ID from the genreIdMap
@@ -294,7 +304,7 @@ class GetGamesFromIgdbCommand extends Command
                     }
                 }
 
-                // Handle company relationships
+                //! Handle company relationships
                 if (isset($game['involved_companies'])) {
                     $gameCompanyIds = [];
                     foreach ($game['involved_companies'] as $involvedCompany) {
@@ -351,3 +361,14 @@ class GetGamesFromIgdbCommand extends Command
         }
     }
 }
+
+
+// Diviser les transactions : Créer des transactions plus petites (100 jeux à la fois) dans storeGamesIntoDatabase()
+
+// Ajouter une barre de progression : Utiliser $io->progressStart($xCount) et $io->progressAdvance()
+
+// Prévoir des pauses : Comme l'API IGDB limite à 4 requêtes/seconde, ajouter des pauses entre chaque lot avec sleep()
+
+// Gestion d'erreurs robuste : Journaliser les erreurs et continuer le processus même en cas d'échec d'un lot
+
+// Mode reprise : Permettre de reprendre le traitem

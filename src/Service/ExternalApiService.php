@@ -56,6 +56,7 @@ class ExternalApiService
         return (int) $response->getHeaders()['x-count'][0];
     }
 
+
     public function getIgdbGames(int $limit, int $offset = 0)
     {
         $body = $this->buildQueryBody([
@@ -64,9 +65,14 @@ class ExternalApiService
             'limit' => $limit,
             'offset' => $offset
         ]);
-
-        $response = $this->makeIgdbRequest('/games', $body);
-        return json_decode($response->getContent(), true);
+    
+        try {
+            $response = $this->makeIgdbRequest('/games', $body);
+            return json_decode($response->getContent(), true);
+        } catch (\Exception $e) {
+            // Log or handle the error
+            throw new \Exception('IGDB API Error: ' . $e->getMessage() . ' - Query: ' . $body);
+        }
     }
 
     public function getIgdbExtensions(int $limit, int $offset = 0)
