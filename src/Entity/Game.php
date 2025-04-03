@@ -97,11 +97,7 @@ class Game
     #[ORM\ManyToMany(targetEntity: Genre::class, mappedBy: 'games')]
     private Collection $genres;
 
-    /**
-     * @var Collection<int, Link>
-     */
-    #[ORM\OneToMany(targetEntity: Link::class, mappedBy: 'game', orphanRemoval: true)]
-    private Collection $links;
+
 
     public function __construct()
     {
@@ -109,7 +105,6 @@ class Game
         $this->patchnotes = new ArrayCollection();
         $this->companies = new ArrayCollection();
         $this->genres = new ArrayCollection();
-        $this->links = new ArrayCollection();
     }
 
 
@@ -318,33 +313,7 @@ class Game
         return $this;
     }
 
-    /**
-     * @return Collection<int, Link>
-     */
-    public function getLinks(): Collection
-    {
-        return $this->links;
-    }
 
-    public function addLink(Link $link): static
-    {
-        if (!$this->links->contains($link)) {
-            $this->links->add($link);
-            $link->setGame($this);
-        }
 
-        return $this;
-    }
 
-    public function removeLink(Link $link): static
-    {
-        if ($this->links->removeElement($link)) {
-            // set the owning side to null (unless already changed)
-            if ($link->getGame() === $this) {
-                $link->setGame(null);
-            }
-        }
-
-        return $this;
-    }
 }
