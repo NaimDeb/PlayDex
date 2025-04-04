@@ -44,6 +44,11 @@ class GetCompaniesFromIgdbCommand extends Command
         $progressBar = new ProgressBar($io, $xCount);
 
         $progressBar->start();
+        $progressBar->setFormat(
+            "%status%\n%current%/%max% [%bar%] %percent:3s%%\n  %estimated:-6s%  %memory:6s%"
+        );
+        $progressBar->setBarCharacter('<fg=green>■</>');
+        $progressBar->setEmptyBarCharacter("<fg=red>■</>");
 
         // Get the first 500 companies
         $io->text('Fetching first 500 companies from IGDB...');
