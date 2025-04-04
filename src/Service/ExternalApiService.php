@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use Exception;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
@@ -51,7 +52,7 @@ class ExternalApiService
 
     private function getCount(string $endpoint, string $whereClause = ''): int
     {
-        $body = "fields id;\n" . $whereClause . "\nlimit 1;";
+        $body = "count;\n" . $whereClause . ";\nlimit 1;";
         $response = $this->makeIgdbRequest($endpoint, $body);
         return (int) $response->getHeaders()['x-count'][0];
     }
@@ -60,19 +61,16 @@ class ExternalApiService
     public function getIgdbGames(int $limit, int $offset = 0)
     {
         $body = $this->buildQueryBody([
-            'fields' => 'id, name, platforms.*, involved_companies.company.name, first_release_date, genres.id, cover.url',
+            'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
             'where' => 'game_type = 0',
             'limit' => $limit,
             'offset' => $offset
         ]);
     
-        try {
+
             $response = $this->makeIgdbRequest('/games', $body);
             return json_decode($response->getContent(), true);
-        } catch (\Exception $e) {
-            // Log or handle the error
-            throw new \Exception('IGDB API Error: ' . $e->getMessage() . ' - Query: ' . $body);
-        }
+
     }
 
     public function getIgdbExtensions(int $limit, int $offset = 0)
@@ -84,8 +82,13 @@ class ExternalApiService
             'offset' => $offset
         ]);
 
-        $response = $this->makeIgdbRequest('/games', $body);
-        return json_decode($response->getContent(), true);
+        try {
+            $response = $this->makeIgdbRequest('/games', $body);
+            return json_decode($response->getContent(), true);
+        } catch (\Exception $e) {
+            // Log or handle the error
+            throw new \Exception('IGDB API Error: ' . $e->getMessage() . ' - Query: ' . $body);
+        }
     }
 
     public function getIgdbGenres(int $limit, int $offset = 0)
