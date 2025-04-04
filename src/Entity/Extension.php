@@ -42,6 +42,15 @@ class Extension
     #[ORM\JoinColumn(nullable: false)]
     private ?Game $game = null;
 
+    #[ORM\Column]
+    private ?int $apiId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageUrl = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastUpdatedAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -91,6 +100,42 @@ class Extension
     public function setGame(?Game $game): static
     {
         $this->game = $game;
+
+        return $this;
+    }
+
+    public function getApiId(): ?int
+    {
+        return $this->apiId;
+    }
+
+    public function setApiId(int $apiId): static
+    {
+        $this->apiId = $apiId;
+
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
+
+        return $this;
+    }
+
+    public function getLastUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->lastUpdatedAt;
+    }
+
+    public function setLastUpdatedAt(?\DateTimeImmutable $lastUpdatedAt): static
+    {
+        $this->lastUpdatedAt = $lastUpdatedAt;
 
         return $this;
     }
