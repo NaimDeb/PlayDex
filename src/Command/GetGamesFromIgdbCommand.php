@@ -21,7 +21,7 @@ use function PHPSTORM_META\type;
 // ! You HAVE to use --no-debug to avoid memory leaks
 
 #[AsCommand(
-    name: 'GetGamesFromIgdb',
+    name: 'app:get-games-from-igdb',
     description: 'Fetches the games from IGDB and stores them in the database.',
 )]
 class GetGamesFromIgdbCommand extends Command
