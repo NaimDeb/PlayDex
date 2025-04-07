@@ -2,26 +2,21 @@
 
 namespace App\Command;
 
-use App\Entity\Company;
-use App\Entity\Game;
-use App\Entity\Genre;
 use App\Service\ExternalApiService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Helper\ProgressBar;
 
-use function PHPSTORM_META\type;
-
 // ! You HAVE to use --no-debug to avoid memory leaks
 
 #[AsCommand(
     name: 'app:get-games-from-igdb',
+    aliases: ['app:igdb:games'],
     description: 'Fetches the games from IGDB and stores them in the database.',
 )]
 class GetGamesFromIgdbCommand extends Command
