@@ -69,12 +69,12 @@ class Patchnote
     private ?User $createdBy = null;
 
     #[ORM\Column(nullable: true, enumType: PatchNoteImportance::class)]
-    #[Groups(['patchnote:write'])]
+    #[Groups(['patchnote:write', 'patchnote:read'])]
     private ?PatchNoteImportance $importance = null;
 
     #[ORM\ManyToOne(inversedBy: 'patchnotes')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['patchnote:write'])]
+    #[Groups(['patchnote:write', 'patchnote:read'])]
     private ?Game $game = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
