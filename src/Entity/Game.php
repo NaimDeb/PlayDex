@@ -14,13 +14,26 @@ use ApiPlatform\Metadata\GetCollection;
 use App\State\Provider\GameExtensionsProvider;
 use App\State\Provider\GamePatchnotesProvider;
 
-// Todo : Get specific collections (last updated, top rated etc...)
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection(),
+        new Get(
+            name: 'getGame',
+            uriTemplate: '/games/{id}',
+            normalizationContext: ['groups' => ['game:read']],
+        ),
+        new GetCollection(
+            uriTemplate: '/games',
+            normalizationContext: ['groups' => ['game:read']],
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
+        ),
         new Get(
             name: 'getExtensions',
             uriTemplate: '/games/{id}/extensions',
@@ -35,6 +48,20 @@ use App\State\Provider\GamePatchnotesProvider;
         )
     ]
 )]
+
+#[ApiFilter(SearchFilter::class, properties: [
+    'title' => 'partial',
+    'description' => 'partial',
+    'genres.name' => 'exact',
+    'companies.name' => 'partial'
+])]
+#[ApiFilter(DateFilter::class, properties: ['releasedAt', 'lastUpdatedAt'])]
+#[ApiFilter(OrderFilter::class, properties: [
+    'title', 
+    'releasedAt' => ['nulls_comparison' => 'nulls_last'],
+    'lastUpdatedAt' => ['nulls_comparison' => 'nulls_last']
+])]
+#[ApiFilter(ExistsFilter::class, properties: ['imageUrl', 'description'])]
 class Game
 {
     #[ORM\Id]
