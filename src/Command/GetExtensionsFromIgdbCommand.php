@@ -16,11 +16,18 @@ use Symfony\Component\Console\Helper\ProgressBar;
 
 #[AsCommand(
     name: 'app:get-extensions-from-igdb',
+    aliases: ['app:igdb:extensions'],
     description: 'Fetches the extensions/DLCs from IGDB and stores them in the database.',
 )]
 class GetExtensionsFromIgdbCommand extends Command
 {
+    /**
+     * @var ExternalApiService
+     */
     private $externalApiService;
+    /**
+     * @var EntityManagerInterface
+     */
     private $entityManager;
 
     public function __construct(ExternalApiService $externalApiService, EntityManagerInterface $entityManager)
@@ -208,8 +215,8 @@ class GetExtensionsFromIgdbCommand extends Command
             // Extract all game IDs from extensions
             $allGameApiIds = [];
             foreach ($extensions as $extension) {
-                if (isset($extension['game']) && isset($extension['game']['id'])) {
-                    $allGameApiIds[] = $extension['game']['id'];
+                if (isset($extension['parent_game'])) {
+                    $allGameApiIds[] = $extension['parent_game'];
                 }
             }
 
@@ -237,6 +244,7 @@ class GetExtensionsFromIgdbCommand extends Command
                 // Only proceed if we still have games after deduplication
                 if (!empty($allGameApiIds)) {
                     $placeholders = implode(',', array_fill(0, count($allGameApiIds), '?'));
+                    // Convert all game API IDs to integers to avoid SQL errors
                     foreach ($allGameApiIds as $key => $value) {
                         $allGameApiIds[$key] = (int)$value;
                     }
@@ -270,19 +278,20 @@ class GetExtensionsFromIgdbCommand extends Command
             $newExtensionIds = []; // Track newly inserted extension IDs
 
             foreach ($extensions as $extension) {
+
+                $io->text(sprintf('Processing extension: %s', $extension['name']));
+                $io->text(sprintf('Extension API ID: %s', $extension['id']));
+                $io->text(sprintf('Extension Game API ID: %s', $extension['parent_game']));
+
                 $releasedAt = isset($extension['first_release_date'])
-                    ? date('Y-m-d H:i:s', $extension['first_release_date'])
+                    ? date('Y-m-d', $extension['first_release_date'])
                     : null;
 
                 $imageUrl = isset($extension['cover']['url'])
                     ? 'https:' . $extension['cover']['url']
                     : null;
 
-                // Get game ID if available
-                $gameId = null;
-                if (isset($extension['game']) && isset($extension['game']['id']) && isset($gameIdMap[$extension['game']['id']])) {
-                    $gameId = $gameIdMap[$extension['game']['id']];
-                }
+
 
                 // Insert or update the extension
                 $extensionStmt->executeQuery([
@@ -291,8 +300,8 @@ class GetExtensionsFromIgdbCommand extends Command
                     'description' => $extension['summary'] ?? null,
                     'releasedAt' => $releasedAt,
                     'imageUrl' => $imageUrl,
-                    'gameId' => $gameId,
-                    'lastUpdatedAt' => date('Y-m-d H:i:s')
+                    'gameId' => $extension['parent_game'],
+                    'lastUpdatedAt' => date('Y-m-d')
                 ]);
 
                 // Get extension ID (either existing or newly created)
@@ -314,6 +323,16 @@ class GetExtensionsFromIgdbCommand extends Command
             // Detailed error logging
             $io->error("Database error: " . $e->getMessage());
             $io->error("Stack trace: " . $e->getTraceAsString());
+
+            // Debugging information
+            if (isset($extension)) {
+                $io->error("Error occurred while processing extension with API ID: " . ($extension['id'] ?? 'unknown'));
+                if (isset($extension['game']) && isset($extension['game']['id'])) {
+                    $io->error("Associated game API ID: " . $extension['game']['id']);
+                    $io->error("Associated game name : " . ($extension['game']['name'] ?? 'unknown'));
+                    $io->error("Associated parent game ID : " . ($extension['game']['parent_game_id'] ?? 'unknown'));
+                }
+            }
 
             // Pass the exception up
             throw $e;
