@@ -2,15 +2,16 @@
 
 namespace App\Command;
 
+use App\Service\DatabaseOperationService;
 use App\Service\ExternalApiService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\IgdbDataProcessorService;
+use App\Service\ProgressBarHandlerService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Helper\ProgressBar;
 
 // ! You HAVE to use --no-debug to avoid memory leaks
 
@@ -21,21 +22,22 @@ use Symfony\Component\Console\Helper\ProgressBar;
 )]
 class GetExtensionsFromIgdbCommand extends Command
 {
-    /**
-     * @var ExternalApiService
-     */
     private $externalApiService;
-    /**
-     * @var EntityManagerInterface
-     */
-    private $entityManager;
+    private $dbService;
+    private $progressHandler;
+    private $dataProcessor;
 
-    public function __construct(ExternalApiService $externalApiService, EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        ExternalApiService $externalApiService,
+        DatabaseOperationService $dbService,
+        ProgressBarHandlerService $progressHandler,
+        IgdbDataProcessorService $dataProcessor
+    ) {
         parent::__construct();
-
         $this->externalApiService = $externalApiService;
-        $this->entityManager = $entityManager;
+        $this->dbService = $dbService;
+        $this->progressHandler = $progressHandler;
+        $this->dataProcessor = $dataProcessor;
     }
 
     protected function configure(): void
@@ -49,56 +51,89 @@ class GetExtensionsFromIgdbCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        // Validate input options
+        $options = $this->validateAndGetOptions($input, $io);
+        if (!$options) {
+            return Command::FAILURE;
+        }
+
+        // Optimize database connection
+        $this->dbService->optimizeDatabaseConnection();
+
+        // Get total count of extensions
+        $xCount = $this->getExtensionsCount($io);
+
+        // Set up progress bar
+        $progressBar = $this->progressHandler->initializeProgressBar($output, $xCount, $options['offset']);
+
+        // Process extensions in batches
+        $this->processExtensionBatches($io, $xCount, $options, $progressBar);
+
+        // Finish up
+        $progressBar->finish();
+        $io->newLine(2);
+        $io->success('Extensions successfully replicated in Database.');
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Validate and get input options
+     */
+    private function validateAndGetOptions(InputInterface $input, SymfonyStyle $io): ?array
+    {
         $offset = $input->getOption('offset') ? (int)$input->getOption('offset') : 0;
         $fetchSize = $input->getOption('fetchSize') ? (int)$input->getOption('fetchSize') : 500;
 
-        // Disable Doctrine SQL logging to save memory
-        $connection = $this->entityManager->getConnection();
-        $connection->getConfiguration()->setMiddlewares([]);
-
-        if ($input->getOption('offset') !== 0) {
-            $io->note(sprintf('You passed an offset: %s', $input->getOption('offset')));
+        // Display info about non-default options
+        if ($offset !== 0) {
+            $io->note(sprintf('You passed an offset: %s', $offset));
         }
-        if ($input->getOption('fetchSize') !== 500) {
-            $io->note(sprintf('You passed a fetch size of: %s', $input->getOption('fetchSize')));
+        if ($fetchSize !== 500) {
+            $io->note(sprintf('You passed a fetch size of: %s', $fetchSize));
         }
 
-        // Check if the offset is valid
+        // Validate offset
         if ($offset < 0) {
             $io->error('Offset must be a non-negative integer.');
-            return Command::FAILURE;
+            return null;
         }
-        // Check if the fetch size is valid
+
+        // Validate fetch size
         if ($fetchSize <= 0 || $fetchSize > 500) {
             $io->error('Fetch size must be a positive integer and less than or equal to 500.');
-            return Command::FAILURE;
+            return null;
         }
 
-        // Get and store x-count
+        return [
+            'offset' => $offset,
+            'fetchSize' => $fetchSize
+        ];
+    }
+
+    /**
+     * Get the total count of extensions from IGDB
+     */
+    private function getExtensionsCount(SymfonyStyle $io): int
+    {
         $xCount = $this->externalApiService->getNumberOfIgdbExtensions();
         $io->text(sprintf('Number of extensions to check : %s', $xCount));
+        return $xCount;
+    }
 
-        // Update your progress bar initialization
-        $progressBar = new ProgressBar($output, $xCount - $offset);
-        $progressBar->start();
-        $progressBar->setFormat(
-            "%status%\n%current%/%max% [%bar%] %percent:3s%%\n  %elapsed:6s%/%estimated:-6s%  %memory:6s%"
-        );
-        $progressBar->setBarCharacter('<fg=green>■</>');
-        $progressBar->setEmptyBarCharacter("<fg=red>■</>");
+    /**
+     * Process extensions in batches
+     */
+    private function processExtensionBatches(SymfonyStyle $io, int $xCount, array $options, $progressBar): void
+    {
+        $offset = $options['offset'];
+        $fetchSize = $options['fetchSize'];
+        $parallelRequests = 4;
 
-        $parallelRequests = 4; // Number of maximum parallel requests/second to IGDB
-
-        // Main loop to fetch and process extensions
-        for ($i = 0 + $offset; $i < $xCount; $i += ($fetchSize * $parallelRequests)) {
-            // Calculate the offsets for the parallel requests
-            $batchOffsets = [];
-            for ($j = 0; $j < $parallelRequests; $j++) {
-                $currentOffset = $i + ($j * $fetchSize);
-                if ($currentOffset < $xCount) {
-                    $batchOffsets[] = $currentOffset;
-                }
-            }
+        for ($i = $offset; $i < $xCount; $i += ($fetchSize * $parallelRequests)) {
+            // Calculate batch offsets
+            $batchOffsets = $this->progressHandler->calculateBatchOffsets($i, $fetchSize, $parallelRequests, $xCount);
 
             if (empty($batchOffsets)) {
                 break;
@@ -106,262 +141,148 @@ class GetExtensionsFromIgdbCommand extends Command
 
             $startTime = microtime(true);
 
-            // Update status message before starting API calls
+            // Update progress bar message
+            $this->progressHandler->updateBatchProgressMessage($progressBar, $i, $fetchSize, count($batchOffsets), $xCount, 'extensions');
+
+            // Fetch and process extensions
+            $allExtensions = $this->fetchExtensionsForBatches($batchOffsets, $fetchSize, $progressBar);
+            $extensionsProcessed = count($allExtensions);
+
+            // Process the fetched extensions
+            $this->processExtensionsBatch($allExtensions, $io, $progressBar, $startTime, $extensionsProcessed);
+
+            // Apply rate limiting
+            $this->progressHandler->applyRateLimiting($progressBar, $startTime);
+        }
+    }
+
+    /**
+     * Fetch extensions for all batches in the current iteration
+     */
+    private function fetchExtensionsForBatches(array $batchOffsets, int $fetchSize, $progressBar): array
+    {
+        $allExtensions = [];
+
+        // Make separate API calls in sequence (one for each offset)
+        foreach ($batchOffsets as $index => $batchOffset) {
+            // Update progress message for each API call
             $progressBar->setMessage(sprintf(
-                'Fetching extensions %d to %d...',
-                $i,
-                min($i + ($fetchSize * count($batchOffsets)), $xCount)
+                'Requesting batch %d/%d (offset %d)...',
+                $index + 1,
+                count($batchOffsets),
+                $batchOffset
             ), 'status');
             $progressBar->display();
 
-            // Collect all extensions from multiple API calls
-            $allExtensions = [];
-            $extensionsProcessed = 0;
+            $batchExtensions = $this->externalApiService->getIgdbExtensions($fetchSize, $batchOffset);
+            $allExtensions = array_merge($allExtensions, $batchExtensions);
 
-            // Make separate API calls in sequence (one for each offset)
-            foreach ($batchOffsets as $index => $batchOffset) {
-                // Update progress message for each API call
-                $progressBar->setMessage(sprintf(
-                    'Requesting batch %d/%d (offset %d)...',
-                    $index + 1,
-                    count($batchOffsets),
-                    $batchOffset
-                ), 'status');
-                $progressBar->display();
-
-                $batchExtensions = $this->externalApiService->getIgdbExtensions($fetchSize, $batchOffset);
-                $allExtensions = array_merge($allExtensions, $batchExtensions);
-                $extensionsProcessed += count($batchExtensions);
-
-                // Brief pause between API calls to avoid rate limiting
-                usleep(50000); // 0.05 seconds
-            }
-
-            // Update with actual count of extensions fetched
-            $progressBar->setMessage(sprintf('Processing %d extensions...', count($allExtensions)), 'status');
-            $progressBar->display();
-
-            try {
-                $this->storeExtensionsIntoDatabase($allExtensions, $io);
-
-                unset($allExtensions, $batchExtensions);
-
-                $memoryUsage = round(memory_get_usage() / 1024 / 1024);
-                $elapsedTime = microtime(true) - $startTime;
-                $rate = $extensionsProcessed / $elapsedTime;
-
-                // Show processing stats
-                $progressBar->setMessage(sprintf(
-                    'Batch complete | Memory: %dMB | Speed: %.1f extensions/sec',
-                    $memoryUsage,
-                    $rate
-                ), 'status');
-
-                if ($memoryUsage > 900) {
-                    $progressBar->setMessage('Clearing memory...', 'status');
-                    $this->entityManager->clear();
-                    gc_collect_cycles();
-                    $this->entityManager->getConnection()->close();
-                    $this->entityManager->getConnection()->connect();
-                }
-            } catch (\Exception $e) {
-                $progressBar->setMessage('<error>Error processing batch</error>', 'status');
-                $io->error("Error processing batch: " . $e->getMessage());
-                die();
-            }
-
-            // Advance the progress bar with actual number of extensions processed
-            $progressBar->advance($extensionsProcessed);
-
-            // Calculate remaining time to maintain rate limit
-            $timeElapsed = microtime(true) - $startTime;
-            $waitTime = max(0, 1 - $timeElapsed); // Ensure we take at least 1 second per batch
-
-            if ($waitTime > 0) {
-                $progressBar->setMessage('Rate limiting...', 'status');
-                usleep($waitTime * 1000000);
-            }
+            // Brief pause between API calls to avoid rate limiting
+            usleep(50000); // 0.05 seconds
         }
 
-        // Finish the progress bar
-        $progressBar->finish();
-        $io->newLine(2);
+        // Update progress bar with processing message
+        $progressBar->setMessage(sprintf('Processing %d extensions...', count($allExtensions)), 'status');
+        $progressBar->display();
 
-        $io->success('Extensions successfully replicated in Database.');
+        return $allExtensions;
+    }
 
-        return Command::SUCCESS;
+    /**
+     * Process a batch of extensions
+     */
+    private function processExtensionsBatch(array $allExtensions, SymfonyStyle $io, $progressBar, float $startTime, int $extensionsProcessed): void
+    {
+        try {
+            $this->storeExtensionsIntoDatabase($allExtensions, $io);
+
+            unset($allExtensions);
+
+            $memoryUsage = round(memory_get_usage() / 1024 / 1024);
+            
+            // Show processing stats
+            $this->progressHandler->updateWithProcessingStats($progressBar, $extensionsProcessed, $startTime, $memoryUsage, 'extensions');
+
+            // Manage memory usage
+            $this->dbService->manageMemoryUsage($progressBar, $memoryUsage);
+
+            // Advance the progress bar
+            $progressBar->advance($extensionsProcessed);
+        } catch (\Exception $e) {
+            $this->handleProcessingError($e, $progressBar, $io);
+        }
+    }
+
+    /**
+     * Handle errors during batch processing
+     */
+    private function handleProcessingError(\Exception $e, $progressBar, SymfonyStyle $io): void
+    {
+        $progressBar->setMessage('<error>Error processing batch</error>', 'status');
+        $io->error("Error processing batch: " . $e->getMessage());
+        die();
     }
 
     /**
      * Store extensions into the database with optimized SQL performance
-     * @param array $extensions Array of extension data from IGDB API
-     * @param SymfonyStyle|null $io Console output helper
-     * @return void
      */
-    private function storeExtensionsIntoDatabase(array $extensions, $io = null)
+    private function storeExtensionsIntoDatabase(array $extensions, SymfonyStyle $io = null): void
     {
-        ini_set('memory_limit', '512M');
+        // Increase memory limit
+        $this->dbService->setMemoryLimit('512M');
 
-        $connection = $this->entityManager->getConnection();
-        // Begin transaction for atomic operations
+        // Get database connection
+        $connection = $this->dbService->getConnection();
         $connection->beginTransaction();
 
         try {
-            // 1. EXTRACT IDENTIFIERS
-            // Extract all IDs we need to look up (extension, game)
-            $extensionApiIds = array_column($extensions, 'id');
-            $extensionIdMap = []; // Will map API IDs to database IDs
-
-            // Extract all game IDs from extensions
-            /**
-             * @var array $allGameApiIds
-             * Array of all parent_game API IDs
-             */
-            $allGameApiIds = [];
-            foreach ($extensions as $extension) {
-                if (isset($extension['parent_game'])) {
-                    $allGameApiIds[] = $extension['parent_game'];
-                }
-            }
-
-            // 2. BULK FETCH EXISTING RECORDS
-            // Find existing extensions in a single query
-            if (!empty($extensionApiIds)) {
-                $placeholders = implode(',', array_fill(0, count($extensionApiIds), '?'));
-
-                if (!empty($placeholders)) {
-                    $existingExtensionsQuery = $connection->prepare("SELECT id, api_id FROM extension WHERE api_id IN ($placeholders)");
-                    $existingExtensions = $existingExtensionsQuery->executeQuery(array_values($extensionApiIds))->fetchAllAssociative();
-
-                    // Create mapping of API ID to database ID
-                    foreach ($existingExtensions as $extension) {
-                        $extensionIdMap[$extension['api_id']] = $extension['id'];
-                    }
-                }
-            }
-
-            // Get game ID mappings in one query
-            /**
-             * Associative array of Game api_id => id
-             */
-            $gameIdMap = [];
-            if (!empty($allGameApiIds)) {
-                $allGameApiIds = array_unique($allGameApiIds);
-
-                // Only proceed if we still have games after deduplication
-                if (!empty($allGameApiIds)) {
-
-                    $placeholders = implode(',', array_fill(0, count($allGameApiIds), '?'));
-                    // Convert all game API IDs to integers to avoid SQL errors
-                    foreach ($allGameApiIds as $key => $value) {
-                        $allGameApiIds[$key] = (int)$value;
-                    }
-
-                    $sql = "SELECT id, api_id FROM game WHERE api_id IN ($placeholders)";
-                    $stmt = $connection->prepare($sql);
-                    $result = $stmt->executeQuery(array_values($allGameApiIds));
-
-                    $games = $result->fetchAllAssociative();
-
-                    foreach ($games as $game) {
-
-                        /**
-                         * Array of Game api_id => id
-                         */
-                        $gameIdMap[$game['api_id']] = $game['id'];
-                    }
-
-                }
-            }
-
-            // 3. INSERT/UPDATE EXTENSIONS
-            // Prepare statement for extension insertion/update
-            $extensionStmt = $connection->prepare('
-                INSERT INTO extension (api_id, title, description, released_at, image_url, game_id, last_updated_at) 
-                VALUES (:apiId, :title, :description, :releasedAt, :imageUrl, :gameId, :lastUpdatedAt) 
-                ON DUPLICATE KEY UPDATE 
-                title = :title,
-                description = :description,
-                released_at = :releasedAt,
-                image_url = :imageUrl,
-                game_id = :gameId,
-                last_updated_at = :lastUpdatedAt
-            ');
-
-            // Process each extension
-            $newExtensionIds = []; // Track newly inserted extension IDs
-
-            foreach ($extensions as $extension) {
-
-
-                $releasedAt = isset($extension['first_release_date'])
-                    ? date('Y-m-d', $extension['first_release_date'])
-                    : null;
-
-                $imageUrl = isset($extension['cover']['url'])
-                    ? 'https:' . $extension['cover']['url']
-                    : null;
-
-                $gameId = $gameIdMap[$extension['parent_game']];
-
-                // If the game Id is not found, skip this extension
-                if ($gameId === null) {
-                    continue;
-                }
-
-                // $io->text(sprintf(
-                //     'Processing extension %s (API ID: %s) for game with API ID: %s, (database ID : %s)',
-                //     $extension['name'],
-                //     $extension['id'],
-                //     $extension['parent_game'] ?? 'unknown',
-                //     $gameId
-                // ));
-
-
-
-                // Insert or update the extension
-                $extensionStmt->executeQuery([
-                    'apiId' => $extension['id'],
-                    'title' => $extension['name'],
-                    'description' => $extension['summary'] ?? null,
-                    'releasedAt' => $releasedAt,
-                    'imageUrl' => $imageUrl,
-                    'gameId' => $gameId,
-                    'lastUpdatedAt' => date('Y-m-d')
-                ]);
-
-                // Get extension ID (either existing or newly created)
-                if (!isset($extensionIdMap[$extension['id']])) {
-                    $extensionIdMap[$extension['id']] = $connection->lastInsertId();
-                    $newExtensionIds[] = $extensionIdMap[$extension['id']]; // Track new IDs
-                }
-            }
+            // Extract identifiers and process the database operations
+            $this->processExtensionsTransaction($extensions, $connection, $io);
 
             // Commit the transaction
             $connection->commit();
 
-            // Unset variables to free memory
-            unset($extensionApiIds, $extensionIdMap, $allGameApiIds, $gameIdMap);
+            // Cleanup
+            $this->cleanupAfterTransaction();
         } catch (\Exception $e) {
             // Roll back on any error
             $connection->rollBack();
-
-            // Detailed error logging
-            $io->error("Database error: " . $e->getMessage());
-            $io->error("Stack trace: " . $e->getTraceAsString());
-
-            // Debugging information
-            if (isset($extension)) {
-                $io->error("Error occurred while processing extension with API ID: " . ($extension['id'] ?? 'unknown'));
-                if (isset($extension['game']) && isset($extension['game']['id'])) {
-                    $io->error("Associated game API ID: " . $extension['game']['id']);
-                    $io->error("Associated game name : " . ($extension['game']['name'] ?? 'unknown'));
-                    $io->error("Associated parent game ID : " . ($extension['game']['parent_game_id'] ?? 'unknown'));
-                }
-            }
-
-            // Pass the exception up
+            $this->dbService->logDatabaseError($e, $io, $extensions);
             throw $e;
         }
+    }
+
+    /**
+     * Process the extensions transaction
+     */
+    private function processExtensionsTransaction(array $extensions, $connection, $io = null): void
+    {
+        // 1. Extract identifiers
+        [$extensionApiIds, $allGameApiIds, $extensionIdMap] = $this->dataProcessor->extractExtensionIdentifiers($extensions);
+
+        // 2. Bulk fetch existing records
+        [$extensionIdMap, $gameIdMap] = $this->dataProcessor->fetchExistingExtensionRecords(
+            $extensionApiIds,
+            $allGameApiIds,
+            $extensionIdMap,
+            $connection
+        );
+
+        // 3. Insert/update extensions
+        [$extensionIdMap, $newExtensionIds] = $this->dataProcessor->insertOrUpdateExtensions(
+            $extensions,
+            $extensionIdMap,
+            $gameIdMap,
+            $connection
+        );
+    }
+
+    /**
+     * Clean up after transaction is committed
+     */
+    private function cleanupAfterTransaction(): void
+    {
+        // Unset variables to free memory
+        gc_collect_cycles();
     }
 }
