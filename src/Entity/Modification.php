@@ -2,31 +2,45 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
 use App\DataPersister\ModificationPersister;
 use App\Repository\ModificationRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
 #[ApiResource(
     operations: [
-        new \ApiPlatform\Metadata\Post(
+        new Post(
             uriTemplate: '/modifications',
             denormalizationContext: ['groups' => ['modification:write']],
             security: "is_granted('ROLE_USER')",
             processor: ModificationPersister::class
         ),
-        new \ApiPlatform\Metadata\Get(
-            uriTemplate: '/admin/modifications/{id}',
+        new Get(
+            uriTemplate: '/modifications/{id}',
             normalizationContext: ['groups' => ['modification:read']],
-            security: "is_granted('ROLE_ADMIN')"
+            security: "is_granted('ROLE_USER')"
+        ),
+        new GetCollection(
+            uriTemplate: '/modifications',
+            normalizationContext: ['groups' => ['modification:read']],
+            security: "is_granted('ROLE_USER')",
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
         )
     ],
 )]
 
+#[ApiFilter(SearchFilter::class, properties: ['patchnote.id' => 'exact'])]
 class Modification
 {
     #[ORM\Id]
@@ -35,24 +49,26 @@ class Modification
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['modification:write', 'modification:read'])]
     private ?string $difference = null;
 
     #[ORM\Column]
+    #[Groups(['modification:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'modifications')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['modification:read'])]
     private ?User $user = null;
 
-    /**
-     * @var Collection<int, Patchnote>
-     */
-    #[ORM\OneToMany(targetEntity: Patchnote::class, mappedBy: 'modification')]
-    private Collection $patchnote;
+    #[ORM\ManyToOne(inversedBy: 'modification')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Patchnote $patchnote = null;
+
+
 
     public function __construct()
     {
-        $this->patchnote = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -96,33 +112,17 @@ class Modification
         return $this;
     }
 
-    /**
-     * @return Collection<int, Patchnote>
-     */
-    public function getPatchnote(): Collection
+    public function getPatchnote(): ?Patchnote
     {
         return $this->patchnote;
     }
 
-    public function addPatchnote(Patchnote $patchnote): static
+    public function setPatchnote(?Patchnote $patchnote): static
     {
-        if (!$this->patchnote->contains($patchnote)) {
-            $this->patchnote->add($patchnote);
-            $patchnote->setModification($this);
-        }
+        $this->patchnote = $patchnote;
 
         return $this;
     }
 
-    public function removePatchnote(Patchnote $patchnote): static
-    {
-        if ($this->patchnote->removeElement($patchnote)) {
-            // set the owning side to null (unless already changed)
-            if ($patchnote->getModification() === $this) {
-                $patchnote->setModification(null);
-            }
-        }
-
-        return $this;
-    }
+   
 }
