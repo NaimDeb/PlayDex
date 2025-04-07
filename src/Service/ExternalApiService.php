@@ -76,7 +76,7 @@ class ExternalApiService
     public function getIgdbExtensions(int $limit, int $offset = 0)
     {
         $body = $this->buildQueryBody([
-            'fields' => 'id, name, platforms.*, involved_companies.company.name, first_release_date, genres.id, cover.url',
+            'fields' => 'id, name, platforms.*, parent_game, involved_companies.company.name, first_release_date, genres.id, cover.url',
             'where' => 'game_type = (1,2,4,6,7)',
             'limit' => $limit,
             'offset' => $offset
