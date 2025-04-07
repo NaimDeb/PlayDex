@@ -63,6 +63,7 @@ class Modification
 
     #[ORM\ManyToOne(inversedBy: 'modification')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['modification:write', 'modification:read'])]
     private ?Patchnote $patchnote = null;
 
 
