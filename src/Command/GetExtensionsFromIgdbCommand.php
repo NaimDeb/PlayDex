@@ -213,6 +213,10 @@ class GetExtensionsFromIgdbCommand extends Command
             $extensionIdMap = []; // Will map API IDs to database IDs
 
             // Extract all game IDs from extensions
+            /**
+             * @var array $allGameApiIds
+             * Array of all parent_game API IDs
+             */
             $allGameApiIds = [];
             foreach ($extensions as $extension) {
                 if (isset($extension['parent_game'])) {
@@ -237,12 +241,16 @@ class GetExtensionsFromIgdbCommand extends Command
             }
 
             // Get game ID mappings in one query
+            /**
+             * Associative array of Game api_id => id
+             */
             $gameIdMap = [];
             if (!empty($allGameApiIds)) {
                 $allGameApiIds = array_unique($allGameApiIds);
 
                 // Only proceed if we still have games after deduplication
                 if (!empty($allGameApiIds)) {
+
                     $placeholders = implode(',', array_fill(0, count($allGameApiIds), '?'));
                     // Convert all game API IDs to integers to avoid SQL errors
                     foreach ($allGameApiIds as $key => $value) {
@@ -252,11 +260,17 @@ class GetExtensionsFromIgdbCommand extends Command
                     $sql = "SELECT id, api_id FROM game WHERE api_id IN ($placeholders)";
                     $stmt = $connection->prepare($sql);
                     $result = $stmt->executeQuery(array_values($allGameApiIds));
+
                     $games = $result->fetchAllAssociative();
 
                     foreach ($games as $game) {
+
+                        /**
+                         * Array of Game api_id => id
+                         */
                         $gameIdMap[$game['api_id']] = $game['id'];
                     }
+
                 }
             }
 
@@ -279,9 +293,6 @@ class GetExtensionsFromIgdbCommand extends Command
 
             foreach ($extensions as $extension) {
 
-                $io->text(sprintf('Processing extension: %s', $extension['name']));
-                $io->text(sprintf('Extension API ID: %s', $extension['id']));
-                $io->text(sprintf('Extension Game API ID: %s', $extension['parent_game']));
 
                 $releasedAt = isset($extension['first_release_date'])
                     ? date('Y-m-d', $extension['first_release_date'])
@@ -290,6 +301,21 @@ class GetExtensionsFromIgdbCommand extends Command
                 $imageUrl = isset($extension['cover']['url'])
                     ? 'https:' . $extension['cover']['url']
                     : null;
+
+                $gameId = $gameIdMap[$extension['parent_game']];
+
+                // If the game Id is not found, skip this extension
+                if ($gameId === null) {
+                    continue;
+                }
+
+                // $io->text(sprintf(
+                //     'Processing extension %s (API ID: %s) for game with API ID: %s, (database ID : %s)',
+                //     $extension['name'],
+                //     $extension['id'],
+                //     $extension['parent_game'] ?? 'unknown',
+                //     $gameId
+                // ));
 
 
 
@@ -300,7 +326,7 @@ class GetExtensionsFromIgdbCommand extends Command
                     'description' => $extension['summary'] ?? null,
                     'releasedAt' => $releasedAt,
                     'imageUrl' => $imageUrl,
-                    'gameId' => $extension['parent_game'],
+                    'gameId' => $gameId,
                     'lastUpdatedAt' => date('Y-m-d')
                 ]);
 
