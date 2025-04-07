@@ -16,7 +16,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'GetGenresFromIgdb',
+    name: 'app:get-genres-from-igdb',
+    aliases: ['app:fetch-genres'],
     description: 'Fetches the genres from IGDB and stores them in the database.',
 )]
 class GetGenresFromIgdbCommand extends Command

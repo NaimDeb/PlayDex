@@ -14,7 +14,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
-    name: 'GetCompaniesFromIgdb',
+    name: 'app:get-companies-from-igdb',
+    aliases: ['app:igdb:companies'],
     description: 'Fetches the companies from IGDB and stores them in the database.',
 )]
 class GetCompaniesFromIgdbCommand extends Command
@@ -29,9 +30,14 @@ class GetCompaniesFromIgdbCommand extends Command
         $this->entityManager = $entityManager;
     }
 
+    public function configure():void {
+        
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
 
         // Get and store x-count
         $io->text('Fetching companies from IGDB...');
