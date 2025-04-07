@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use App\Config\PatchNoteImportance;
 use App\Repository\PatchnoteRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -79,8 +81,18 @@ class Patchnote
     #[Groups(['patchnote:write', 'patchnote:read'])]
     private ?string $smallDescription = null;
 
-    #[ORM\ManyToOne(inversedBy: 'patchnote')]
-    private ?Modification $modification = null;
+    /**
+     * @var Collection<int, Modification>
+     */
+    #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'patchnote', orphanRemoval: true)]
+    private Collection $modification;
+
+    public function __construct()
+    {
+        $this->modification = new ArrayCollection();
+    }
+
+
 
     public function getId(): ?int
     {
@@ -183,15 +195,35 @@ class Patchnote
         return $this;
     }
 
-    public function getModification(): ?Modification
+    /**
+     * @return Collection<int, Modification>
+     */
+    public function getModification(): Collection
     {
         return $this->modification;
     }
 
-    public function setModification(?Modification $modification): static
+    public function addModification(Modification $modification): static
     {
-        $this->modification = $modification;
+        if (!$this->modification->contains($modification)) {
+            $this->modification->add($modification);
+            $modification->setPatchnote($this);
+        }
 
         return $this;
     }
+
+    public function removeModification(Modification $modification): static
+    {
+        if ($this->modification->removeElement($modification)) {
+            // set the owning side to null (unless already changed)
+            if ($modification->getPatchnote() === $this) {
+                $modification->setPatchnote(null);
+            }
+        }
+
+        return $this;
+    }
+
+
 }
