@@ -8,7 +8,9 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ModificationPersister;
+use App\DataPersister\ModificationDeleteProcessor;
 use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
 use Doctrine\DBAL\Types\Types;
@@ -36,6 +38,11 @@ use Symfony\Component\Serializer\Attribute\Groups;
             security: "is_granted('ROLE_USER')",
             paginationEnabled: true,
             paginationItemsPerPage: 10,
+        ),
+        new Delete(
+            uriTemplate: '/modifications/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            processor: ModificationDeleteProcessor::class
         )
     ],
 )]
@@ -66,11 +73,12 @@ class Modification implements ReportableInterface
     #[Groups(['modification:write', 'modification:read'])]
     private ?Patchnote $patchnote = null;
 
+    #[ORM\Column]
+    private ?bool $isDeleted = null;
 
 
-    public function __construct()
-    {
-    }
+
+    public function __construct() {}
 
     public function getId(): ?int
     {
@@ -125,5 +133,15 @@ class Modification implements ReportableInterface
         return $this;
     }
 
-   
+    public function isDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
 }

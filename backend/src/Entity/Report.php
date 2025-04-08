@@ -5,7 +5,9 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ReportPersister;
+use App\DataPersister\ReportDeleteProcessor;
 use App\Repository\ReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,6 +29,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
             security: "is_granted('ROLE_USER')",
             securityMessage: 'Only authenticated users can create reports.',
             processor: ReportPersister::class,
+        ),
+        new Delete(
+            uriTemplate: '/reports/{id}',
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Only admins can delete reports.',
+            processor: ReportDeleteProcessor::class,
         )
     ],
 )]
@@ -58,6 +66,9 @@ class Report
     #[ORM\Column(length: 255)]
     #[Groups(['report:write', 'report:read'])]
     private ?string $reportableEntity = null;
+
+    #[ORM\Column]
+    private ?bool $isDeleted = null;
 
     public function getId(): ?int
     {
@@ -120,6 +131,18 @@ class Report
     public function setReportableEntity(string $reportableEntity): static
     {
         $this->reportableEntity = $reportableEntity;
+
+        return $this;
+    }
+
+    public function isDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
 
         return $this;
     }
