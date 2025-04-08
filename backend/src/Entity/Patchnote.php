@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
 use App\DataPersister\PatchnotePersister;
+use App\DataPersister\PatchnoteDeleteProcessor;
 use App\Interfaces\ReportableInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -29,7 +30,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
             processor: PatchnotePersister::class
         ),
         new Delete(
-            security: "is_granted('ROLE_ADMIN')"
+            security: "is_granted('ROLE_ADMIN')",
+            processor: PatchnoteDeleteProcessor::class
         ),
         new Get(
             security: "is_granted('ROLE_USER')",
@@ -39,7 +41,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             uriTemplate: '/patchnotes/{id}/modifications',
             name: 'getModifications',
             security: "is_granted('ROLE_ADMIN')",
-            normalizationContext: ['groups' => ['patchnote:read','patchnote:admin']]
+            normalizationContext: ['groups' => ['patchnote:read', 'patchnote:admin']]
         )
     ]
 )]
@@ -89,6 +91,9 @@ class Patchnote implements ReportableInterface
      */
     #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'patchnote', orphanRemoval: true)]
     private Collection $modification;
+
+    #[ORM\Column]
+    private ?bool $isDeleted = null;
 
     public function __construct()
     {
@@ -228,5 +233,15 @@ class Patchnote implements ReportableInterface
         return $this;
     }
 
+    public function isDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
 
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
 }
