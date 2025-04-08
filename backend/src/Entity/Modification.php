@@ -9,12 +9,12 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Post;
 use App\DataPersister\ModificationPersister;
+use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+
 
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
 #[ApiResource(
@@ -41,7 +41,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 )]
 
 #[ApiFilter(SearchFilter::class, properties: ['patchnote.id' => 'exact'])]
-class Modification
+class Modification implements ReportableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
