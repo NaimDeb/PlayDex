@@ -1,14 +1,13 @@
 api_platform:
-  title: FinalProject API
-  description: API for my final project
-  version: 1.0.0
-  swagger:
-    api_keys:
-      JWT:
-        name: Authorization
-        type: header
-  defaults:
-    stateless: true
-    cache_headers:
-      vary: ["Content-Type", "Authorization", "Origin"]
-    provider: App\State\SoftDeletedStateProvider
+    title: FinalProject API
+    description: API for my final project
+    version: 1.0.0
+    swagger:
+        api_keys:
+            JWT:
+                name: Authorization
+                type: header
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']
