@@ -4,19 +4,31 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use App\DataPersister\ReportPersister;
 use App\Repository\ReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
-    new GetCollection(
-        uriTemplate: '/reports',
-        normalizationContext: ['groups' => ['report:read']],
-        denormalizationContext: ['groups' => ['report:write']],
-        security: "is_granted('ROLE_ADMIN')",
-        securityMessage: 'Only admins can view reports.',
-    ),
+    operations: [
+        new GetCollection(
+            uriTemplate: '/reports',
+            normalizationContext: ['groups' => ['report:read']],
+            denormalizationContext: ['groups' => ['report:write']],
+            security: "is_granted('ROLE_ADMIN')",
+            securityMessage: 'Only admins can view reports.',
+        ),
+        new Post(
+            uriTemplate: '/reports',
+            normalizationContext: ['groups' => ['report:read']],
+            denormalizationContext: ['groups' => ['report:write']],
+            security: "is_granted('ROLE_USER')",
+            securityMessage: 'Only authenticated users can create reports.',
+            processor: ReportPersister::class,
+        )
+    ],
 )]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
 class Report
