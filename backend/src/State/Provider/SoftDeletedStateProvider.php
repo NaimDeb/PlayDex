@@ -1,21 +1,23 @@
 <?php
 
-namespace App\State;
+namespace App\State\Provider;
 
 use ApiPlatform\Metadata\CollectionOperationInterface;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class SoftDeletedStateProvider implements ProviderInterface
+final class SoftDeletedStateProvider implements ProviderInterface
 {
     public function __construct(
-        private ProviderInterface $decorated
     ) {}
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
-        $result = $this->decorated->provide($operation, $uriVariables, $context);
+
+        // Call the decorated provider to get the result
+        $result = $this->provide($operation, $uriVariables, $context);   
+
 
         // Handle collection
         if ($operation instanceof CollectionOperationInterface && is_array($result)) {
@@ -27,7 +29,7 @@ class SoftDeletedStateProvider implements ProviderInterface
 
         // Handle single item
         if ($result !== null && method_exists($result, 'isDeleted') && $result->isDeleted()) {
-            throw new NotFoundHttpException('The requested resource has been deleted.');
+            throw new NotFoundHttpException('Resource not found');
         }
 
         return $result;
