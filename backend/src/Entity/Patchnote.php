@@ -14,7 +14,10 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
 use App\DataPersister\PatchnotePersister;
+use App\Interfaces\ReportableInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+
+
 // Todo : check security
 
 #[ORM\Entity(repositoryClass: PatchnoteRepository::class)]
@@ -41,7 +44,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ]
 )]
 
-class Patchnote
+class Patchnote implements ReportableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
