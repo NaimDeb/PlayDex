@@ -2,10 +2,22 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use App\Repository\ReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    new GetCollection(
+        uriTemplate: '/reports',
+        normalizationContext: ['groups' => ['report:read']],
+        denormalizationContext: ['groups' => ['report:write']],
+        security: "is_granted('ROLE_ADMIN')",
+        securityMessage: 'Only admins can view reports.',
+    ),
+)]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
 class Report
 {
@@ -16,18 +28,23 @@ class Report
 
     #[ORM\ManyToOne(inversedBy: 'reports')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['report:read'])]
     private ?User $reportedBy = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['report:write', 'report:read'])]
     private ?string $reason = null;
 
     #[ORM\Column]
+    #[Groups(['report:read'])]
     private ?\DateTimeImmutable $reportedAt = null;
 
     #[ORM\Column]
+    #[Groups(['report:write', 'report:read'])]
     private ?int $reportableId = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['report:write', 'report:read'])]
     private ?string $reportableEntity = null;
 
     public function getId(): ?int
