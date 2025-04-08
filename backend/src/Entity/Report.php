@@ -36,6 +36,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             securityMessage: 'Only admins can delete reports.',
             processor: ReportDeleteProcessor::class,
         )
+
     ],
 )]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
