@@ -39,12 +39,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
             normalizationContext: ['groups' => ['patchnote:read']],
             provider : SoftDeletedStateProvider::class,
         ),
-        new Get(
-            uriTemplate: '/patchnotes/{id}/modifications',
-            name: 'getModifications',
-            security: "is_granted('ROLE_ADMIN')",
-            normalizationContext: ['groups' => ['patchnote:read', 'patchnote:admin']]
-        )
     ]
 )]
 
