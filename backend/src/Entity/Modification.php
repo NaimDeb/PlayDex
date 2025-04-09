@@ -13,6 +13,7 @@ use App\DataPersister\ModificationPersister;
 use App\DataPersister\ModificationDeleteProcessor;
 use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
+use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -30,7 +31,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Get(
             uriTemplate: '/modifications/{id}',
             normalizationContext: ['groups' => ['modification:read']],
-            security: "is_granted('ROLE_USER')"
+            security: "is_granted('ROLE_USER')",
+            provider : SoftDeletedStateProvider::class,
         ),
         new GetCollection(
             uriTemplate: '/modifications',
@@ -38,6 +40,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             security: "is_granted('ROLE_USER')",
             paginationEnabled: true,
             paginationItemsPerPage: 10,
+            provider : SoftDeletedStateProvider::class,
         ),
         new Delete(
             uriTemplate: '/modifications/{id}',
