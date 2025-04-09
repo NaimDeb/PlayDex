@@ -53,9 +53,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ApiFilter(SearchFilter::class, properties: ['patchnote.id' => 'exact'])]
 class Modification implements ReportableInterface
 {
+
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['modification:read'])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
@@ -77,11 +80,15 @@ class Modification implements ReportableInterface
     private ?Patchnote $patchnote = null;
 
     #[ORM\Column]
+    #[Groups(['modification:read'])]
     private ?bool $isDeleted = null;
 
 
 
-    public function __construct() {}
+    public function __construct() {
+        $this->isDeleted = false;
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -136,6 +143,7 @@ class Modification implements ReportableInterface
         return $this;
     }
 
+    #[Groups(['modification:read'])]
     public function isDeleted(): ?bool
     {
         return $this->isDeleted;
