@@ -16,6 +16,7 @@ use ApiPlatform\Metadata\Get;
 use App\DataPersister\PatchnotePersister;
 use App\DataPersister\PatchnoteDeleteProcessor;
 use App\Interfaces\ReportableInterface;
+use App\State\Provider\SoftDeletedStateProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 
@@ -35,7 +36,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ),
         new Get(
             security: "is_granted('ROLE_USER')",
-            normalizationContext: ['groups' => ['patchnote:read']]
+            normalizationContext: ['groups' => ['patchnote:read']],
+            provider : SoftDeletedStateProvider::class,
         ),
         new Get(
             uriTemplate: '/patchnotes/{id}/modifications',

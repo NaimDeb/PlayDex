@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ReportPersister;
 use App\DataPersister\ReportDeleteProcessor;
 use App\Repository\ReportRepository;
+use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -21,6 +22,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             denormalizationContext: ['groups' => ['report:write']],
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Only admins can view reports.',
+            provider : SoftDeletedStateProvider::class,
         ),
         new Post(
             uriTemplate: '/reports',
