@@ -14,6 +14,9 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+// Todo : Post doesn't work (create a processor to apply the followed_games list to the user ?)
+// Todo : GetCollections asks for id
+
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -36,6 +39,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
                 toProperty: 'game'
             )
             ],
+            processor : FollowedGamesPersister::class,
         ),
         new Delete(
             uriTemplate: '/followed-games/{id}',
@@ -51,22 +55,19 @@ class FollowedGames
     #[ORM\Column]
     private ?int $id = null;
 
-    /**
-     * @var Collection<int, Game>
-     */
-    #[ORM\ManyToMany(targetEntity: Game::class, inversedBy: 'followedGames')]
-    private Collection $game;
+    #[ORM\ManyToOne(inversedBy: 'followedGames')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
 
-    /**
-     * @var Collection<int, User>
-     */
-    #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'followedGames')]
-    private Collection $user;
+    #[ORM\ManyToOne(inversedBy: 'followedGames')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Game $game = null;
+
+    
 
     public function __construct()
     {
-        $this->game = new ArrayCollection();
-        $this->user = new ArrayCollection();
+       
     }
 
     public function getId(): ?int
@@ -74,59 +75,31 @@ class FollowedGames
         return $this->id;
     }
 
-    /**
-     * @return Collection<int, Game>
-     */
-    public function getGame(): Collection
-    {
-        return $this->game;
-    }
-
-    public function addGame(Game $game): static
-    {
-        if (!$this->game->contains($game)) {
-            $this->game->add($game);
-        }
-
-        return $this;
-    }
-
-    public function removeGame(Game $game): static
-    {
-        $this->game->removeElement($game);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    public function getUser(): Collection
+    public function getUser(): ?User
     {
         return $this->user;
     }
 
-    public function addUser(User $user): static
+    public function setUser(?User $user): static
     {
-        if (!$this->user->contains($user)) {
-            $this->user->add($user);
-            $user->setFollowedGames($this);
-        }
+        $this->user = $user;
 
         return $this;
     }
 
-    public function removeUser(User $user): static
+    public function getGame(): ?Game
     {
-        if ($this->user->removeElement($user)) {
-            // set the owning side to null (unless already changed)
-            if ($user->getFollowedGames() === $this) {
-                $user->setFollowedGames(null);
-            }
-        }
+        return $this->game;
+    }
+
+    public function setGame(?Game $game): static
+    {
+        $this->game = $game;
 
         return $this;
     }
+
+    
 
    
 }
