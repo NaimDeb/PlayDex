@@ -54,14 +54,13 @@ class FollowedGames
     /**
      * @var Collection<int, Game>
      */
-    #[Groups(['followedgame:read', 'followedgame:write'])]
-    #[ORM\ManyToMany(targetEntity: Game::class)]
+    #[ORM\ManyToMany(targetEntity: Game::class, inversedBy: 'followedGames')]
     private Collection $game;
 
     /**
      * @var Collection<int, User>
      */
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'followedGames')]
+    #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'followedGames')]
     private Collection $user;
 
     public function __construct()
@@ -111,6 +110,7 @@ class FollowedGames
     {
         if (!$this->user->contains($user)) {
             $this->user->add($user);
+            $user->setFollowedGames($this);
         }
 
         return $this;
@@ -118,8 +118,15 @@ class FollowedGames
 
     public function removeUser(User $user): static
     {
-        $this->user->removeElement($user);
+        if ($this->user->removeElement($user)) {
+            // set the owning side to null (unless already changed)
+            if ($user->getFollowedGames() === $this) {
+                $user->setFollowedGames(null);
+            }
+        }
 
         return $this;
     }
+
+   
 }
