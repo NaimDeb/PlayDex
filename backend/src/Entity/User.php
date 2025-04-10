@@ -15,6 +15,7 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
 use App\DataPersister\UserDataPersister;
+use App\DataPersister\UserDeleteProcessor;
 use App\DataPersister\UserUpdateDataPersister;
 use App\State\Provider\MeProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -42,6 +43,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Delete(
             security: "is_granted('ROLE_USER') and object == user",
             securityMessage : "You must be logged in",
+            processor : UserDeleteProcessor::class,
+
         ),
         new Patch(
         
@@ -121,12 +124,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reportedBy', orphanRemoval: true)]
     private Collection $reports;
 
+    #[ORM\Column]
+    private ?bool $isDeleted = null;
+
     public function __construct()
     {
         $this->patchnotes = new ArrayCollection();
         $this->modifications = new ArrayCollection();
         $this->followedGames = new ArrayCollection();
         $this->reports = new ArrayCollection();
+        $this->isDeleted = false;
     }
 
     public function getId(): ?int
@@ -353,6 +360,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $report->setReportedBy(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
 
         return $this;
     }
