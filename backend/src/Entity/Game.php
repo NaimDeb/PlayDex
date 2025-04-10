@@ -124,6 +124,12 @@ class Game
     #[ORM\ManyToMany(targetEntity: Genre::class, mappedBy: 'games')]
     private Collection $genres;
 
+    /**
+     * @var Collection<int, FollowedGames>
+     */
+    #[ORM\ManyToMany(targetEntity: FollowedGames::class, mappedBy: 'game')]
+    private Collection $followedGames;
+
 
 
     public function __construct()
@@ -132,6 +138,7 @@ class Game
         $this->patchnotes = new ArrayCollection();
         $this->companies = new ArrayCollection();
         $this->genres = new ArrayCollection();
+        $this->followedGames = new ArrayCollection();
     }
 
 
@@ -335,6 +342,33 @@ class Game
     {
         if ($this->genres->removeElement($genre)) {
             $genre->removeGame($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, FollowedGames>
+     */
+    public function getFollowedGames(): Collection
+    {
+        return $this->followedGames;
+    }
+
+    public function addFollowedGame(FollowedGames $followedGame): static
+    {
+        if (!$this->followedGames->contains($followedGame)) {
+            $this->followedGames->add($followedGame);
+            $followedGame->addGame($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFollowedGame(FollowedGames $followedGame): static
+    {
+        if ($this->followedGames->removeElement($followedGame)) {
+            $followedGame->removeGame($this);
         }
 
         return $this;
