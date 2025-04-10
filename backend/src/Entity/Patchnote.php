@@ -94,6 +94,7 @@ class Patchnote implements ReportableInterface
     public function __construct()
     {
         $this->modification = new ArrayCollection();
+        $this->isDeleted = false;
     }
 
 
