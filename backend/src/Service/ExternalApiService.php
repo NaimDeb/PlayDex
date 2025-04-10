@@ -58,11 +58,11 @@ class ExternalApiService
     }
 
 
-    public function getIgdbGames(int $limit, int $offset = 0)
+    public function getIgdbGames(int $limit, int $offset = 0, ?int $from)
     {
         $body = $this->buildQueryBody([
             'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
-            'where' => 'game_type = 0',
+            'where' => 'game_type = 0' . ($from ? ' & updated_at >= ' . $from : ''),
             'limit' => $limit,
             'offset' => $offset
         ]);
@@ -73,11 +73,11 @@ class ExternalApiService
 
     }
 
-    public function getIgdbExtensions(int $limit, int $offset = 0)
+    public function getIgdbExtensions(int $limit, int $offset = 0, ?int $from)
     {
         $body = $this->buildQueryBody([
             'fields' => 'id, name, platforms.*, parent_game, involved_companies.company.name, first_release_date, genres.id, cover.url',
-            'where' => 'game_type = (1,2,4,6,7)',
+            'where' => 'game_type = (1,2,4,6,7)' . ($from ? ' & updated_at >= ' . $from : ''),
             'limit' => $limit,
             'offset' => $offset
         ]);
@@ -91,25 +91,44 @@ class ExternalApiService
         }
     }
 
-    public function getIgdbGenres(int $limit, int $offset = 0)
+    public function getIgdbGenres(int $limit, ?int $from, int $offset = 0)
     {
-        $body = $this->buildQueryBody([
-            'fields' => 'id, name',
-            'limit' => $limit,
-            'offset' => $offset
-        ]);
+
+        if ($from == null) {
+            $body = $this->buildQueryBody([
+                'fields' => 'id, name',
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
+        } else {
+            $body = $this->buildQueryBody([
+                'fields' => 'id, name',
+                'where' => 'updated_at >= ' . $from,
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
+        }
 
         $response = $this->makeIgdbRequest('/genres', $body);
         return json_decode($response->getContent(), true);
     }
 
-    public function getIgdbCompanies(int $limit, int $offset = 0)
+    public function getIgdbCompanies(int $limit, ?int $from, int $offset = 0)
     {
-        $body = $this->buildQueryBody([
-            'fields' => 'id, name',
-            'limit' => $limit,
-            'offset' => $offset
-        ]);
+        if ($from == null) {
+            $body = $this->buildQueryBody([
+                'fields' => 'id, name',
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
+        } else {
+            $body = $this->buildQueryBody([
+                'fields' => 'id, name',
+                'where' => 'updated_at >= ' . $from,
+                'limit' => $limit,
+                'offset' => $offset
+            ]);
+        }
 
         $response = $this->makeIgdbRequest('/companies', $body);
         return json_decode($response->getContent(), true);
@@ -125,24 +144,26 @@ class ExternalApiService
         return $query;
     }
 
-    public function getNumberOfIgdbGames(): int
+    // Todo : Can all be merged into one function
+
+    public function getNumberOfIgdbGames(?int $from): int
     {
-        return $this->getCount('/games', 'where game_type = 0');
+        return $this->getCount('/games', 'where game_type = 0' . ($from ? ' & updated_at >= ' . $from : ''));
     }
 
-    public function getNumberOfIgdbExtensions(): int
+    public function getNumberOfIgdbExtensions(?int $from): int
     {
-        return $this->getCount('/games', 'where game_type = (1,2,4,6,7)');
+        return $this->getCount('/games', 'where game_type = (1,2,4,6,7)' . ($from ? ' & updated_at >= ' . $from : ''));
     }
 
-    public function getNumberOfIgdbGenres(): int
+    public function getNumberOfIgdbGenres(?int $from): int
     {
-        return $this->getCount('/genres');
+        return $this->getCount('/genres', $from ? 'where updated_at >= ' . $from : '');
     }
 
-    public function getNumberOfIgdbCompanies(): int
+    public function getNumberOfIgdbCompanies(?int $from): int
     {
-        return $this->getCount('/companies');
+        return $this->getCount('/companies', $from ? 'where updated_at >= ' . $from : '');
     }
 
     

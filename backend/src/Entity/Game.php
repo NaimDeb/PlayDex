@@ -127,8 +127,9 @@ class Game
     /**
      * @var Collection<int, FollowedGames>
      */
-    #[ORM\ManyToMany(targetEntity: FollowedGames::class, mappedBy: 'game')]
+    #[ORM\OneToMany(targetEntity: FollowedGames::class, mappedBy: 'game', orphanRemoval: true)]
     private Collection $followedGames;
+
 
 
 
@@ -359,7 +360,7 @@ class Game
     {
         if (!$this->followedGames->contains($followedGame)) {
             $this->followedGames->add($followedGame);
-            $followedGame->addGame($this);
+            $followedGame->setGame($this);
         }
 
         return $this;
@@ -368,11 +369,16 @@ class Game
     public function removeFollowedGame(FollowedGames $followedGame): static
     {
         if ($this->followedGames->removeElement($followedGame)) {
-            $followedGame->removeGame($this);
+            // set the owning side to null (unless already changed)
+            if ($followedGame->getGame() === $this) {
+                $followedGame->setGame(null);
+            }
         }
 
         return $this;
     }
+
+   
 
 
 

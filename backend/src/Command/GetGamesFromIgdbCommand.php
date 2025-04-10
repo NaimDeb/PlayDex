@@ -45,12 +45,14 @@ class GetGamesFromIgdbCommand extends Command
         $this
             ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Offset for fetching games', 0)
             ->addOption('fetchSize', null, InputOption::VALUE_OPTIONAL, 'Number of games to fetch per request, maximum is 500', 500)
+            ->addOption('from', null , InputOption::VALUE_OPTIONAL, 'Fetch games from a specific date (UNIX time)', null)
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
         
         // Get input options with validation
         $options = $this->validateAndGetOptions($input, $io);
@@ -62,7 +64,7 @@ class GetGamesFromIgdbCommand extends Command
         $this->dbService->optimizeDatabaseConnection();
         
         // Get total number of games and initialize progress
-        $xCount = $this->getGamesCount($io);
+        $xCount = $this->getGamesCount($io, $options['from']);
         $progressBar = $this->progressHandler->initializeProgressBar($output, $xCount, $options['offset']);
         
         // Process games in batches
@@ -83,6 +85,12 @@ class GetGamesFromIgdbCommand extends Command
     {
         $offset = $input->getOption('offset') ? (int)$input->getOption('offset') : 0;
         $fetchSize = $input->getOption('fetchSize') ? (int)$input->getOption('fetchSize') : 500;
+        $from = $input->getOption('from');
+
+        if ($from && !is_numeric($from)) {
+            $io->error('The "from" option must be a valid UNIX timestamp.');
+            return null;
+        }
 
         // Display info about non-default options
         if ($offset !== 0) {
@@ -106,16 +114,17 @@ class GetGamesFromIgdbCommand extends Command
         
         return [
             'offset' => $offset,
-            'fetchSize' => $fetchSize
+            'fetchSize' => $fetchSize,
+            'from' => $from,
         ];
     }
 
     /**
      * Get total count of games from IGDB
      */
-    private function getGamesCount(SymfonyStyle $io): int
+    private function getGamesCount(SymfonyStyle $io, ?int $from): int
     {
-        $xCount = $this->externalApiService->getNumberOfIgdbGames();
+        $xCount = $this->externalApiService->getNumberOfIgdbGames($from);
         $io->text(sprintf('Number of games to check : %s', $xCount));
         return $xCount;
     }
@@ -143,7 +152,7 @@ class GetGamesFromIgdbCommand extends Command
             $this->progressHandler->updateBatchProgressMessage($progressBar, $i, $fetchSize, count($batchOffsets), $xCount, 'games');
             
             // Fetch and process games
-            $allGames = $this->fetchGamesForBatches($batchOffsets, $fetchSize, $progressBar);
+            $allGames = $this->fetchGamesForBatches($batchOffsets, $fetchSize, $progressBar, $options['from']);
             $gamesProcessed = count($allGames);
             
             // Process the fetched games
@@ -157,7 +166,7 @@ class GetGamesFromIgdbCommand extends Command
     /**
      * Fetch games for all batches in the current iteration
      */
-    private function fetchGamesForBatches(array $batchOffsets, int $fetchSize, $progressBar): array
+    private function fetchGamesForBatches(array $batchOffsets, int $fetchSize, $progressBar, ?int $from): array
     {
         $allGames = [];
         
@@ -172,7 +181,7 @@ class GetGamesFromIgdbCommand extends Command
             ), 'status');
             $progressBar->display();
 
-            $batchGames = $this->externalApiService->getIgdbGames($fetchSize, $batchOffset);
+            $batchGames = $this->externalApiService->getIgdbGames($fetchSize, $batchOffset, $from);
             $allGames = array_merge($allGames, $batchGames);
 
             // Brief pause between API calls to avoid rate limiting
