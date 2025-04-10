@@ -16,6 +16,13 @@ class UpdateHistoryRepository extends ServiceEntityRepository
         parent::__construct($registry, UpdateHistory::class);
     }
 
+    public function getLatestUpdateDate() {
+        return $this->createQueryBuilder('u')
+            ->select('MAX(u.updatedAt)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     //    /**
     //     * @return UpdateHistory[] Returns an array of UpdateHistory objects
     //     */

@@ -45,12 +45,15 @@ class GetExtensionsFromIgdbCommand extends Command
         $this
             ->addOption('offset', null, InputOption::VALUE_OPTIONAL, 'Offset for fetching extensions', 0)
             ->addOption('fetchSize', null, InputOption::VALUE_OPTIONAL, 'Number of extensions to fetch per request, maximum is 500', 500)
+            ->addOption('from', null , InputOption::VALUE_OPTIONAL, 'Fetch games from a specific date (UNIX time)', null)
+
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
 
         // Validate input options
         $options = $this->validateAndGetOptions($input, $io);
@@ -62,7 +65,7 @@ class GetExtensionsFromIgdbCommand extends Command
         $this->dbService->optimizeDatabaseConnection();
 
         // Get total count of extensions
-        $xCount = $this->getExtensionsCount($io);
+        $xCount = $this->getExtensionsCount($io, $options['from']);
 
         // Set up progress bar
         $progressBar = $this->progressHandler->initializeProgressBar($output, $xCount, $options['offset']);
@@ -85,6 +88,12 @@ class GetExtensionsFromIgdbCommand extends Command
     {
         $offset = $input->getOption('offset') ? (int)$input->getOption('offset') : 0;
         $fetchSize = $input->getOption('fetchSize') ? (int)$input->getOption('fetchSize') : 500;
+        $from = $input->getOption('from');
+
+        if ($from && !is_numeric($from)) {
+            $io->error('The "from" option must be a valid UNIX timestamp.');
+            return null;
+        }
 
         // Display info about non-default options
         if ($offset !== 0) {
@@ -108,16 +117,17 @@ class GetExtensionsFromIgdbCommand extends Command
 
         return [
             'offset' => $offset,
-            'fetchSize' => $fetchSize
+            'fetchSize' => $fetchSize,
+            'from' => $from
         ];
     }
 
     /**
      * Get the total count of extensions from IGDB
      */
-    private function getExtensionsCount(SymfonyStyle $io): int
+    private function getExtensionsCount(SymfonyStyle $io, ?int $from): int
     {
-        $xCount = $this->externalApiService->getNumberOfIgdbExtensions();
+        $xCount = $this->externalApiService->getNumberOfIgdbExtensions($from);
         $io->text(sprintf('Number of extensions to check : %s', $xCount));
         return $xCount;
     }
@@ -145,7 +155,7 @@ class GetExtensionsFromIgdbCommand extends Command
             $this->progressHandler->updateBatchProgressMessage($progressBar, $i, $fetchSize, count($batchOffsets), $xCount, 'extensions');
 
             // Fetch and process extensions
-            $allExtensions = $this->fetchExtensionsForBatches($batchOffsets, $fetchSize, $progressBar);
+            $allExtensions = $this->fetchExtensionsForBatches($batchOffsets, $fetchSize, $progressBar, $options['from']);
             $extensionsProcessed = count($allExtensions);
 
             // Process the fetched extensions
@@ -159,7 +169,7 @@ class GetExtensionsFromIgdbCommand extends Command
     /**
      * Fetch extensions for all batches in the current iteration
      */
-    private function fetchExtensionsForBatches(array $batchOffsets, int $fetchSize, $progressBar): array
+    private function fetchExtensionsForBatches(array $batchOffsets, int $fetchSize, $progressBar, ?int $from): array	
     {
         $allExtensions = [];
 
@@ -174,7 +184,7 @@ class GetExtensionsFromIgdbCommand extends Command
             ), 'status');
             $progressBar->display();
 
-            $batchExtensions = $this->externalApiService->getIgdbExtensions($fetchSize, $batchOffset);
+            $batchExtensions = $this->externalApiService->getIgdbExtensions($fetchSize, $batchOffset, $from);
             $allExtensions = array_merge($allExtensions, $batchExtensions);
 
             // Brief pause between API calls to avoid rate limiting

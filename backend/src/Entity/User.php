@@ -123,8 +123,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $isDeleted = null;
 
-    #[ORM\ManyToOne(inversedBy: 'user')]
-    private ?FollowedGames $followedGames = null;
+    /**
+     * @var Collection<int, FollowedGames>
+     */
+    #[ORM\OneToMany(targetEntity: FollowedGames::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $followedGames;
+
+
 
     public function __construct()
     {
@@ -132,6 +137,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->modifications = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->isDeleted = false;
+        $this->followedGames = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -349,15 +355,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getFollowedGames(): ?FollowedGames
+    /**
+     * @return Collection<int, FollowedGames>
+     */
+    public function getFollowedGames(): Collection
     {
         return $this->followedGames;
     }
 
-    public function setFollowedGames(?FollowedGames $followedGames): static
+    public function addFollowedGame(FollowedGames $followedGame): static
     {
-        $this->followedGames = $followedGames;
+        if (!$this->followedGames->contains($followedGame)) {
+            $this->followedGames->add($followedGame);
+            $followedGame->setUser($this);
+        }
 
         return $this;
     }
+
+    public function removeFollowedGame(FollowedGames $followedGame): static
+    {
+        if ($this->followedGames->removeElement($followedGame)) {
+            // set the owning side to null (unless already changed)
+            if ($followedGame->getUser() === $this) {
+                $followedGame->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+  
 }
