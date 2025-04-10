@@ -22,7 +22,7 @@ class UserDeleteProcessor implements ProcessorInterface
 
         // Check if already deleted
         if ($data->isDeleted()) {
-            throw new BadRequestHttpException('This report has already been deleted.');
+            throw new BadRequestHttpException('This user has already been deleted.');
         }
 
         // Soft delete by setting isDeleted to true

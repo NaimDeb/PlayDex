@@ -2,11 +2,47 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Link;
 use App\Repository\FollowedGamesRepository;
+use App\State\Provider\FollowedGamesProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            uriTemplate: '/followed-games',
+            normalizationContext: ['groups' => ['game:read']],
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
+            security: "is_granted('ROLE_USER')",
+            provider : FollowedGamesProvider::class
+        ),
+        new Post(
+            uriTemplate: '/followed-games/{id}',
+            normalizationContext: ['groups' => ['game:read']],
+            denormalizationContext: ['groups' => ['game:write']],
+            security: "is_granted('ROLE_USER')",
+            uriVariables: [
+            'id' => new Link(
+                fromClass: Game::class,
+                identifiers: ['id'],
+                toProperty: 'game'
+            )
+            ],
+        ),
+        new Delete(
+            uriTemplate: '/followed-games/{id}',
+            security: "is_granted('ROLE_USER')",
+        )  
+    ]
+)]
 #[ORM\Entity(repositoryClass: FollowedGamesRepository::class)]
 class FollowedGames
 {
@@ -18,6 +54,7 @@ class FollowedGames
     /**
      * @var Collection<int, Game>
      */
+    #[Groups(['followedgame:read', 'followedgame:write'])]
     #[ORM\ManyToMany(targetEntity: Game::class)]
     private Collection $game;
 

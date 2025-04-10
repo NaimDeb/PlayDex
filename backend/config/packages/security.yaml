@@ -11,6 +11,7 @@ security:
                 property: email
     firewalls:
         login:
+            user_checker: App\Security\UserChecker
             pattern: ^/api/login
             stateless: true
             json_login:
