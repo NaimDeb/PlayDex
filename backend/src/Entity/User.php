@@ -112,11 +112,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'user', orphanRemoval: false)]
     private Collection $modifications;
 
-    /**
-     * @var Collection<int, FollowedGames>
-     */
-    #[ORM\ManyToMany(targetEntity: FollowedGames::class, mappedBy: 'user')]
-    private Collection $followedGames;
+
 
     /**
      * @var Collection<int, Report>
@@ -127,11 +123,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?bool $isDeleted = null;
 
+    #[ORM\ManyToOne(inversedBy: 'user')]
+    private ?FollowedGames $followedGames = null;
+
     public function __construct()
     {
         $this->patchnotes = new ArrayCollection();
         $this->modifications = new ArrayCollection();
-        $this->followedGames = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->isDeleted = false;
     }
@@ -307,32 +305,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, FollowedGames>
-     */
-    public function getFollowedGames(): Collection
-    {
-        return $this->followedGames;
-    }
 
-    public function addFollowedGame(FollowedGames $followedGame): static
-    {
-        if (!$this->followedGames->contains($followedGame)) {
-            $this->followedGames->add($followedGame);
-            $followedGame->addUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeFollowedGame(FollowedGames $followedGame): static
-    {
-        if ($this->followedGames->removeElement($followedGame)) {
-            $followedGame->removeUser($this);
-        }
-
-        return $this;
-    }
 
     /**
      * @return Collection<int, Report>
@@ -372,6 +345,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsDeleted(bool $isDeleted): static
     {
         $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+    public function getFollowedGames(): ?FollowedGames
+    {
+        return $this->followedGames;
+    }
+
+    public function setFollowedGames(?FollowedGames $followedGames): static
+    {
+        $this->followedGames = $followedGames;
 
         return $this;
     }
