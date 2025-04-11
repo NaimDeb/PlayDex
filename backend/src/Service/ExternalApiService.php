@@ -58,7 +58,7 @@ class ExternalApiService
     }
 
 
-    public function getIgdbGames(int $limit, int $offset = 0, ?int $from)
+    public function getIgdbGames(int $limit, int $offset = 0, ?int $from = null)
     {
         $body = $this->buildQueryBody([
             'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
@@ -73,7 +73,7 @@ class ExternalApiService
 
     }
 
-    public function getIgdbExtensions(int $limit, int $offset = 0, ?int $from)
+    public function getIgdbExtensions(int $limit, int $offset = 0, ?int $from = null)
     {
         $body = $this->buildQueryBody([
             'fields' => 'id, name, platforms.*, parent_game, involved_companies.company.name, first_release_date, genres.id, cover.url',
@@ -91,7 +91,7 @@ class ExternalApiService
         }
     }
 
-    public function getIgdbGenres(int $limit, ?int $from, int $offset = 0)
+    public function getIgdbGenres(int $limit, int $offset = 0, ?int $from = null)
     {
 
         if ($from == null) {
@@ -113,7 +113,7 @@ class ExternalApiService
         return json_decode($response->getContent(), true);
     }
 
-    public function getIgdbCompanies(int $limit, ?int $from, int $offset = 0)
+    public function getIgdbCompanies(int $limit, int $offset = 0, ?int $from = null)
     {
         if ($from == null) {
             $body = $this->buildQueryBody([
