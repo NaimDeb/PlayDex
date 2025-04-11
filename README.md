@@ -1,3 +1,37 @@
+## Frontend Installation
+
+Follow these steps to set up the frontend:
+
+1. **Install Dependencies**:
+
+   - Navigate to the frontend directory:
+     ```bash
+     cd frontend
+     ```
+   - Install the required dependencies:
+     ```bash
+     npm install
+     ```
+2. **Run the Development Server**:
+
+   - Start the Next.js development server:
+     ```bash
+     npm run dev
+     ```
+
+3. **Build for Production** (optional):
+
+   - To create an optimized production build:
+     ```bash
+     npm run build
+     ```
+   - Start the production server:
+     ```bash
+     npm start
+     ```
+
+Your frontend is now ready to use!
+
 ## Backend Installation
 
 Follow these steps to set up the backend:
