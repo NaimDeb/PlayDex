@@ -18,11 +18,16 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class GetIgdbDataCommand extends Command
 {
+
+    /**
+     * Commands to execute in sequence.
+     * The order of the commands in this array is important as it determines the sequence of execution.
+     */
     private array $commandsToExecute = [
         'app:get-genres-from-igdb',
         'app:get-companies-from-igdb',
+        'app:get-games-from-igdb',
         'app:get-extensions-from-igdb',
-        'app:get-games-from-igdb'
     ];
 
     private UpdateHistoryRepository $updateHistoryRepository;
@@ -34,6 +39,7 @@ class GetIgdbDataCommand extends Command
         $this->updateHistoryRepository = $updateHistoryRepository;
     }
 
+    // Todo : make skip option more flexible, e.g. skip all commands that start with a certain prefix
     protected function configure(): void
     {
         $this->setDescription('Executes all IGDB import commands in sequence');
