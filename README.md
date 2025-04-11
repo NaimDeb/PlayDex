@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Backend Installation
 
-## Getting Started
+Follow these steps to set up the backend:
 
-First, run the development server:
+1. **Get Your API Keys**:
+    - Obtain your Steam API key [here](https://steamcommunity.com/dev/apikey).
+    - Obtain your Twitch API key and IGDB access token by following the instructions [here](https://api-docs.igdb.com/#getting-started).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Set Up Environment Variables**:
+    - Create a `.env` file in the root of your project.
+    - Add the following variables to the `.env` file:
+      ```env
+      STEAM_API_KEY=your_steam_api_key
+      TWITCH_CLIENT_ID=your_twitch_client_id
+      TWITCH_ACCESS_TOKEN=your_igdb_access_token
+      DATABASE_URL=mysql://db_user:db_password@127.0.0.1:3306/db_name
+      ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Launch Your SQL Database**:
+    - Start your SQL database server.
+    - Ensure the database user and name match the credentials in the `DATABASE_URL` variable.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. **Install Dependencies**:
+    - Run the following command to install PHP dependencies:
+      ```bash
+      composer install
+      ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. **Set Up the Database**:
+    - Create the database:
+      ```bash
+      php bin/console doctrine:database:create
+      ```
+    - Run migrations:
+      ```bash
+      php bin/console doctrine:migrations:migrate
+      ```
 
-## Learn More
+6. **Fill the database**:
 
-To learn more about Next.js, take a look at the following resources:
+    - With your database created, you now need to launch the command to fill the database with IGDB's API data
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+        ```bash
+        php bin/console app:get-igdb-data
+        ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Your backend is now ready to use!
