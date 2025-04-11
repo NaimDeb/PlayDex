@@ -44,7 +44,12 @@ class PatchnoteModificationReportFixtures extends Fixture
             $user = $manager->getRepository(User::class)->find($id);
             if (!$user) {
                 $user = new User();
-                // Set required User properties here
+                $user->setUsername('User' . $id);
+                $user->setEmail('user' . $id . '@example.com');
+                $user->setPassword('password' . $id); // In a real scenario, use a password encoder
+                $user->setRoles(['ROLE_USER']);
+                $user->setCreatedAt(new \DateTimeImmutable(sprintf('2025-%02d-%02d', 1, $id)));
+                $user->setReputation(rand(0,100));
                 $manager->persist($user);
             }
             $users[] = $user;
