@@ -54,6 +54,8 @@ class GetIgdbDataCommand extends Command
 
         $latestUpdateDate = $this->updateHistoryRepository->getLatestUpdateDate();
 
+        $io->info(sprintf('Latest update date: %s', $latestUpdateDate ?? 'No previous updates found.'));
+
         $application = $this->getApplication();
         
         $skipCommands = $input->getOption('skip');
@@ -70,7 +72,7 @@ class GetIgdbDataCommand extends Command
             $command = $application->find($commandName);
             $arguments = [
                 'command' => $commandName,
-                '--from' => !$input->getOption('force') && $commandName === 'app:get-games-from-igdb' ? $latestUpdateDate : null,
+                '--from' => !$input->getOption('force') ? $latestUpdateDate : null,
             ];
             
             $commandInput = new ArrayInput($arguments);
@@ -96,11 +98,9 @@ class GetIgdbDataCommand extends Command
         $io->info('Updating the latest update date...');
 
         $updateHistory = new UpdateHistory();
-
-        $updateHistory->setUpdatedAt(new \DateTimeImmutable(time()));
-
-        $this->updateHistoryRepository->persist($updateHistory);
-        $this->updateHistoryRepository->flush($updateHistory);
+        $entityManager = $this->updateHistoryRepository->getEntityManager();
+        $entityManager->persist($updateHistory);
+        $entityManager->flush();
         
         return Command::SUCCESS;
     }
