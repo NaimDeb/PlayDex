@@ -13,6 +13,8 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Patch;
+use App\DataPersister\DiffMatchPatchProcessor;
 use App\DataPersister\PatchnotePersister;
 use App\DataPersister\PatchnoteDeleteProcessor;
 use App\Interfaces\ReportableInterface;
@@ -39,6 +41,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
             normalizationContext: ['groups' => ['patchnote:read']],
             provider : SoftDeletedStateProvider::class,
         ),
+        new Patch(
+            security: "is_granted('ROLE_USER')",
+            denormalizationContext: ['groups' => ['patchnote:write']],
+            normalizationContext: ['groups' => ['patchnote:read']],
+            processor: DiffMatchPatchProcessor::class,
+        )
     ]
 )]
 

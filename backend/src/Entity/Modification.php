@@ -22,12 +22,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
 #[ApiResource(
     operations: [
-        new Post(
-            uriTemplate: '/modifications',
-            denormalizationContext: ['groups' => ['modification:write']],
-            security: "is_granted('ROLE_USER')",
-            processor: ModificationPersister::class
-        ),
         new Get(
             uriTemplate: '/modifications/{id}',
             normalizationContext: ['groups' => ['modification:read']],
@@ -61,9 +55,7 @@ class Modification implements ReportableInterface
     #[Groups(['modification:read'])]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::TEXT)]
-    #[Groups(['modification:write', 'modification:read'])]
-    private ?string $difference = null;
+
 
     #[ORM\Column]
     #[Groups(['modification:read'])]
@@ -83,6 +75,9 @@ class Modification implements ReportableInterface
     #[Groups(['modification:read'])]
     private ?bool $isDeleted = null;
 
+    #[ORM\Column(type: Types::ARRAY, nullable: true)]
+    private ?array $difference = null;
+
 
 
     public function __construct() {
@@ -95,17 +90,7 @@ class Modification implements ReportableInterface
         return $this->id;
     }
 
-    public function getDifference(): ?string
-    {
-        return $this->difference;
-    }
 
-    public function setDifference(string $difference): static
-    {
-        $this->difference = $difference;
-
-        return $this;
-    }
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
@@ -152,6 +137,18 @@ class Modification implements ReportableInterface
     public function setIsDeleted(bool $isDeleted): static
     {
         $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+    public function getDifference(): ?array
+    {
+        return $this->difference;
+    }
+
+    public function setDifference(?array $difference): static
+    {
+        $this->difference = $difference;
 
         return $this;
     }
