@@ -8,6 +8,7 @@ export interface Game {
     releasedAt: string;
     lastUpdatedAt: string;
     extensions: string[];
+    companies: Company[];
 }
 
 export interface Extension {
@@ -18,4 +19,9 @@ export interface Extension {
     game: string;
     imageUrl: string;
     lastUpdatedAt: string;
+}
+
+export interface Company {
+    id: number;
+    name : string;
 }

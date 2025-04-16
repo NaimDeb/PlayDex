@@ -6,6 +6,7 @@ use App\Repository\CompanyRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 class Company
@@ -16,20 +17,21 @@ class Company
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('game:read')]
     private ?string $name = null;
 
     /**
      * @var Collection<int, Game>
      */
     #[ORM\ManyToMany(targetEntity: Game::class, inversedBy: 'companies')]
-    private Collection $games;
+    private Collection $game;
 
     #[ORM\Column]
     private ?int $apiId = null;
 
     public function __construct()
     {
-        $this->games = new ArrayCollection();
+        $this->game = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -54,13 +56,13 @@ class Company
      */
     public function getGames(): Collection
     {
-        return $this->games;
+        return $this->game;
     }
 
     public function addGame(Game $game): static
     {
-        if (!$this->games->contains($game)) {
-            $this->games->add($game);
+        if (!$this->game->contains($game)) {
+            $this->game->add($game);
         }
 
         return $this;
@@ -68,7 +70,7 @@ class Company
 
     public function removeGame(Game $game): static
     {
-        $this->games->removeElement($game);
+        $this->game->removeElement($game);
 
         return $this;
     }
