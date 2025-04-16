@@ -2,21 +2,25 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image"; // Assuming you use next/image
-import { Game } from "@/types/gameType";
+import { Extension, Game } from "@/types/gameType";
 import gameService from "@/lib/gameService"; // Adjust the import path as needed
+import { Patchnote } from "@/types/patchNoteType";
+import { notFound } from "next/navigation";
+import { use } from "react";
 
 
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params);
   const parts = slug.split('-');
   const id = parts.pop(); // Assumes ID is the last part
 
   const [gameData, setGameData] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [patchnotes, setPatchnotes] = useState([]); // Assuming updates is an array of objects
-  const [extensions, setExtensions] = useState([]); // Assuming extensions is an array of objects
+  const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]); // Explicitly define the type as Patchnote[]
+  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [image, setImage] = useState<string | null>(null); // Assuming extensions is an array of objects
 
   // --- Filter State ---
   const [showNews, setShowNews] = useState(true);
@@ -30,35 +34,61 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       setIsLoading(true);
       setError(null);
       try {
-        if (!id) {
-          throw new Error("Invalid game ID.");
-        }
-        const data = await gameService.getGameById(id);
-        setGameData(data);
+      if (!id) {
+        throw new Error("Invalid game ID.");
+      }
+      const data = await gameService.getGameById(id);
+      setGameData(data);
+
+      // Fetch patchnotes
+      const patchnotesData = await gameService.getGamePatchNotes(id);
+      setPatchnotes(Array.isArray(patchnotesData) ? patchnotesData : []);
+
+      // Fetch extensions if available
+      if (data.extensions && data.extensions.length > 0) {
+        const extensionsData = await gameService.getGameExtensions(id);
+        setExtensions(extensionsData);
+      }
+
+      // Set the image
+
+      if (data.imageUrl) {
+        const imageUrl = data.imageUrl.replace("t_thumb", "t_cover_big") // Adjust the image size as needed
+        // console.log("image url ", imageUrl);
+        
+        setImage(imageUrl);
+      } else {
+        // todo : find a way to get the cover missing image from igdb
+        // setImage("https://www.igdb.com/assets/no_cover_show-ef1e36c00e101c2fb23d15bb80edd9667bbf604a12fc0267a66033afea320c65.png"); // No image available
+        setImage(null)
+      }
+
+
+
       } catch (err) {
-        setError("Failed to load game data.");
-        console.error(err);
+      setError("Failed to load game data.");
+      console.error(err);
       } finally {
-        setIsLoading(false);
+      setIsLoading(false);
       }
     }
     loadData();
   }, [id]); // Re-fetch if id changes
 
+
+  
   // --- Filter Logic ---
-  const filteredUpdates = gameData?.updates.filter(update => {
+  const filteredUpdates = patchnotes.filter(patchnote => {
     // Add date range filtering here if implemented
-    if (update.type === 'update' && !showNews) return false; // Assuming 'update' maps to 'Nouveautés' for now
-    if (update.type === 'major' && !showMajor) return false;
-    if (update.type === 'minor' && !showMinor) return false;
-    if (update.type === 'hotfix' && !showHotfix) return false;
-    if (update.type === 'dlc' && !showDlc) return false; // Assuming DLC is also 'Nouveautés'
+    if (patchnote.importance === 'major' && !showMajor) return false;
+    if (patchnote.importance === 'minor' && !showMinor) return false;
+    if (patchnote.importance === 'hotfix' && !showHotfix) return false;
     return true;
-  }) || [];
+  });
 
   // --- Rendering ---
   if (isLoading) {
-    return <div className="container mx-auto px-4 py-8 text-center">Loading...</div>;
+    return <div className="container mx-auto px-4 py-8 text-center">Chargement...</div>;
   }
 
   if (error) {
@@ -66,14 +96,19 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   }
 
   if (!gameData) {
-    return <div className="container mx-auto px-4 py-8 text-center">Game not found.</div>;
+
+    notFound();
   }
 
-  // Helper to format date difference (replace with a robust library like date-fns if needed)
-  const formatDateDifference = (dateStr: string): string => {
-      const date = new Date(dateStr);
+  /**
+   * Formats the date difference between now and the given date.
+   * @param date 
+   * @returns 
+   */
+  const formatDateDifference = (date: Date | string): string => {
+      const parsedDate = typeof date === "string" ? new Date(date) : date;
       const now = new Date();
-      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffTime = Math.abs(now.getTime() - parsedDate.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       const diffYears = Math.floor(diffDays / 365);
 
@@ -83,6 +118,10 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
       return `Il y a ${diffYears} ans`;
   }
 
+  console.log("extensions : ", extensions);
+  
+
+
   return (
     <div className="bg-[#1a1a1a] text-white min-h-screen font-sans"> {/* Assuming font-sans, adjust as needed */}
       <div className="container mx-auto px-4 py-8">
@@ -91,7 +130,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
         <section className="flex flex-col md:flex-row gap-8 mb-12">
           <div className="flex-shrink-0 w-full md:w-1/3 lg:w-1/4">
             <Image
-              src={gameData.coverImageUrl}
+              src={image || ""}
               alt={`${gameData.title} Cover Art`}
               width={300} // Adjust size as needed
               height={450} // Adjust size as needed
@@ -100,8 +139,12 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           </div>
           <div className="flex-grow">
             <h1 className="text-4xl lg:text-5xl font-bold font-montserrat mb-2">{gameData.title}</h1> {/* Assuming font-montserrat */}
-            <p className="text-lg text-gray-400 mb-1">{gameData.developer}</p>
-            <p className="text-sm text-gray-500 mb-4">Sorti en {new Date(gameData.releaseDate).toLocaleDateString()}</p>
+            <div className="flex gap-3 text-off-white underline text-nowrap flex-wrap">
+            {gameData.companies.map((company) => (
+              <p key={company.id} className="text-lg hover:text-gray-300 cursor-pointer mb-1">{company.name}</p>
+            ))}
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Sorti en {new Date(gameData.releasedAt).toLocaleDateString()}</p>
             <div className="flex items-center gap-4 mb-6">
               <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded transition duration-200">
                 Suivi
@@ -112,27 +155,30 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
           </div>
         </section>
 
+  
+          {/* --- Patchnotes Section --- */}
         {/* --- Extensions Section --- */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold font-montserrat">{gameData.extensions.length} Extensions</h2>
+            <h2 className="text-2xl font-bold font-montserrat">{gameData.extensions.length} Extension{gameData.extensions.length > 1 && "s"}</h2>
             <button className="text-purple-400 hover:text-purple-300">Tout voir</button>
           </div>
           {/* Basic Carousel Placeholder - Replace with a real carousel component */}
           <div className="relative">
              {/* Add Arrow buttons here */}
             <div className="flex space-x-4 overflow-x-auto pb-4">
-              {gameData.extensions.map((ext) => (
-                <div key={ext.id} className="flex-shrink-0 w-40 bg-[#2a2a2a] rounded p-2 text-center">
+              
+              {extensions.map((extension) => (
+                <div key={extension.id} className="flex-shrink-0 w-40 bg-[#2a2a2a] rounded p-2 textension-center">
                   <Image
-                    src={ext.imageUrl}
-                    alt={ext.name}
+                    src={extension.imageUrl}
+                    alt={extension.title}
                     width={150}
                     height={200}
                     className="object-cover rounded mb-2 mx-auto"
                   />
-                  <p className="text-sm font-semibold">{ext.name}</p>
-                  <p className="text-xs text-gray-400">Sortie: {new Date(ext.releaseDate).toLocaleDateString()}</p>
+                  <p className="text-sm font-semibold">{extension.title}</p>
+                  <p className="text-xs text-gray-400">Sortie: {new Date(extension.releasedAt).toLocaleDateString()}</p>
                 </div>
               ))}
             </div>
@@ -176,13 +222,13 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
 
                 {/* Date Column */}
                 <div className="absolute left-[-120px] top-0 text-right w-24 text-sm text-gray-400">
-                  <div>{new Date(update.date).toLocaleDateString()}</div>
-                  <div>{formatDateDifference(update.date)}</div>
+                  <div>{new Date(update.releasedAt).toLocaleDateString()}</div>
+                  <div>{formatDateDifference(update.releasedAt)}</div>
                 </div>
 
                 {/* Content Column */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-2 capitalize">{update.type === 'update' ? 'Mise à jour' : update.type}</h3> {/* Simple type display */}
+                  <h3 className="ml-2 text-lg font-semibold mb-2 capitalize">{update.importance} update</h3> {/* Simple type display */}
                    <div className="bg-[#2a2a2a] p-4 rounded-lg shadow-md">
                       <div className="flex justify-between items-center mb-2">
                         <h4 className="font-bold">{update.title}</h4>
@@ -194,24 +240,20 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                             <span className="text-gray-400 cursor-pointer">👎</span>
                          </div>
                       </div>
-                      <p className="text-gray-300 text-sm mb-3 whitespace-pre-line">{update.description}</p>
-                      {update.details && (
-                        <ul className="list-disc list-inside text-gray-400 text-sm mb-3">
-                          {update.details.map((detail, i) => <li key={i}>{detail}</li>)}
-                        </ul>
-                      )}
+                      <p className="text-gray-300 text-sm mb-3 whitespace-pre-line">{update.title}</p>
+                      {update.content}
                       <button className="text-purple-400 hover:text-purple-300 text-sm">Voir plus</button>
                    </div>
                 </div>
                  {/* Year markers (simplified) - Needs better logic for grouping */}
-                 {index > 0 && new Date(update.date).getFullYear() !== new Date(filteredUpdates[index - 1].date).getFullYear() && (
+                 {index > 0 && new Date(update.releasedAt).getFullYear() !== new Date(filteredUpdates[index - 1].releasedAt).getFullYear() && (
                     <div className="absolute left-[-22px] top-[-40px] w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a] flex items-center justify-center">
                        {/* Arrow or indicator */}
                     </div>
                  )}
                  {index === 0 && ( /* Add year marker for the first item */
                     <div className="absolute left-[-120px] top-[-40px] text-right w-24 font-bold text-lg">
-                        {new Date(update.date).getFullYear()}
+                        {new Date(update.releasedAt).getFullYear()}
                     </div>
                  )}
               </div>

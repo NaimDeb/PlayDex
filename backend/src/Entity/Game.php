@@ -115,6 +115,7 @@ class Game
      * @var Collection<int, Company>
      */
     #[ORM\ManyToMany(targetEntity: Company::class, mappedBy: 'game')]
+    #[Groups('game:read')]
     private Collection $companies;
 
 
