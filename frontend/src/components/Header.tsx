@@ -12,6 +12,21 @@ export function Header() {
     clipPath: 'polygon(5% 0, 95% 0, 100% 100%, 0% 100%)', // Adjust slant
   };
 
+  function randomGame() {
+    // Check the current URL to get the game ID or null
+    const currentGameId = window.location.pathname.split("/article/")[1] || null;
+
+    // Generate a random number between 1 and 120000
+    const randomGameId = Math.floor(Math.random() * 120000) + 1;
+    // If the random game ID is the same as the current one, generate a new one
+    if (randomGameId === parseInt(currentGameId || "0")) {
+      randomGame();
+      return;
+    }
+    // Navigate to the random game page
+    window.location.href = `/article/${randomGameId}`;
+  }
+
   return (
     // Use a base dark background and relative positioning
     <header className="bg-off-gray text-white shadow-md relative h-16">
@@ -39,6 +54,9 @@ export function Header() {
           </a>
           <a href="#home" className="hover:text-gray-200 px-2">
             Home
+          </a>
+          <a onClick={randomGame} className="hover:text-gray-200 px-2">
+            Jeu au hasard
           </a>
         </nav>
 
