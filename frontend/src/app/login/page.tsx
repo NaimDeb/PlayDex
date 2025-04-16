@@ -43,7 +43,7 @@ export default function LoginPage() {
     <>
             <div className="bg-gray-800 p-4 sm:p-6 md:p-8 rounded-xl shadow-xl w-full max-w-lg mx-auto">
             <h1 className="text-2xl sm:text-3xl font-bold text-center text-white mb-6">
-                {isLoginForm ? "connection" : "Inscription"}
+                {isLoginForm ? "Log in" : "Inscription"}
             </h1>
 
             {error && (
