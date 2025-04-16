@@ -9,6 +9,7 @@ export interface PatchnoteFormData {
 }
 
 export interface Patchnote {
+    id: number;
     title: string;
     content: string;
     releasedAt: Date;

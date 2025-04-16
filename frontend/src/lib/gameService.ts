@@ -10,14 +10,14 @@ class GameService {
         return response.data;
     }
 
-    async getGameExtensions(id: string): Promise<Extension> {
+    async getGameExtensions(id: string): Promise<Array<Extension>> {
         const response = await apiClient.get(`/games/${id}/extensions`);
-        return response.data;
+        return response.data.member;
     }
 
     async getGamePatchNotes(id: string): Promise<Array<Patchnote>> {
         const response = await apiClient.get(`/games/${id}/patchnotes`);
-        return response.data;
+        return response.data.member;
     }
 
     async getPatchNoteById(id: string): Promise<Patchnote> {
