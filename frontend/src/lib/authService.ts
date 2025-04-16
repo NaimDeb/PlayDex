@@ -20,7 +20,8 @@ class AuthService {
         password: givenData.password,
       });
 
-      const token = data.auth_token;
+      const token = data.token;
+      
 
       // Store the token in a cookie
       // Todo : check if it really works, if the max Age isn't configured in the API instead.
