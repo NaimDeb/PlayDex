@@ -1,7 +1,7 @@
-export function Logo() {
+import Image from "next/image";
+
+export function Logo({width = 100, height = 100}: {width?: number; height?: number}) {
   return (
-    <div className="font-montserrat font-bold text-2xl text-primary">
-      Logo
-    </div>
+    <Image src="/logo.png" alt="Logo" width={width} height={height} />
   );
 }
