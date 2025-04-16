@@ -71,7 +71,7 @@ class AuthService {
     }
 
 
-    private async me(): Promise<User> {
+    public async me(): Promise<User> {
       // Get the token from the cookie
       // Todo : check if works
       const token = document.cookie.split("; ").find(row => row.startsWith("auth_token="))?.split("=")[1];

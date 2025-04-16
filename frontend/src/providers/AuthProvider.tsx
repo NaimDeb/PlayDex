@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useMemo, useState, ReactNode, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import authService from "@/lib/authService";
 import { AuthState, LoginFormData, RegisterFormData } from "@/types/authType";
@@ -11,6 +11,8 @@ interface AuthContextType extends AuthState {
     register: (data: RegisterFormData) => Promise<void>;
     logout: () => void;
 }
+
+
 
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +30,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const [state, setState] = useState<AuthState>(initialState);
     const router = useRouter();
+
+    useEffect(() => {
+      const checkAuth = async () => {
+          try {
+              const user = await authService.me();
+              if (user) {
+                  setState({
+                      user,
+                      isAuthenticated: true,
+                      error: null,
+                  });
+              }
+          } catch {
+              // Si l'appel échoue, on reste déconnecté
+              setState(initialState);
+          }
+      };
+
+      checkAuth();
+  }, []);
 
     // ? On utilise useCallback pour éviter de recréer les fonctions à chaque rendu
 
