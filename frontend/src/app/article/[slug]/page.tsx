@@ -1,18 +1,21 @@
 "use client"; // Needed for useState and useEffect
 
-import { useState, useEffect } from "react";
-import Image from "next/image"; // Assuming you use next/image
+import { useState, useEffect, use } from "react";
+import Image from "next/image";
 import { Extension, Game } from "@/types/gameType";
-import gameService from "@/lib/gameService"; // Adjust the import path as needed
+import gameService from "@/lib/gameService";
 import { Patchnote } from "@/types/patchNoteType";
 import { notFound } from "next/navigation";
-import { use } from "react";
+import { PatchnoteCard } from "@/components/PatchnoteCard";
+import Link from "next/link";
 
-
-
-export default function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+export default function ArticlePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = use(params);
-  const parts = slug.split('-');
+  const parts = slug.split("-");
   const id = parts.pop(); // Assumes ID is the last part
 
   const [gameData, setGameData] = useState<Game | null>(null);
@@ -34,98 +37,124 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
       setIsLoading(true);
       setError(null);
       try {
-      if (!id) {
-        throw new Error("Invalid game ID.");
-      }
-      const data = await gameService.getGameById(id);
-      setGameData(data);
+        if (!id) {
+          throw new Error("Invalid game ID.");
+        }
+        const data = await gameService.getGameById(id);
+        setGameData(data);
 
-      // Fetch patchnotes
-      const patchnotesData = await gameService.getGamePatchNotes(id);
-      setPatchnotes(Array.isArray(patchnotesData) ? patchnotesData : []);
+        // Fetch patchnotes
+        const patchnotesData = await gameService.getGamePatchNotes(id);
+        setPatchnotes(Array.isArray(patchnotesData) ? patchnotesData : []);
 
-      // Fetch extensions if available
-      if (data.extensions && data.extensions.length > 0) {
-        const extensionsData = await gameService.getGameExtensions(id);
-        setExtensions(extensionsData);
-      }
+        // Fetch extensions if available
+        if (data.extensions && data.extensions.length > 0) {
+          const extensionsData = await gameService.getGameExtensions(id);
+          setExtensions(extensionsData);
+        }
 
-      // Set the image
+        // Set the image
 
-      if (data.imageUrl) {
-        const imageUrl = data.imageUrl.replace("t_thumb", "t_cover_big") // Adjust the image size as needed
-        // console.log("image url ", imageUrl);
-        
-        setImage(imageUrl);
-      } else {
-        // todo : find a way to get the cover missing image from igdb
-        // setImage("https://www.igdb.com/assets/no_cover_show-ef1e36c00e101c2fb23d15bb80edd9667bbf604a12fc0267a66033afea320c65.png"); // No image available
-        setImage(null)
-      }
+        if (data.imageUrl) {
+          const imageUrl = data.imageUrl.replace("t_thumb", "t_cover_big"); // Adjust the image size as needed
+          // console.log("image url ", imageUrl);
 
-
-
+          setImage(imageUrl);
+        } else {
+          // todo : find a way to get the cover missing image from igdb
+          // setImage("https://www.igdb.com/assets/no_cover_show-ef1e36c00e101c2fb23d15bb80edd9667bbf604a12fc0267a66033afea320c65.png"); // No image available
+          setImage(null);
+        }
       } catch (err) {
-      setError("Failed to load game data.");
-      console.error(err);
+        setError("Failed to load game data.");
+        console.error(err);
       } finally {
-      setIsLoading(false);
+        setIsLoading(false);
       }
     }
     loadData();
   }, [id]); // Re-fetch if id changes
 
+  // Combine patchnotes and extensions for timeline
+  const timelineItems = [
+    ...patchnotes.map((patchnote) => ({ ...patchnote, type: "patchnote" })),
+    ...extensions.map((extension) => ({ ...extension, type: "extension" })),
+  ];
 
-  
   // --- Filter Logic ---
-  const filteredUpdates = patchnotes.filter(patchnote => {
-    // Add date range filtering here if implemented
-    if (patchnote.importance === 'major' && !showMajor) return false;
-    if (patchnote.importance === 'minor' && !showMinor) return false;
-    if (patchnote.importance === 'hotfix' && !showHotfix) return false;
+  const filteredUpdates = timelineItems.filter((item) => {
+    if (item.type === "patchnote") {
+      const patchnoteItem = item as Patchnote; // Merci typescript
+      if (patchnoteItem.importance === "major" && !showMajor) return false;
+      if (patchnoteItem.importance === "minor" && !showMinor) return false;
+      if (patchnoteItem.importance === "hotfix" && !showHotfix) return false;
+    }
+    if (!showNews && item.type === "extension") return false; // Assuming showNews includes updates and dlc for now
     return true;
   });
 
+  // --- Timeline Grouping ---
+  const currentYear = new Date().getFullYear();
+  const groupedByYear = filteredUpdates.reduce((acc, item) => {
+    const year = new Date(item.releasedAt).getFullYear();
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(item);
+    return acc;
+  }, {} as Record<number, typeof filteredUpdates>);
+
+  const [openYears, setOpenYears] = useState<{ [year: number]: boolean }>({});
+
+  const toggleYear = (year: number) => {
+    setOpenYears((prev) => ({ ...prev, [year]: !prev[year] }));
+  };
+
   // --- Rendering ---
   if (isLoading) {
-    return <div className="container mx-auto px-4 py-8 text-center">Chargement...</div>;
+    return (
+      <div className="container mx-auto px-4 py-8 text-center min-h-screen bg-off-gray">
+        {/* Todo : HeroUi Skeleton */}
+        Chargement...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="container mx-auto px-4 py-8 text-center text-red-500">{error}</div>;
+    return (
+      <div className="container mx-auto px-4 py-8 text-center text-red-500">
+        {error}
+      </div>
+    );
   }
 
   if (!gameData) {
-
     notFound();
   }
 
   /**
    * Formats the date difference between now and the given date.
-   * @param date 
-   * @returns 
+   * @param date
+   * @returns
    */
   const formatDateDifference = (date: Date | string): string => {
-      const parsedDate = typeof date === "string" ? new Date(date) : date;
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - parsedDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const diffYears = Math.floor(diffDays / 365);
+    const parsedDate = typeof date === "string" ? new Date(date) : date;
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - parsedDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffYears = Math.floor(diffDays / 365);
 
-      if (diffDays <= 1) return "Il y a 1 jour";
-      if (diffDays < 365) return `Il y a ${diffDays} jours`;
-      if (diffYears === 1) return "Il y a 1 an";
-      return `Il y a ${diffYears} ans`;
-  }
+    if (diffDays <= 1) return "Il y a 1 jour";
+    if (diffDays < 365) return `Il y a ${diffDays} jours`;
+    if (diffYears === 1) return "Il y a 1 an";
+    return `Il y a ${diffYears} ans`;
+  };
 
-  console.log("extensions : ", extensions);
-  
-
+  // console.log("extensions : ", extensions);
 
   return (
-    <div className="bg-[#1a1a1a] text-white min-h-screen font-sans"> {/* Assuming font-sans, adjust as needed */}
+    <div className="bg-[#1a1a1a] text-white min-h-screen font-sans">
+      {" "}
+      {/* Assuming font-sans, adjust as needed */}
       <div className="container mx-auto px-4 py-8">
-
         {/* --- Game Info Section --- */}
         <section className="flex flex-col md:flex-row gap-8 mb-12">
           <div className="flex-shrink-0 w-full md:w-1/3 lg:w-1/4">
@@ -138,38 +167,67 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
             />
           </div>
           <div className="flex-grow">
-            <h1 className="text-4xl lg:text-5xl font-bold font-montserrat mb-2">{gameData.title}</h1> {/* Assuming font-montserrat */}
+            <h1 className="text-4xl lg:text-5xl font-bold font-montserrat mb-2">
+              {gameData.title}
+            </h1>{" "}
+            {/* Assuming font-montserrat */}
             <div className="flex gap-3 text-off-white underline text-nowrap flex-wrap">
-            {gameData.companies.map((company) => (
-              <p key={company.id} className="text-lg hover:text-gray-300 cursor-pointer mb-1">{company.name}</p>
-            ))}
+              {gameData.companies.map((company) => (
+                <p
+                  key={company.id}
+                  className="text-lg hover:text-gray-300 cursor-pointer mb-1"
+                >
+                  {company.name}
+                </p>
+              ))}
             </div>
-            <p className="text-sm text-gray-500 mb-4">Sorti en {new Date(gameData.releasedAt).toLocaleDateString()}</p>
+            {/* Genres */}
+            <div className="flex gap-3 text-off-white underline text-nowrap flex-wrap mb-4">
+              {gameData.genres.map((genre) => (
+                <p
+                  key={genre.id}
+                  className="text-lg hover:text-gray-300 cursor-pointer mb-1"
+                >
+                  {genre.name}
+                </p>
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Sorti en {new Date(gameData.releasedAt).toLocaleDateString()}
+            </p>
             <div className="flex items-center gap-4 mb-6">
               <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded transition duration-200">
                 Suivi
               </button>
               {/* Add the circle button if needed */}
             </div>
-            <p className="text-gray-300 leading-relaxed">{gameData.description}</p>
+            <p className="text-gray-300 leading-relaxed">
+              {gameData.description}
+            </p>
           </div>
         </section>
 
-  
-          {/* --- Patchnotes Section --- */}
+        {/* --- Patchnotes Section --- */}
         {/* --- Extensions Section --- */}
         <section className="mb-12">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold font-montserrat">{gameData.extensions.length} Extension{gameData.extensions.length > 1 && "s"}</h2>
-            <button className="text-purple-400 hover:text-purple-300">Tout voir</button>
+            <h2 className="text-2xl font-bold font-montserrat">
+              {gameData.extensions.length} Extension
+              {gameData.extensions.length > 1 && "s"}
+            </h2>
+            <button className="text-purple-400 hover:text-purple-300">
+              Tout voir
+            </button>
           </div>
           {/* Basic Carousel Placeholder - Replace with a real carousel component */}
           <div className="relative">
-             {/* Add Arrow buttons here */}
+            {/* Add Arrow buttons here */}
             <div className="flex space-x-4 overflow-x-auto pb-4">
-              
               {extensions.map((extension) => (
-                <div key={extension.id} className="flex-shrink-0 w-40 bg-[#2a2a2a] rounded p-2 textension-center">
+                <div
+                  key={extension.id}
+                  className="flex-shrink-0 w-40 bg-[#2a2a2a] rounded p-2 textension-center"
+                >
                   <Image
                     src={extension.imageUrl}
                     alt={extension.title}
@@ -178,7 +236,10 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
                     className="object-cover rounded mb-2 mx-auto"
                   />
                   <p className="text-sm font-semibold">{extension.title}</p>
-                  <p className="text-xs text-gray-400">Sortie: {new Date(extension.releasedAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400">
+                    Sortie:{" "}
+                    {new Date(extension.releasedAt).toLocaleDateString()}
+                  </p>
                 </div>
               ))}
             </div>
@@ -187,82 +248,239 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
 
         {/* --- Updates Timeline Section --- */}
         <section>
-          <h2 className="text-3xl font-bold font-montserrat mb-6">Dernières mises à jour</h2>
-
+          <div className="mb-4 flex justify-between items-center">
+            <h2 className="text-3xl font-bold font-montserrat mb-6">
+              Dernières mises à jour
+            </h2>
+            <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition duration-200">
+              <Link href={`/article/${id}/patchnote/new`}>
+                Ajouter un patchnote
+              </Link>
+            </button>
+          </div>
           {/* Filters */}
           <div className="bg-[#2a2a2a] p-4 rounded-lg mb-8 flex flex-wrap gap-4 items-center">
             {/* Add Date Range Pickers Here if needed: Du: Au: */}
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="filter-news" checked={showNews} onChange={(e) => setShowNews(e.target.checked)} className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"/>
-              <label htmlFor="filter-news">Nouveautés</label> {/* Includes updates and dlc for now */}
+              <input
+                type="checkbox"
+                id="filter-news"
+                checked={showNews}
+                onChange={(e) => setShowNews(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="filter-news">Nouveautés</label>{" "}
+              {/* Includes updates and dlc for now */}
             </div>
             <div className="flex items-center gap-2">
-              <input type="checkbox" id="filter-major" checked={showMajor} onChange={(e) => setShowMajor(e.target.checked)} className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"/>
+              <input
+                type="checkbox"
+                id="filter-major"
+                checked={showMajor}
+                onChange={(e) => setShowMajor(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+              />
               <label htmlFor="filter-major">Majeures</label>
             </div>
-             <div className="flex items-center gap-2">
-              <input type="checkbox" id="filter-minor" checked={showMinor} onChange={(e) => setShowMinor(e.target.checked)} className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"/>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="filter-minor"
+                checked={showMinor}
+                onChange={(e) => setShowMinor(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+              />
               <label htmlFor="filter-minor">Mineures</label>
             </div>
-             <div className="flex items-center gap-2">
-              <input type="checkbox" id="filter-hotfix" checked={showHotfix} onChange={(e) => setShowHotfix(e.target.checked)} className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"/>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="filter-hotfix"
+                checked={showHotfix}
+                onChange={(e) => setShowHotfix(e.target.checked)}
+                className="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+              />
               <label htmlFor="filter-hotfix">Hotfixes</label>
             </div>
           </div>
 
-          {/* Timeline */}
-          <div className="relative pl-8"> {/* Padding left for the line */}
-            {/* The Vertical Line */}
+          {/* Timeline for current year */}
+          <div className="relative pl-8 mt-16">
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-600"></div>
-
-            {filteredUpdates.length > 0 ? filteredUpdates.map((update, index) => (
-              <div key={update.id} className="mb-10 relative">
-                {/* Timeline Dot */}
-                <div className="absolute left-[-22px] top-1 w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a]"></div>
-
-                {/* Date Column */}
-                <div className="absolute left-[-120px] top-0 text-right w-24 text-sm text-gray-400">
-                  <div>{new Date(update.releasedAt).toLocaleDateString()}</div>
-                  <div>{formatDateDifference(update.releasedAt)}</div>
-                </div>
-
-                {/* Content Column */}
-                <div>
-                  <h3 className="ml-2 text-lg font-semibold mb-2 capitalize">{update.importance} update</h3> {/* Simple type display */}
-                   <div className="bg-[#2a2a2a] p-4 rounded-lg shadow-md">
-                      <div className="flex justify-between items-center mb-2">
-                        <h4 className="font-bold">{update.title}</h4>
-                        {/* Add Modifier/Like/Dislike buttons here */}
-                         <div className="flex gap-2 items-center">
-                            <button className="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded">Modifier</button>
-                            {/* Placeholder icons */}
-                            <span className="text-gray-400 cursor-pointer">👍</span>
-                            <span className="text-gray-400 cursor-pointer">👎</span>
-                         </div>
+            {groupedByYear[currentYear] &&
+            groupedByYear[currentYear].length > 0 ? (
+              groupedByYear[currentYear].map((item, index) => (
+                <div key={item.id + item.type} className="mb-10 relative">
+                  <div className="absolute left-[-22px] top-1 w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a]"></div>
+                  <div className="absolute left-[-120px] top-0 text-right w-24 text-sm text-gray-400">
+                    <div>{new Date(item.releasedAt).toLocaleDateString()}</div>
+                    <div>{formatDateDifference(item.releasedAt)}</div>
+                  </div>
+                  {/* Render Patchnote or Extension */}
+                  {item.type === "patchnote" ? (
+                    <PatchnoteCard update={item} />
+                  ) : (
+                    <div className="bg-[#232323] rounded-lg p-4 flex items-center gap-4">
+                      <Image
+                        src={"imageUrl" in item ? item.imageUrl : ""}
+                        alt={item.title}
+                        width={60}
+                        height={80}
+                        className="rounded object-cover"
+                      />
+                      <div>
+                        <div className="font-bold text-lg">{item.title}</div>
+                        <div className="text-xs text-gray-400">Extension</div>
+                        <div className="text-sm text-gray-300">
+                          Sortie:{" "}
+                          {new Date(item.releasedAt).toLocaleDateString()}
+                        </div>
                       </div>
-                      <p className="text-gray-300 text-sm mb-3 whitespace-pre-line">{update.title}</p>
-                      {update.content}
-                      <button className="text-purple-400 hover:text-purple-300 text-sm">Voir plus</button>
-                   </div>
-                </div>
-                 {/* Year markers (simplified) - Needs better logic for grouping */}
-                 {index > 0 && new Date(update.releasedAt).getFullYear() !== new Date(filteredUpdates[index - 1].releasedAt).getFullYear() && (
-                    <div className="absolute left-[-22px] top-[-40px] w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a] flex items-center justify-center">
-                       {/* Arrow or indicator */}
                     </div>
-                 )}
-                 {index === 0 && ( /* Add year marker for the first item */
+                  )}
+                  {/* Year marker logic unchanged */}
+                  {index > 0 &&
+                    new Date(item.releasedAt).getFullYear() !==
+                      new Date(
+                        filteredUpdates[index - 1].releasedAt
+                      ).getFullYear() && (
+                      <div className="absolute left-[-22px] top-[-40px] w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a] flex items-center justify-center"></div>
+                    )}
+                  {index === 0 && (
                     <div className="absolute left-[-120px] top-[-40px] text-right w-24 font-bold text-lg">
-                        {new Date(update.releasedAt).getFullYear()}
+                      {new Date(item.releasedAt).getFullYear()}
                     </div>
-                 )}
-              </div>
-            )) : (
-                <p className="text-gray-500">No updates match the current filters.</p>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500">No updates this year.</p>
             )}
           </div>
-        </section>
 
+          {/* Dropdowns for previous years */}
+          <div className="mt-12">
+            {Object.keys(groupedByYear)
+              .map(Number)
+              .filter((year) => year !== currentYear)
+              .sort((a, b) => b - a)
+              .map((year) => {
+                const yearItems = groupedByYear[year];
+                const extensionsList = yearItems.filter(
+                  (i) => i.type === "extension"
+                );
+                const timelineSorted = [...yearItems].sort(
+                  (a, b) =>
+                    new Date(b.releasedAt).getTime() -
+                    new Date(a.releasedAt).getTime()
+                );
+                const majorCount = yearItems.filter(
+                  (i) => i.type === "patchnote" && i.importance === "major"
+                ).length;
+                const minorCount = yearItems.filter(
+                  (i) => i.type === "patchnote" && i.importance === "minor"
+                ).length;
+                const hotfixCount = yearItems.filter(
+                  (i) => i.type === "patchnote" && i.importance === "hotfix"
+                ).length;
+                return (
+                  <div key={year} className="mb-6">
+                    <button
+                      className="w-full text-left bg-[#232323] rounded p-4 font-bold flex items-center justify-between gap-4"
+                      onClick={() => toggleYear(year)}
+                    >
+                      <span className="flex flex-col gap-2">
+                        <span>
+                          {year} — {extensionsList.length} extension
+                          {extensionsList.length !== 1 && "s"}, {majorCount}{" "}
+                          maj., {minorCount} mineure{minorCount !== 1 && "s"},{" "}
+                          {hotfixCount} hotfix{hotfixCount !== 1 && "es"}
+                        </span>
+                        {extensionsList.length > 0 && (
+                          <span className="flex gap-2 mt-1">
+                            {extensionsList.map((ext) => (
+                              <span
+                                key={ext.id}
+                                className="flex-shrink-0 w-8 h-12 bg-[#2a2a2a] rounded overflow-hidden flex flex-col items-center justify-center"
+                                title={ext.title}
+                              >
+                                <Image
+                                  src={"imageUrl" in ext ? ext.imageUrl : ""}
+                                  alt={ext.title}
+                                  width={64}
+                                  height={96}
+                                  className="object-cover rounded"
+                                />
+                                <span className="text-[9px] text-gray-400 truncate w-full">
+                                  {ext.title}
+                                </span>
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </span>
+                      <span>{openYears[year] ? "▲" : "▼"}</span>
+                    </button>
+                    {openYears[year] && (
+                      <div className="pl-8 mt-4">
+                        {/* Timeline verticale */}
+                        <div className="relative pl-8">
+                          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-600"></div>
+                          {timelineSorted.map((item) => (
+                            <div
+                              key={item.id + item.type}
+                              className="mb-10 relative"
+                            >
+                              <div className="absolute left-[-22px] top-1 w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a]"></div>
+                              <div className="absolute left-[-120px] top-0 text-right w-24 text-sm text-gray-400">
+                                <div>
+                                  {new Date(
+                                    item.releasedAt
+                                  ).toLocaleDateString()}
+                                </div>
+                                <div>
+                                  {formatDateDifference(item.releasedAt)}
+                                </div>
+                              </div>
+                              {item.type === "patchnote" ? (
+                                <PatchnoteCard update={item} />
+                              ) : (
+                                <div className="bg-[#232323] rounded-lg p-4 flex items-center gap-4">
+                                  <Image
+                                    src={
+                                      "imageUrl" in item ? item.imageUrl : ""
+                                    }
+                                    alt={item.title}
+                                    width={64}
+                                    height={96}
+                                    className="rounded object-cover"
+                                  />
+                                  <div>
+                                    <div className="font-bold text-lg">
+                                      {item.title}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Extension
+                                    </div>
+                                    <div className="text-sm text-gray-300">
+                                      Sortie:{" "}
+                                      {new Date(
+                                        item.releasedAt
+                                      ).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        </section>
       </div>
     </div>
   );

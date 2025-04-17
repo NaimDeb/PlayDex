@@ -123,6 +123,7 @@ class Game
      * @var Collection<int, Genre>
      */
     #[ORM\ManyToMany(targetEntity: Genre::class, mappedBy: 'games')]
+    #[Groups('game:read')]
     private Collection $genres;
 
     /**

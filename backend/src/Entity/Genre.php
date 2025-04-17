@@ -6,6 +6,7 @@ use App\Repository\GenreRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: GenreRepository::class)]
 class Genre
@@ -13,12 +14,14 @@ class Genre
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups('game:read')]
     private ?int $id = null;
 
     #[ORM\Column]
     private ?int $apiId = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups('game:read')]
     private ?string $name = null;
 
     /**
