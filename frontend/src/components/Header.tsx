@@ -12,6 +12,10 @@ export function Header() {
     clipPath: 'polygon(5% 0, 95% 0, 100% 100%, 0% 100%)', // Adjust slant
   };
 
+  /**
+   * Generates a random game ID and navigates to the corresponding game page.
+   * @returns void
+   */
   function randomGame() {
     // Check the current URL to get the game ID or null
     const currentGameId = window.location.pathname.split("/article/")[1] || null;

@@ -9,6 +9,7 @@ export interface Game {
     lastUpdatedAt: string;
     extensions: string[];
     companies: Company[];
+    genres: Genre[];
 }
 
 export interface Extension {
@@ -24,4 +25,9 @@ export interface Extension {
 export interface Company {
     id: number;
     name : string;
+}
+
+export interface Genre {
+    id: number;
+    name: string;
 }
