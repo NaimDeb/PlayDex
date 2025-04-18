@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Extension, Game } from "@/types/gameType";
 import gameService from "@/lib/gameService";
 import { Patchnote } from "@/types/patchNoteType";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { PatchnoteCard } from "@/components/PatchnoteCard";
 import Link from "next/link";
 
@@ -14,6 +14,7 @@ export default function ArticlePage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const router = useRouter();
   const { slug } = use(params);
   const parts = slug.split("-");
   const id = parts.pop(); // Assumes ID is the last part
@@ -75,6 +76,22 @@ export default function ArticlePage({
     loadData();
   }, [id]); // Re-fetch if id changes
 
+// --- Slug Logic ---
+  const sluggified =
+    gameData && id
+      ? `${gameData.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")}-${id}`
+      : null;
+
+  useEffect(() => {
+    if (gameData && id && slug !== sluggified) {
+      router.replace(`/article/${sluggified}`);
+    }
+  }, [gameData, id, slug, sluggified, router]);
+
+
   // Combine patchnotes and extensions for timeline
   const timelineItems = [
     ...patchnotes.map((patchnote) => ({ ...patchnote, type: "patchnote" })),
@@ -117,6 +134,7 @@ export default function ArticlePage({
       </div>
     );
   }
+
 
   if (error) {
     return (

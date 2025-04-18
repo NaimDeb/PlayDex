@@ -1,5 +1,7 @@
 "use client";
+import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 
 export default function ArticleModificationsPage({
@@ -7,9 +9,23 @@ export default function ArticleModificationsPage({
 }: {
   params: { slug: string };
 }) {
-  // TODO: Fetch article data based on params.slug to get the actual title
-  const articleTitle = `Patch Note du 6 février 2025 - Sims 4`; // Placeholder
 
+  const [gameName, setGameName] = useState(""); // Placeholder for game name
+  const [gameReleaseDate, setGameReleaseDate] = useState(""); // Placeholder for game release date
+
+  useEffect(() => {
+
+    // get ID from slug
+
+    const gameId = getIdFromSlug(params.slug); // Fetch game ID using the slug
+
+    const fetchGameName = async () => {
+      const gameData = await getGameById(gameId); // Fetch game name using the game ID
+      setGameName(gameData.name); // Set the game name state
+      setGameReleaseDate(gameData.releaseDate); // Set the game release date state
+    }
+    fetchGameName();
+  }, [params.slug])
 
   function handleAddPatchnote(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); // Prevent the default form submission
@@ -121,3 +137,5 @@ export default function ArticleModificationsPage({
     </div>
   );
 }
+
+
