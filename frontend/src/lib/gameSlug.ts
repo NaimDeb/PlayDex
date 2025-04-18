@@ -10,14 +10,3 @@ export function getIdFromSlug(slug: string): string {
 
   return id;
 }
-
-
-export function redoSlug(slug: string): string {
-
-  const id = getIdFromSlug(slug); 
-
-  // Join the remaining parts back into a slug
-  const newSlug = parts.join("-");
-
-  return newSlug;
-}
