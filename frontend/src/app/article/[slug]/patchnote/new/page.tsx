@@ -19,7 +19,6 @@ export default function ArticleModificationsPage({
   const [gameReleaseDate, setGameReleaseDate] = useState(""); // Placeholder for game release date
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState(false); // State to track if the patch note title has changed
   const [content, setContent] = useState("");
-  const [message, setMessage] = useState(""); // State to store flash message
 
 
   useEffect(() => {
@@ -54,7 +53,7 @@ export default function ArticleModificationsPage({
 
     
     // Convert FormData to JSON object
-    const jsonObject: { [key: string]: any } = {}; // Initialize an empty object
+    const jsonObject: Record<string, string | File> = {}; // Initialize an object with specific types
     formData.forEach((value, key) => {  
       if (key === "releasedAt") {
         if (key === "releasedAt" && typeof value === "string" && !isNaN(Date.parse(value))) {
@@ -102,9 +101,7 @@ export default function ArticleModificationsPage({
   }
 
   return (
-    <>
-    {message && <div>{message}</div>}
-    
+    <>    
     <div className="container mx-auto px-4 py-8 text-white bg-off-gray min-h-screen">
       {" "}
       {/* Added bg-gray-900 and text-white */}
