@@ -21,20 +21,34 @@ class GameService {
     }
 
     async getPatchNoteById(id: string): Promise<Patchnote> {
-        const response = await apiClient.get(`/api/patchnotes/${id}`);
+        const response = await apiClient.get(`/patchnotes/${id}`);
         return response.data;
     }
 
     async patchPatchnote(id: string, patchnoteData: Partial<Patchnote>): Promise<Patchnote> {
-        const response = await apiClient.patch(`/api/patchnotes/${id}`, patchnoteData);
+        const config = { headers: { "Authorization": `Bearer ${getToken()}` } };
+
+        const response = await apiClient.patch(`/patchnotes/${id}`, patchnoteData, config);
         return response.data;
     }
 
     async postPatchnote(patchnoteData: Partial<Patchnote>): Promise<Patchnote> {
-        const response = await apiClient.post(`/api/patchnotes`, patchnoteData);
+        const config = { headers: { "Authorization": `Bearer ${getToken()}` } };
+
+        const response = await apiClient.post(`/patchnotes`, patchnoteData, config);
+
         return response.data;
     }
+    
 
+}
+
+function getToken() {
+    const token = document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
+    if (!token) {
+        throw new Error('No token found in local storage');
+    }
+    return token;
 }
 
 const gameService = new GameService();
