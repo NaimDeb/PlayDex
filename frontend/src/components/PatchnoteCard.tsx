@@ -1,5 +1,5 @@
 interface Update {
-  importance: string;
+  importance?: string;
   title: string;
 }
 

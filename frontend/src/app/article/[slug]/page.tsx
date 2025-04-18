@@ -271,9 +271,9 @@ export default function ArticlePage({
               Dernières mises à jour
             </h2>
             <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition duration-200">
-              <Link href={`/article/${id}/patchnote/new`}>
+                <Link href={`${slug}/patchnote/new`}>
                 Ajouter un patchnote
-              </Link>
+                </Link>
             </button>
           </div>
           {/* Filters */}
@@ -393,13 +393,22 @@ export default function ArticlePage({
                     new Date(a.releasedAt).getTime()
                 );
                 const majorCount = yearItems.filter(
-                  (i) => i.type === "patchnote" && i.importance === "major"
+                  (i) =>
+                    i.type === "patchnote" &&
+                    "importance" in i &&
+                    i.importance === "major"
                 ).length;
                 const minorCount = yearItems.filter(
-                  (i) => i.type === "patchnote" && i.importance === "minor"
+                  (i) =>
+                    i.type === "patchnote" &&
+                    "importance" in i &&
+                    i.importance === "minor"
                 ).length;
                 const hotfixCount = yearItems.filter(
-                  (i) => i.type === "patchnote" && i.importance === "hotfix"
+                  (i) =>
+                    i.type === "patchnote" &&
+                    "importance" in i &&
+                    i.importance === "hotfix"
                 ).length;
                 return (
                   <div key={year} className="mb-6">
