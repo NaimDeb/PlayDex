@@ -8,6 +8,7 @@ import { Patchnote } from "@/types/patchNoteType";
 import { notFound, useRouter } from "next/navigation";
 import { PatchnoteCard } from "@/components/PatchnoteCard";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ArticlePage({
   params,
@@ -24,7 +25,7 @@ export default function ArticlePage({
   const [error, setError] = useState<string | null>(null);
   const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]); // Explicitly define the type as Patchnote[]
   const [extensions, setExtensions] = useState<Extension[]>([]);
-  const [image, setImage] = useState<string | null>(null); // Assuming extensions is an array of objects
+  const [image, setImage] = useState<string>("/no_cover.png"); // Assuming extensions is an array of objects
 
   // --- Filter State ---
   const [showNews, setShowNews] = useState(true);
@@ -57,14 +58,10 @@ export default function ArticlePage({
         // Set the image
 
         if (data.imageUrl) {
-          const imageUrl = data.imageUrl.replace("t_thumb", "t_cover_big"); // Adjust the image size as needed
+          const imageUrl = data.imageUrl.replace("t_thumb", "t_cover_big_2x"); // Adjust the image size as needed
           // console.log("image url ", imageUrl);
 
           setImage(imageUrl);
-        } else {
-          // todo : find a way to get the cover missing image from igdb
-          // setImage("https://www.igdb.com/assets/no_cover_show-ef1e36c00e101c2fb23d15bb80edd9667bbf604a12fc0267a66033afea320c65.png"); // No image available
-          setImage(null);
         }
       } catch (err) {
         setError("Failed to load game data.");
@@ -125,12 +122,20 @@ export default function ArticlePage({
     setOpenYears((prev) => ({ ...prev, [year]: !prev[year] }));
   };
 
-  // --- Rendering ---
+    const toggleLoad = () => {
+    setIsLoading(!isLoading);
+  };
+
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center min-h-screen bg-off-gray">
-        {/* Todo : HeroUi Skeleton */}
-        Chargement...
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Skeleton className="h-10 w-1/2 mx-auto mb-4" />
+        <Skeleton className="h-64 w-full mb-4" />
+        <Skeleton className="h-10 w-1/3 mx-auto mb-4" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-10 w-full mb-4" />
       </div>
     );
   }
@@ -169,15 +174,13 @@ export default function ArticlePage({
   // console.log("extensions : ", extensions);
 
   return (
-    <div className="bg-[#1a1a1a] text-white min-h-screen font-sans">
-      {" "}
-      {/* Assuming font-sans, adjust as needed */}
+    <div className="bg-off-black text-white min-h-screen font-sans">
       <div className="container mx-auto px-4 py-8">
         {/* --- Game Info Section --- */}
         <section className="flex flex-col md:flex-row gap-8 mb-12">
           <div className="flex-shrink-0 w-full md:w-1/3 lg:w-1/4">
             <Image
-              src={image || ""}
+              src={image}
               alt={`${gameData.title} Cover Art`}
               width={300} // Adjust size as needed
               height={450} // Adjust size as needed
