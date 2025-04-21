@@ -37,6 +37,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             )
             ],
             processor : FollowedGamesPersister::class,
+            input: false,
         ),
         new Delete(
             uriTemplate: '/followed-games/{id}',
@@ -50,6 +51,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
             ],
             provider: FollowedGamesProvider::class,
             processor: FollowedGamesDeleteProcessor::class,
+            input: false,
+
 
         )  
     ]
