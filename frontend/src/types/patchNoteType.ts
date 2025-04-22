@@ -1,3 +1,5 @@
+import { Game } from "./gameType";
+
 export interface PatchnoteFormData {
     title: string;
     content: string;
