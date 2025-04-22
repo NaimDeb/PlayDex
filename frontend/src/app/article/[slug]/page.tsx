@@ -9,16 +9,20 @@ import { notFound, useRouter } from "next/navigation";
 import { PatchnoteCard } from "@/components/PatchnoteCard";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GenreTag } from "@/components/GenreTag";
+import { FollowButton } from "@/components/FollowButton";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function ArticlePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const {isAuthenticated} = useAuth();
   const router = useRouter();
   const { slug } = use(params);
   const parts = slug.split("-");
-  const id = parts.pop(); // Assumes ID is the last part
+  const id = parts.pop();
 
   const [gameData, setGameData] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,13 +30,14 @@ export default function ArticlePage({
   const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]); // Explicitly define the type as Patchnote[]
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [image, setImage] = useState<string>("/no_cover.png"); // Assuming extensions is an array of objects
-
+  
   // --- Filter State ---
   const [showNews, setShowNews] = useState(true);
   const [showMajor, setShowMajor] = useState(true);
   const [showMinor, setShowMinor] = useState(true);
   const [showHotfix, setShowHotfix] = useState(true);
-  // Add date range filters if needed
+  // Todo : date range filter
+  // const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
   useEffect(() => {
     async function loadData() {
@@ -72,6 +77,8 @@ export default function ArticlePage({
     }
     loadData();
   }, [id]); // Re-fetch if id changes
+
+
 
 // --- Slug Logic ---
   const sluggified =
@@ -122,9 +129,9 @@ export default function ArticlePage({
     setOpenYears((prev) => ({ ...prev, [year]: !prev[year] }));
   };
 
-    const toggleLoad = () => {
-    setIsLoading(!isLoading);
-  };
+  //   const toggleLoad = () => {
+  //   setIsLoading(!isLoading);
+  // };
 
 
   if (isLoading) {
@@ -178,49 +185,57 @@ export default function ArticlePage({
       <div className="container mx-auto px-4 py-8">
         {/* --- Game Info Section --- */}
         <section className="flex flex-col md:flex-row gap-8 mb-12">
+          {/* Cover Image */}
           <div className="flex-shrink-0 w-full md:w-1/3 lg:w-1/4">
             <Image
               src={image}
               alt={`${gameData.title} Cover Art`}
-              width={300} // Adjust size as needed
-              height={450} // Adjust size as needed
+              width={300}
+              height={450}
               className="rounded-lg object-cover w-full"
             />
           </div>
+          {/* Title */}
           <div className="flex-grow">
-            <h1 className="text-4xl lg:text-5xl font-bold font-montserrat mb-2">
+            <div className="flex justify-between items-center mb-4">
+              
+            <h1
+              className="text-4xl lg:text-5xl font-bold mb-2"
+              aria-label={`Game title: ${gameData.title}`}
+            >
               {gameData.title}
-            </h1>{" "}
-            {/* Assuming font-montserrat */}
-            <div className="flex gap-3 text-off-white underline text-nowrap flex-wrap">
-              {gameData.companies.map((company) => (
-                <p
-                  key={company.id}
-                  className="text-lg hover:text-gray-300 cursor-pointer mb-1"
-                >
-                  {company.name}
-                </p>
+            </h1>
+            {/* Follow button */}
+            {isAuthenticated && (
+              < FollowButton gameId={gameData.id} />
+            )}
+            </div>
+            {/* Companies */}
+            <div
+              className="flex gap-3 text-off-white text-nowrap flex-wrap font-semibold"
+              aria-label="List of companies involved in the game"
+            >
+              {gameData.companies.map((company, index) => (
+              <p
+              key={company.id}
+              className="text-xl hover:text-gray-300 hover:underline cursor-pointer mb-1"
+              >
+              <a href="#" aria-label={`View details about ${company.name}`}>
+              {company.name}
+              </a>
+              {index < gameData.companies.length - 1 && ", "}
+              </p>
               ))}
             </div>
-            {/* Genres */}
-            <div className="flex gap-3 text-off-white underline text-nowrap flex-wrap mb-4">
-              {gameData.genres.map((genre) => (
-                <p
-                  key={genre.id}
-                  className="text-lg hover:text-gray-300 cursor-pointer mb-1"
-                >
-                  {genre.name}
-                </p>
-              ))}
-            </div>
-            <p className="text-sm text-gray-500 mb-4">
+            {/* Date de sortie */}
+            <p className="text-md text-gray-500 mb-4">
               Sorti en {new Date(gameData.releasedAt).toLocaleDateString()}
             </p>
-            <div className="flex items-center gap-4 mb-6">
-              <button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded transition duration-200">
-                Suivi
-              </button>
-              {/* Add the circle button if needed */}
+            {/* Genres */}
+            <div className="flex gap-3 flex-wrap mb-4">
+              {gameData.genres.map((genre) => (
+                GenreTag({ genre: genre.name })
+              ))}
             </div>
             <p className="text-gray-300 leading-relaxed">
               {gameData.description}

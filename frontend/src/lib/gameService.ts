@@ -1,6 +1,7 @@
 import { Extension, Game } from '@/types/gameType';
 import apiClient from './apiClient';
 import { Patchnote } from '@/types/patchNoteType';
+import authUtils from './authUtils';
 
 class GameService {
 
@@ -26,14 +27,14 @@ class GameService {
     }
 
     async patchPatchnote(id: string, patchnoteData: Partial<Patchnote>): Promise<Patchnote> {
-        const config = { headers: { "Authorization": `Bearer ${getToken()}` } };
+        const config = authUtils.getAuthorization();
 
         const response = await apiClient.patch(`/patchnotes/${id}`, patchnoteData, config);
         return response.data;
     }
 
     async postPatchnote(patchnoteData: Partial<Patchnote>): Promise<Patchnote> {
-        const config = { headers: { "Authorization": `Bearer ${getToken()}` } };
+        const config = authUtils.getAuthorization();
 
         const response = await apiClient.post(`/patchnotes`, patchnoteData, config);
 
@@ -43,13 +44,7 @@ class GameService {
 
 }
 
-function getToken() {
-    const token = document.cookie.split('; ').find(row => row.startsWith('auth_token='))?.split('=')[1];
-    if (!token) {
-        throw new Error('No token found in local storage');
-    }
-    return token;
-}
+
 
 const gameService = new GameService();
 export default gameService;
