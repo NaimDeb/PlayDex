@@ -27,7 +27,13 @@ class GameService {
     }
 
     async patchPatchnote(id: string, patchnoteData: Partial<Patchnote>): Promise<Patchnote> {
-        const config = authUtils.getAuthorization();
+        const config = {
+            ...authUtils.getAuthorization(),
+            headers: {
+                ...(authUtils.getAuthorization().headers || {}),
+                'Content-Type': 'application/merge-patch+json',
+            },
+        };
 
         const response = await apiClient.patch(`/patchnotes/${id}`, patchnoteData, config);
         return response.data;
