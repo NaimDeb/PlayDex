@@ -37,7 +37,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
             processor: PatchnoteDeleteProcessor::class
         ),
         new Get(
-            security: "is_granted('ROLE_USER')",
             normalizationContext: ['groups' => ['patchnote:read']],
             provider : SoftDeletedStateProvider::class,
         ),

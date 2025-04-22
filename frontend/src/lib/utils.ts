@@ -57,3 +57,16 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
     totalPages,
   ];
 };
+
+export enum IgdbImageFormat {
+  Thumbnail = "t_thumb",
+  CoverBig2x = "t_cover_big_2x",
+  CoverBig = "t_cover_big",
+  CoverSmall = "t_cover_small",
+  ScreenshotBig = "t_screenshot_big",
+  ScreenshotMed = "t_screenshot_med",
+}
+
+export function changeIgdbImageFormat(imageUrl: string, format: IgdbImageFormat) {
+  return imageUrl.replace(IgdbImageFormat.Thumbnail, format);
+}
