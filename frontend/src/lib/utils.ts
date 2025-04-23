@@ -70,3 +70,9 @@ export enum IgdbImageFormat {
 export function changeIgdbImageFormat(imageUrl: string, format: IgdbImageFormat) {
   return imageUrl.replace(IgdbImageFormat.Thumbnail, format);
 }
+
+export function colorizeContent(content: string) {
+  return content
+    .replace(/\[buff\](.*?)\[\/buff\]/g, '<span class="buff">$1</span>')
+    .replace(/\[debuff\](.*?)\[\/debuff\]/g, '<span class="debuff">$1</span>');
+}
