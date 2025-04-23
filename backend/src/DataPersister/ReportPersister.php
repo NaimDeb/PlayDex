@@ -32,7 +32,7 @@ class ReportPersister implements ProcessorInterface
         // Validate the reportable entity class and ID
         $reportableEntityClass = "App\\Entity\\" . $data->getReportableEntity();
         if (!class_exists($reportableEntityClass) || !in_array(ReportableInterface::class, class_implements($reportableEntityClass))) {
-            throw new \InvalidArgumentException('The specified reportable entity does not implement ReportableInterface.');
+            throw new \InvalidArgumentException("{$reportableEntityClass} does not implement ReportableInterface.");
         }
 
 

@@ -102,9 +102,8 @@ export default function PatchnoteModificationsPage() {
                   color="danger"
                   size="sm"
                   variant="ghost"
-                  onPress={(e) => {
-                    (e as unknown as React.MouseEvent).stopPropagation();
-                    alert("Fonction de signalement à implémenter");
+                  onPress={() => {
+                    router.push(`/report/modification/${mod.id}`);
                   }}
                 >
                   Signaler
