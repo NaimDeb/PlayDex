@@ -27,7 +27,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Post(
             uriTemplate: '/reports',
             normalizationContext: ['groups' => ['report:read']],
-            denormalizationContext: ['groups' => ['report:write']],
+            denormalizationContext: ['groups' => ['report:write', 'report:read']],
             security: "is_granted('ROLE_USER')",
             securityMessage: 'Only authenticated users can create reports.',
             processor: ReportPersister::class,
@@ -72,6 +72,12 @@ class Report
 
     #[ORM\Column]
     private ?bool $isDeleted = null;
+
+
+    public function __construct()
+    {
+        $this->isDeleted = false;
+    }
 
     public function getId(): ?int
     {

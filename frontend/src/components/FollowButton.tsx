@@ -1,4 +1,4 @@
-import userService from "@/lib/userService";
+import userService from "@/lib/api/userService";
 import { useState } from "react";
 import { FaMinusCircle, FaPlusCircle } from "react-icons/fa";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
