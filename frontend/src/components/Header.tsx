@@ -44,8 +44,7 @@ export function Header() {
 
         {/* Logo (Left) - Positioned above background */}
         <div className="flex items-center z-10">
-          <Logo />
-          <span className="text-lg font-bold ml-2">PLAYDEX</span>
+          <Logo width={64}/>
         </div>
 
         {/* Navigation Links - Centered using absolute positioning */}
