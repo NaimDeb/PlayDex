@@ -1,5 +1,5 @@
 "use client";
-import gameService from "@/lib/gameService";
+import gameService from "@/lib/api/gameService";
 import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
@@ -118,9 +118,6 @@ export default function ArticleModificationsPage({
         <h1 className="text-3xl font-montserrat font-bold mb-2">
           Nouvelle patch note pour : {gameName}
         </h1>
-        <Link href={`/article/${slug}/modifications`}>
-          Voir toutes les modifications
-        </Link>
         <div
           className="bg-yellow-900 border-l-4 border-yellow-500 text-yellow-100 p-4 my-6 rounded-md flex items-start"
           role="alert"

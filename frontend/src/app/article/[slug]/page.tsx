@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, use } from "react";
 import { Extension, Game } from "@/types/gameType";
-import gameService from "@/lib/gameService";
+import gameService from "@/lib/api/gameService";
 import { Patchnote } from "@/types/patchNoteType";
 import { notFound, useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";

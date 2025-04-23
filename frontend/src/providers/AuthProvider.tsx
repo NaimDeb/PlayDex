@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, ReactNode, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import authService from "@/lib/authService";
+import authService from "@/lib/api/authService";
 import { AuthState, LoginFormData, RegisterFormData } from "@/types/authType";
 
 
