@@ -1,30 +1,22 @@
 "use client";
 import { useRouter, useParams } from "next/navigation";
+
 import Link from "next/link";
 import { Button } from "@heroui/button";
-import {addToast} from "@heroui/toast";
 import { Card, CardBody } from "@heroui/card";
 import Image from "next/image";
 import { usePatchnoteLayout } from "./layout";
 import ReactMarkdown from "react-markdown";
 import { colorizeContent } from "@/lib/utils";
-import { FormEvent } from "react";
+import rehypeRaw from "rehype-raw";
+
 
 export default function PatchnoteDetailPage() {
   const router = useRouter();
   const { slug, id } = useParams() as { slug: string; id: string };
   const { patchnote, game, loading } = usePatchnoteLayout();
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    addToast({
-      title: "Patchnote modifiée avec succès !",
-      description: "La patchnote a bien été sauvegardée.",
-      color: "success"
 
-    });
-    router.back();
-  };
 
   if (loading) {
     return (
@@ -44,7 +36,6 @@ export default function PatchnoteDetailPage() {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
         <h1 className="text-3xl font-bold mb-2">{patchnote.title}</h1>
         <div className="flex items-center mb-6">
           <span className="mr-2 ">Du jeu :</span>
@@ -97,6 +88,7 @@ export default function PatchnoteDetailPage() {
                 {patchnote.smallDescription}
               </h3>
               <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
                 components={{
                   span: (props) => <span {...props} />,
                 }}
@@ -107,7 +99,6 @@ export default function PatchnoteDetailPage() {
             </div>
           </CardBody>
         </Card>
-      </form>
     </>
   );
 }
