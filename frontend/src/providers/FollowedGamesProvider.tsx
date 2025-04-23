@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect } from "react";
-import userService from "@/lib/userService";
+import userService from "@/lib/api/userService";
 import { useAuth } from "./AuthProvider";
 
 type FollowedGamesContextType = {

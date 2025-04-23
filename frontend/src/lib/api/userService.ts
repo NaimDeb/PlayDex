@@ -1,6 +1,6 @@
 import { User } from '@/types/authType';
 import apiClient from './apiClient';
-import authUtils from './authUtils';
+import authUtils from '../authUtils';
 
 class UserService {
     /**
