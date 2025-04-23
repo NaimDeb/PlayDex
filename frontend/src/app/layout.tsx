@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { FollowedGamesProvider } from "@/providers/FollowedGamesProvider";
+import {ToastProvider} from "@heroui/toast";
 
 
 
@@ -42,11 +43,19 @@ export default function RootLayout({
       >
       <HeroUIProvider>
         <AuthProvider>
-          <FollowedGamesProvider>
+            <FollowedGamesProvider>
+              {/* Todo : the color doesn't seem to work */}
+            <ToastProvider 
+              placement="top-right"
+              toastProps={{
+                variant: "flat",
+                timeout: 3000,
+              }} 
+            />
             <Header />
             <main>{children}</main>
             <Footer />
-          </FollowedGamesProvider>
+            </FollowedGamesProvider>
         </AuthProvider>
       </HeroUIProvider>
       </body>
