@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, createContext, useContext } from "react";
+import { useEffect, useState, createContext, useContext, use as usePromise } from "react";
 import Link from "next/link";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
 import gameService from "@/lib/gameService";
@@ -27,9 +27,9 @@ export default function PatchnoteLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: { slug: string; id: string };
+  params: Promise<{ slug: string; id: string }>;
 }) {
-  const { slug, id } = params;
+  const { slug, id } = usePromise(params);
   const [patchnote, setPatchnote] = useState<Patchnote | null>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
