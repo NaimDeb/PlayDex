@@ -1,4 +1,3 @@
-import { Game } from "./gameType";
 
 export interface PatchnoteFormData {
     title: string;
@@ -22,8 +21,12 @@ export interface Patchnote {
 
 export interface Modification {
     id: string;
-    changes: string;
-    modifiedAt: Date;
+    difference: Array<[number, string]>;
+    createdAt: Date;
+    user: {
+        id: number;
+        username: string;
+    }
 }
 
 export interface PatchnotePatchData {
