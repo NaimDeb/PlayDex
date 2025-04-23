@@ -12,6 +12,15 @@
   --color-off-white: oklch(0.94 0 0); /* #F0F0F0 in OKLCH */
 }
 
+.buff {
+  color: #22c55e; 
+  font-weight: bold;
+}
+.debuff {
+  color: #ef4444;
+  font-weight: bold;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
