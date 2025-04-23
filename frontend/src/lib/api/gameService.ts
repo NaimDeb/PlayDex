@@ -1,7 +1,7 @@
 import { Extension, Game } from '@/types/gameType';
 import apiClient from './apiClient';
-import { Patchnote } from '@/types/patchNoteType';
-import authUtils from './authUtils';
+import { Modification, Patchnote } from '@/types/patchNoteType';
+import authUtils from '../authUtils';
 
 class GameService {
 
@@ -44,6 +44,18 @@ class GameService {
 
         const response = await apiClient.post(`/patchnotes`, patchnoteData, config);
 
+        return response.data;
+    }
+
+    async getModificationsByPatchnoteId(id: string, page: number): Promise<Array<Modification>> {
+        const config = authUtils.getAuthorization();
+        const response = await apiClient.get(`/modifications?page=${page}&patchnote.id=${id}`, config);
+
+        return response.data.member;
+    }
+
+    async getModificationById(id: string): Promise<Modification> {
+        const response = await apiClient.get(`/modifications/${id}`);
         return response.data;
     }
     

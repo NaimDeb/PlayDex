@@ -2,9 +2,10 @@
 import { useEffect, useState, createContext, useContext, use as usePromise } from "react";
 import Link from "next/link";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
-import gameService from "@/lib/gameService";
+import gameService from "@/lib/api/gameService";
 import { Patchnote } from "@/types/patchNoteType";
 import { Game } from "@/types/gameType";
+import { usePathname } from "next/navigation";
 
 type PatchnoteLayoutContextType = {
   patchnote: Patchnote | null;
@@ -57,6 +58,9 @@ export default function PatchnoteLayout({
     fetchData();
   }, [id]);
 
+  const pathname = usePathname();
+
+
   return (
     <PatchnoteLayoutContext.Provider value={{ patchnote, game, loading }}>
       <div className="container mx-auto px-4 py-8 text-white">
@@ -72,6 +76,11 @@ export default function PatchnoteLayout({
           <BreadcrumbItem>
             <span className="text-white">{patchnote?.title || "Patchnote..."}</span>
           </BreadcrumbItem>
+          {pathname.endsWith("/modifications") && (
+            <BreadcrumbItem>
+              <span className="text-white">Modifications</span>
+            </BreadcrumbItem>
+          )}
         </Breadcrumbs>
         {children}
       </div>
