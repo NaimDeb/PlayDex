@@ -4,10 +4,14 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import MDEditor from '@uiw/react-md-editor';
 import { redirect, useParams } from "next/navigation";
-import { flashMessage } from "@thewebartisan7/next-flash-message";
 import { Patchnote } from "@/types/patchNoteType";
+import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
+import {addToast} from "@heroui/toast";
+import {
+  buffCommand,
+  debuffCommand,
+} from "@/components/MDEditor/customCommands";
 
 export default function EditPatchnotePage() {
     const params = useParams();
@@ -22,8 +26,12 @@ export default function EditPatchnotePage() {
     const [title, setTitle] = useState("");
     const [releasedAt, setReleasedAt] = useState("");
     const [smallDescription, setSmallDescription] = useState("");
-    const [importance, setImportance] = useState<'minor' | 'major' | 'hotfix'>("minor");
+    const [importance, setImportance] = useState<"minor" | "major" | "hotfix">(
+        "minor"
+    );
     const [content, setContent] = useState("");
+
+    const [isLoading, setIsLoading] = useState(false);
 
     // Fetch patchnote and game data
     useEffect(() => {
@@ -55,6 +63,9 @@ export default function EditPatchnotePage() {
     // --- Form submission handler ---
     async function handleEditPatchnote(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+
+        setIsLoading(true);
+
         const updatedPatchnote: Partial<Patchnote> = {
             title,
             smallDescription,
@@ -67,11 +78,18 @@ export default function EditPatchnotePage() {
 
         try {
             await gameService.patchPatchnote(id, updatedPatchnote);
-            flashMessage("Patchnote modifiée avec succès", "success");
-            redirect(`/article/${slug}/patchnote/${id}`);
-        } catch (error) {
-            console.error("Error updating patchnote:", error);
-            flashMessage("Erreur lors de la modification", "error");
+        } catch {
+            addToast({
+                title: "Erreur lors de la modification de la patchnote",
+                description: "Une erreur est survenue lors de la sauvegarde.",
+            });
+        }
+        finally{
+                addToast({
+                        title: "Patchnote modifiée avec succès !",
+                        description: "La patchnote a bien été sauvegardée.",
+                });
+                redirect(`/article/${slug}/patchnote/${id}`);
         }
     }
 
@@ -91,7 +109,7 @@ export default function EditPatchnotePage() {
     }
 
     return (
-        <>    
+        <>
             <div className="container mx-auto px-4 py-8 text-white bg-off-gray min-h-screen">
                 <h1 className="text-3xl font-montserrat font-bold mb-2">
                     Modifier la patch note pour : {gameName}
@@ -114,112 +132,138 @@ export default function EditPatchnotePage() {
                             <Link href="/rules" className="underline hover:text-yellow-300">
                                 nos règles d&apos;utilisation
                             </Link>
-                            . Toute modification inappropriée ou non conforme peut entraîner des
-                            restrictions sur votre compte. Merci de contribuer à une communauté
-                            claire et organisée !
+                            . Toute modification inappropriée ou non conforme peut entraîner
+                            des restrictions sur votre compte. Merci de contribuer à une
+                            communauté claire et organisée !
                         </p>
                     </div>
                 </div>
-                <form className="space-y-6" onSubmit={handleEditPatchnote}>
-                    <div>
-                        <label
-                            htmlFor="title"
-                            className="block text-xl font-montserrat font-semibold mb-2"
-                        >
-                            Titre :
-                        </label>
-                        <input
-                            type="text"
-                            id="title"
-                            name="title"
-                            value={title}
-                            onChange={e => {
-                                setTitle(e.target.value);
-                                setPatchNoteTitleChanged(true);
-                            }}
-                            className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                    </div>
+                <div
+                    className={`transition-all duration-200 ${isLoading ? "pointer-events-none opacity-50 select-none" : ""}`}
+                >
+                    <form className="space-y-6" onSubmit={handleEditPatchnote}>
+                        <fieldset disabled={isLoading}>
+                            <div>
+                                <label
+                                    htmlFor="title"
+                                    className="block text-xl font-montserrat font-semibold mb-2"
+                                >
+                                    Titre :
+                                </label>
+                                <input
+                                    type="text"
+                                    id="title"
+                                    name="title"
+                                    value={title}
+                                    onChange={(e) => {
+                                        setTitle(e.target.value);
+                                        setPatchNoteTitleChanged(true);
+                                    }}
+                                    className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
 
-                    <div>
-                        <label
-                            htmlFor="releasedAt"
-                            className="block text-xl font-montserrat font-semibold mb-2"
-                        >
-                            Date :
-                        </label>
-                        <input
-                            type="date"
-                            id="releasedAt"
-                            name="releasedAt"
-                            min={gameReleaseDate}
-                            value={releasedAt}
-                            onChange={changePatchnoteTitle}
-                            className="w-fit py-3 px-4 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                    </div>
+                            <div>
+                                <label
+                                    htmlFor="releasedAt"
+                                    className="block text-xl font-montserrat font-semibold mb-2"
+                                >
+                                    Date :
+                                </label>
+                                <input
+                                    type="date"
+                                    id="releasedAt"
+                                    name="releasedAt"
+                                    min={gameReleaseDate}
+                                    value={releasedAt}
+                                    onChange={changePatchnoteTitle}
+                                    className="w-fit py-3 px-4 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
 
-                    <div>
-                        <label
-                            htmlFor="smallDescription"
-                            className="block text-xl font-montserrat font-semibold mb-2"
-                        >
-                            Résumé :
-                        </label>
-                        <textarea
-                            id="smallDescription"
-                            name="smallDescription"
-                            rows={2}
-                            value={smallDescription}
-                            onChange={e => setSmallDescription(e.target.value)}
-                            placeholder="Small resume of the change"
-                            className="w-1/2  p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
-                    </div>
+                            <div>
+                                <label
+                                    htmlFor="smallDescription"
+                                    className="block text-xl font-montserrat font-semibold mb-2"
+                                >
+                                    Résumé :
+                                </label>
+                                <textarea
+                                    id="smallDescription"
+                                    name="smallDescription"
+                                    rows={2}
+                                    value={smallDescription}
+                                    onChange={(e) => setSmallDescription(e.target.value)}
+                                    placeholder="Small resume of the change"
+                                    className="w-1/2  p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                            </div>
 
-                    <div>
-                        <label
-                            htmlFor="importance"
-                            className="block text-xl font-montserrat font-semibold mb-2"
-                        >
-                            Importance :
-                        </label>
-                        <select
-                            id="importance"
-                            name="importance"
-                            value={importance}
-                            onChange={e => setImportance(e.target.value)}
-                            className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        >
-                            <option value="minor">Minor</option>
-                            <option value="major">Major</option>
-                            <option value="hotfix">Hotfix</option>
-                        </select>
-                    </div>
+                            <div>
+                                <label
+                                    htmlFor="importance"
+                                    className="block text-xl font-montserrat font-semibold mb-2"
+                                >
+                                    Importance :
+                                </label>
+                                <select
+                                    id="importance"
+                                    name="importance"
+                                    value={importance}
+                                    onChange={(e) =>
+                                        setImportance(e.target.value as "minor" | "major" | "hotfix")
+                                    }
+                                    className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value="minor">Minor</option>
+                                    <option value="major">Major</option>
+                                    <option value="hotfix">Hotfix</option>
+                                </select>
+                            </div>
 
-                    <div>
-                        <label
-                            htmlFor="content"
-                            className="block text-xl font-montserrat font-semibold mb-2"
-                        >
-                            Contenu :
-                        </label>
-                        <MDEditor
-                            value={content}
-                            onChange={(newContent) => setContent(newContent || "")}
-                            textareaProps={{ autoCapitalize: "off" }}
-                        />
-                    </div>
+                            <div>
+                                <label
+                                    htmlFor="content"
+                                    className="block text-xl font-montserrat font-semibold mb-2"
+                                >
+                                    Contenu :
+                                </label>
+                                <MDEditor
+                                    value={content}
+                                    onChange={(newContent) => setContent(newContent || "")}
+                                    textareaProps={{ autoCapitalize: "none", disabled: isLoading }}
+                                    commands={[
+                                        defaultCommands.bold,
+                                        defaultCommands.italic,
+                                        defaultCommands.divider,
+                                        buffCommand,
+                                        debuffCommand,
+                                        defaultCommands.divider,
+                                        defaultCommands.link,
+                                        defaultCommands.quote,
+                                        defaultCommands.unorderedListCommand,
+                                        defaultCommands.orderedListCommand,
+                                        defaultCommands.checkedListCommand,
+                                        defaultCommands.divider,
+                                    ]}
+                                    previewOptions={{}}
+                                    visibleDragbar={false}
+                                    tabIndex={isLoading ? -1 : 0}
+                                />
+                            </div>
 
-                    <div className="flex justify-end pt-6">
-                        <button
-                            type="submit"
-                            className="bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 px-6 rounded transition duration-150 ease-in-out"
-                        >
-                            Sauvegarder
-                        </button>
-                    </div>
-                </form>
+                            <div className="flex justify-end pt-6">
+                                <button
+                                    type="submit"
+                                    className="bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 px-6 rounded transition duration-150 ease-in-out"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? "Sauvegarde..." : "Sauvegarder"}
+                                </button>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
             </div>
         </>
     );
