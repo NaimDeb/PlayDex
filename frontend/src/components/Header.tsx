@@ -1,116 +1,238 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
+import Link from "next/link";
 import { Logo } from "./Logo";
 import { useAuth } from "@/providers/AuthProvider";
+import { SearchIcon, XIcon, MenuIcon, UserCircleIcon, ClipboardListIcon ,LogInIcon as LoginIcon, LogOutIcon as LogoutIcon } from "lucide-react";
 
 export function Header() {
-  const { user, isAuthenticated } = useAuth();
+  // Assume que 'logout' existe dans ton contexte d'authentification
+  const { user, isAuthenticated, logout } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Nouvel état pour le menu mobile
 
-  // Note: The exact percentages for left, right, and clip-path might need adjustment
-  // to perfectly match the slanted background in the image.
-  const purpleBackgroundStyle = {
-    clipPath: 'polygon(5% 0, 95% 0, 100% 100%, 0% 100%)', // Adjust slant
+  // Fonctions pour basculer l'état et fermer l'autre panneau
+  const toggleSearch = () => {
+    const newState = !searchOpen;
+    setSearchOpen(newState);
+    if (newState) { // Si on ouvre la recherche, on ferme le menu
+        setMobileMenuOpen(false);
+    }
   };
 
-  /**
-   * Generates a random game ID and navigates to the corresponding game page.
-   * @returns void
-   */
-  function randomGame() {
-    // Check the current URL to get the game ID or null
-    const currentGameId = window.location.pathname.split("/article/")[1] || null;
-
-    // Generate a random number between 1 and 120000
-    const randomGameId = Math.floor(Math.random() * 120000) + 1;
-    // If the random game ID is the same as the current one, generate a new one
-    if (randomGameId === parseInt(currentGameId || "0")) {
-      randomGame();
-      return;
+  const toggleMobileMenu = () => {
+    const newState = !mobileMenuOpen;
+    setMobileMenuOpen(newState);
+    if (newState) { // Si on ouvre le menu, on ferme la recherche
+        setSearchOpen(false);
     }
-    // Navigate to the random game page
-    window.location.href = `/article/${randomGameId}`;
+  };
+
+  // Logique des triangles
+  const triangleRightWidth =  searchOpen ? "md:w-[75vw]" : "w-16";
+
+  const triangleRightClip =
+    searchOpen
+      ? "polygon(15% 0, 100% 0, 100% 100%, 0% 100%)"
+      : "polygon(100% 0, 0% 100%, 100% 100%)";
+
+  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    console.log("Recherche soumise...");
+    setSearchOpen(false); 
   }
 
+  function handleRandomGame() {
+    const currentGameId =
+      window.location.pathname.split("/article/")[1] || null;
+    const randomGameId = Math.floor(Math.random() * 120000) + 1;
+    if (randomGameId === parseInt(currentGameId || "0")) {
+      window.location.reload();
+      return;
+    }
+    window.location.href = `/article/${randomGameId}`;
+    setMobileMenuOpen(false); // Ferme le menu mobile après clic
+  }
+
+  // Composant interne pour le formulaire de recherche (évite la duplication)
+  const SearchFormComponent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <form
+      className={`flex gap-2 py-2 ${isMobile ? 'flex-col w-full px-4' : 'absolute left-1/4 w-3/4 transform items-center'}`}
+      onSubmit={handleSearch}
+    >
+      <select
+        className={`h-10 px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 shadow-lg z-40 ${isMobile ? 'w-full' : 'w-36 md:w-48'}`}
+        defaultValue="jeux"
+        name="category"
+      >
+        <option value="jeux">Jeux</option>
+        <option value="extensions">Extensions</option>
+        <option value="genre">Genre</option>
+        <option value="entreprise">Entreprise</option>
+      </select>
+      <input
+        type="text"
+        className={`bg-transparent text-white px-2 placeholder-gray-400 focus:outline-none z-40 ${isMobile ? 'border-b border-gray-500/50 h-10 text-xl w-full' : 'underline border-none text-3xl w-1/2'}`}
+        placeholder="Rechercher..."
+        autoFocus={!isMobile} // Autofocus seulement sur desktop
+        name="search"
+      />
+      <button
+        type="submit"
+        className={`bg-indigo-500 hover:bg-indigo-600 text-white py-2 px-4 rounded z-40 ${isMobile ? 'w-full mt-2' : 'shrink-0'}`} // shrink-0 pour desktop
+      >
+         <SearchIcon className="h-6 w-6 mx-auto" />
+      </button>
+    </form>
+  );
+
   return (
-    // Use a base dark background and relative positioning
-    <header className="bg-off-gray text-white shadow-md relative h-16">
-      <div className="container mx-auto h-full flex items-center justify-between px-4 relative">
-
-        {/* Purple Background Shape - Positioned absolutely behind content */}
-        <div
-          className="absolute inset-y-0 left-[15%] right-[25%] bg-indigo-500 z-0" // Adjust left/right positioning
-          style={purpleBackgroundStyle}
-        ></div>
-
-        {/* Logo (Left) - Positioned above background */}
-        <div className="flex items-center z-10">
-          <Logo width={64}/>
+    // Fragment pour permettre le menu déroulant comme élément adjacent au header
+    <>
+      <header className="relative h-16 flex w-full overflow-hidden bg-secondary text-white">
+        {/* 1. Logo (toujours visible) */}
+        <div className="bg-[#18181b] h-full flex items-center px-2 z-30 relative shrink-0">
+          {/* Assure-toi que Logo est un lien vers l'accueil */}
+            <Link href="/" aria-label="Accueil PlayDex">
+            <Logo width={64} />
+            </Link>
         </div>
 
-        {/* Navigation Links - Centered using absolute positioning */}
-        <nav className="absolute inset-y-0 left-0 right-0 flex justify-center items-center space-x-12 text-lg font-medium z-10">
-          <a href="#accueil" className="hover:text-gray-200 px-2">
-            Accueil
-          </a>
-          <a href="#jeux" className="hover:text-gray-200 px-2">
-            Jeux
-          </a>
-          <a href="#home" className="hover:text-gray-200 px-2">
-            Home
-          </a>
-          <a onClick={randomGame} className="hover:text-gray-200 px-2">
-            Jeu au hasard
-          </a>
-        </nav>
+        {/* 2. Triangle gauche */}
+        <div
+          className="h-full w-8 md:w-16 z-20 flex-shrink-0 bg-off-black"
+          style={{ clipPath: "polygon(0 0, 0 100%, 100% 100%)" }}
+        />
 
-        {/* Right side controls - Positioned above background */}
-        <div className="flex items-center space-x-6 z-10">
-          {/* Search Button */}
-          <button className="hover:text-gray-200">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </button>
+        {/* 3. Bande centrale avec Nav (Bureau seulement) */}
+        <div className="flex-1 h-full bg-secondary items-center justify-center relative z-10 overflow-hidden hidden md:flex">
+          {/* Nav bureau (cachée si recherche ouverte) */}
+          {!searchOpen && (
+            <nav>
+              <Link href="/" className="hover:text-gray-200 px-2">Accueil</Link>
+              <Link href="/#jeux" className="hover:text-gray-200 px-2">Jeux</Link>
+              <a onClick={handleRandomGame} className="hover:text-gray-200 px-2 cursor-pointer">Jeu au hasard</a>
+            </nav>
+          )}
+        </div>
 
-          {/* User Profile / Login */}
-          {isAuthenticated ? (
-            <div className="flex items-center space-x-6">
-              {/* Ma Liste - Updated Icon */}
-              <div className="flex items-center space-x-2 cursor-pointer hover:text-gray-200">
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    {/* Rounded square */}
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h12A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25H6A2.25 2.25 0 013.75 18V6z" />
-                    {/* Checkmark */}
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 11.25l3 3 6-6" />
-                    {/* Lines */}
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 7.5h-7.5" />
-                 </svg>
-                <span>Ma liste</span>
-              </div>
-              {/* Profile Icon - Updated Icon */}
-              <button className="hover:text-gray-200 flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-                <span className="text-lg font-bold">{user?.username}</span>
-                
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-4">
-              <a href="/login" className="hover:text-gray-200">
-                Connexion
-              </a>
-              <a
-                href="/register"
-                className="bg-indigo-500 hover:bg-indigo-600 text-white py-1 px-3 rounded" // Updated style
-              >
-                Inscription
-              </a>
+        {/* 4. Triangle droit (Bureau seulement) */}
+        <div
+          className={`h-full ${triangleRightWidth} z-20 flex-shrink-0 transition-all duration-300 relative`}
+          style={{ clipPath: triangleRightClip, background: "#18181b" }}
+        >
+          {/* Formulaire de recherche Bureau (dans le triangle) */}
+          {searchOpen && (
+            <div className="hidden md:block w-full h-full"> {/* Conteneur pour positionner le form */}
+              <SearchFormComponent isMobile={false} />
             </div>
           )}
         </div>
+
+        {/* 5. Section droite avec icônes/boutons */}
+        <div className="bg-[#18181b] h-full flex items-center px-4 space-x-4 z-30 ml-auto max-md:w-[80vw] md:ml-0 shrink-0">
+
+          {/* Icônes/Boutons Bureau */}
+          <div className="hidden md:flex items-center space-x-4">
+            <button className="hover:text-gray-200" onClick={toggleSearch}>
+              {searchOpen ? <XIcon className="h-6 w-6" /> : <SearchIcon className="h-6 w-6" />}
+            </button>
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <a href="/ma-liste" className="flex items-center space-x-2 cursor-pointer hover:text-gray-200">
+                  <ClipboardListIcon className="h-6 w-6" />
+                  <span>Ma liste</span>
+                </a>
+                {/* TODO: Implémenter un dropdown pour le profil */}
+                <button className="hover:text-gray-200 flex items-center space-x-2">
+                  <UserCircleIcon className="h-7 w-7" />
+                  <span className="text-lg font-bold">{user?.username}</span>
+                </button>
+                <button onClick={() => logout && logout()} className="hover:text-red-400" title="Déconnexion">
+                   <LogoutIcon className="h-6 w-6" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <a href="/login" className="hover:text-gray-200">Connexion</a>
+                <a href="/register" className="bg-indigo-500 hover:bg-indigo-600 text-white py-1 px-3 rounded">Inscription</a>
+              </div>
+            )}
+          </div>
+
+          {/* Icônes Mobile */}
+          <div className="flex md:hidden items-center space-x-4">
+             <button className="hover:text-gray-200" onClick={toggleSearch}>
+               {searchOpen ? <XIcon className="h-6 w-6" /> : <SearchIcon className="h-6 w-6" />}
+             </button>
+             {isAuthenticated ? (
+                  <a href="/profil" className="hover:text-gray-200">
+                     <UserCircleIcon className="h-7 w-7" />
+                  </a>
+             ) : (
+                 <a href="/login" className="hover:text-gray-200">
+                     <LoginIcon className="h-6 w-6" />
+                 </a>
+             )}
+             <button className="hover:text-gray-200" onClick={toggleMobileMenu}>
+               {mobileMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+             </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Zone déroulante pour Mobile (Recherche ou Menu) */}
+      <div className="relative z-40 md:hidden"> {/* md:hidden pour ne l'afficher que sur mobile */}
+        {/* Dropdown Recherche Mobile */}
+        {searchOpen && (
+            <div className="absolute top-0 left-0 right-0 bg-gray-800 p-4 shadow-lg border-t border-gray-700">
+                 <SearchFormComponent isMobile={true} />
+            </div>
+        )}
+
+        {/* Dropdown Menu Mobile */}
+        {mobileMenuOpen && (
+            <div className="absolute top-0 left-0 right-0 bg-gray-800 p-4 shadow-lg border-t border-gray-700">
+                <nav className="flex flex-col space-y-4 text-lg font-medium">
+                    <Link href="/" onClick={() => setMobileMenuOpen(false)} className="hover:text-gray-200 px-2 py-1">Accueil</Link>
+                    <Link href="/#jeux" onClick={() => setMobileMenuOpen(false)} className="hover:text-gray-200 px-2 py-1">Jeux</Link>
+                    <a onClick={handleRandomGame} className="hover:text-gray-200 px-2 py-1 cursor-pointer">Jeu au hasard</a>
+                    {/* Liens spécifiques utilisateur si connecté */}
+                    {isAuthenticated && (
+                        <>
+                            <hr className="border-gray-600 my-2"/>
+                            <a href="/ma-liste" onClick={() => setMobileMenuOpen(false)} className="flex items-center space-x-2 hover:text-gray-200 px-2 py-1">
+                                <ClipboardListIcon className="h-6 w-6" />
+                                <span>Ma liste</span>
+                            </a>
+                            <a href="/profil" onClick={() => setMobileMenuOpen(false)} className="flex items-center space-x-2 hover:text-gray-200 px-2 py-1">
+                                <UserCircleIcon className="h-6 w-6" />
+                                <span>Profil ({user?.username})</span>
+                            </a>
+                            <button
+                              onClick={() => {
+                                if (logout) logout();
+                                setMobileMenuOpen(false);
+                              }}
+                              className="flex items-center space-x-2 text-red-400 hover:text-red-300 px-2 py-1 text-left"
+                            >
+                                <LogoutIcon className="h-6 w-6" />
+                                <span>Déconnexion</span>
+                            </button>
+                        </>
+                    )}
+                    {/* Liens Connexion/Inscription si non connecté */}
+                     {!isAuthenticated && (
+                        <>
+                            <hr className="border-gray-600 my-2"/>
+                             <a href="/login" onClick={() => setMobileMenuOpen(false)} className="hover:text-gray-200 px-2 py-1">Connexion</a>
+                            <a href="/register" onClick={() => setMobileMenuOpen(false)} className="bg-indigo-500 hover:bg-indigo-600 text-white py-1 px-3 rounded text-center mx-2">Inscription</a>
+                        </>
+                    )}
+                </nav>
+            </div>
+        )}
       </div>
-    </header>
+    </>
   );
 }

@@ -21,6 +21,13 @@
   font-weight: bold;
 }
 
+.bg-hero {
+  background-image: url('/hero.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
