@@ -108,7 +108,7 @@ export function Header() {
         <div className="flex-1 h-full bg-secondary items-center justify-center relative z-10 overflow-hidden hidden md:flex">
           {/* Nav bureau (cachée si recherche ouverte) */}
           {!searchOpen && (
-            <nav>
+            <nav className="font-bold text-xl">
               <Link href="/" className="hover:text-gray-200 px-2">Accueil</Link>
               <Link href="/#jeux" className="hover:text-gray-200 px-2">Jeux</Link>
               <a onClick={handleRandomGame} className="hover:text-gray-200 px-2 cursor-pointer">Jeu au hasard</a>
@@ -130,7 +130,7 @@ export function Header() {
         </div>
 
         {/* 5. Section droite avec icônes/boutons */}
-        <div className="bg-[#18181b] h-full flex items-center px-4 space-x-4 z-30 ml-auto max-md:w-[80vw] md:ml-0 shrink-0">
+        <div className="bg-[#18181b] h-full flex justify-end items-center px-4 space-x-4 z-30 ml-auto max-md:w-[80vw] md:ml-0 shrink-0">
 
           {/* Icônes/Boutons Bureau */}
           <div className="hidden md:flex items-center space-x-4">
@@ -139,11 +139,6 @@ export function Header() {
             </button>
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <a href="/ma-liste" className="flex items-center space-x-2 cursor-pointer hover:text-gray-200">
-                  <ClipboardListIcon className="h-6 w-6" />
-                  <span>Ma liste</span>
-                </a>
-                {/* TODO: Implémenter un dropdown pour le profil */}
                 <button className="hover:text-gray-200 flex items-center space-x-2">
                   <UserCircleIcon className="h-7 w-7" />
                   <span className="text-lg font-bold">{user?.username}</span>
@@ -161,7 +156,7 @@ export function Header() {
           </div>
 
           {/* Icônes Mobile */}
-          <div className="flex md:hidden items-center space-x-4">
+          <div className="flex md:hidden items-center space-x-4 px-8">
              <button className="hover:text-gray-200" onClick={toggleSearch}>
                {searchOpen ? <XIcon className="h-6 w-6" /> : <SearchIcon className="h-6 w-6" />}
              </button>
