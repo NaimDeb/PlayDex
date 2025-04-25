@@ -26,6 +26,7 @@ class FollowedGamesProvider implements ProviderInterface
             throw new AccessDeniedException('Not authenticated');
         }
 
+        // todo : Shouldn't be here ? Should be in another file
         // For DELETE operation, validate the specific followed game entry
         if ($operation instanceof Delete) {
             $gameId = $uriVariables['id'] ?? null;
@@ -56,7 +57,7 @@ class FollowedGamesProvider implements ProviderInterface
         $games = $this->entityManager->getRepository(FollowedGames::class)->findBy(['user' => $user]);
 
         if (!$games) {
-            throw new AccessDeniedException('You don\'t follow any games');
+            return [];
         }
 
         return $games;
