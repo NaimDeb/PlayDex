@@ -5,6 +5,9 @@ import { Logo } from "./Logo";
 import { useAuth } from "@/providers/AuthProvider";
 import { SearchIcon, XIcon, MenuIcon, UserCircleIcon, ClipboardListIcon ,LogInIcon as LoginIcon, LogOutIcon as LogoutIcon } from "lucide-react";
 
+// Todo : Implement ajax search
+
+
 export function Header() {
   // Assume que 'logout' existe dans ton contexte d'authentification
   const { user, isAuthenticated, logout } = useAuth();
@@ -38,7 +41,13 @@ export function Header() {
 
   function handleSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log("Recherche soumise...");
+    const formData = new FormData(event.currentTarget);
+    const category = formData.get("category") as string;
+    const search = formData.get("search") as string;
+    if (!search.trim()) return;
+
+    // Redirige vers la page de recherche avec les paramètres
+    window.location.href = `/recherche?category=${encodeURIComponent(category)}&q=${encodeURIComponent(search)}`;
     setSearchOpen(false); 
   }
 
