@@ -47,7 +47,7 @@ export function Header() {
     if (!search.trim()) return;
 
     // Redirige vers la page de recherche avec les paramètres
-    window.location.href = `/recherche?category=${encodeURIComponent(category)}&q=${encodeURIComponent(search)}`;
+    window.location.href = `/search?category=${encodeURIComponent(category)}&q=${encodeURIComponent(search)}`;
     setSearchOpen(false); 
   }
 
