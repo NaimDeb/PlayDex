@@ -9,6 +9,10 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 
 #[ORM\Entity(repositoryClass: ExtensionRepository::class)]
 #[ApiResource(
@@ -18,6 +22,19 @@ use ApiPlatform\Metadata\GetCollection;
 
 ])]
 
+// Todo : Implement better search by using title[] for strict, and title for partial, and put the results in title[] at the beginning if not ordered
+
+#[ApiFilter(SearchFilter::class, properties: [
+    'title' => 'partial',
+    'description' => 'partial',
+    'game.title' => 'partial'
+])]
+#[ApiFilter(DateFilter::class, properties: ['releasedAt', 'lastUpdatedAt'])]
+#[ApiFilter(OrderFilter::class, properties: [
+    'title',
+    'releasedAt' => ['nulls_comparison' => 'nulls_largest'],
+    'lastUpdatedAt' => ['nulls_comparison' => 'nulls_largest']
+])]
 class Extension
 {
     #[ORM\Id]
