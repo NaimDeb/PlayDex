@@ -31,3 +31,23 @@ export interface Genre {
     id: number;
     name: string;
 }
+
+export interface GameFilters {
+    page?: number;
+    title?: string;
+    description?: string;
+    'genres.name'?: string;
+    'genres.name[]'?: string[];
+    'companies.name'?: string;
+    'releasedAt[before]'?: string;
+    'releasedAt[strictly_before]'?: string;
+    'releasedAt[after]'?: string;
+    'releasedAt[strictly_after]'?: string;
+    'lastUpdatedAt[before]'?: string;
+    'lastUpdatedAt[strictly_before]'?: string;
+    'lastUpdatedAt[after]'?: string;
+    'lastUpdatedAt[strictly_after]'?: string;
+    'order[title]'?: 'asc' | 'desc';
+    'order[releasedAt]'?: 'asc' | 'desc';
+    'order[lastUpdatedAt]'?: 'asc' | 'desc';
+}

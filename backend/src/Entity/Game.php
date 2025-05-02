@@ -58,10 +58,9 @@ use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 #[ApiFilter(DateFilter::class, properties: ['releasedAt', 'lastUpdatedAt'])]
 #[ApiFilter(OrderFilter::class, properties: [
     'title', 
-    'releasedAt' => ['nulls_comparison' => 'nulls_last'],
-    'lastUpdatedAt' => ['nulls_comparison' => 'nulls_last']
+    'releasedAt' => ['nulls_comparison' => 'nulls_largest'],
+    'lastUpdatedAt' => ['nulls_comparison' => 'nulls_largest']
 ])]
-#[ApiFilter(ExistsFilter::class, properties: ['imageUrl', 'description'])]
 class Game
 {
     #[ORM\Id]

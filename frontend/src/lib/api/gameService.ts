@@ -1,9 +1,58 @@
-import { Extension, Game } from '@/types/gameType';
+import { Extension, Game, GameFilters } from '@/types/gameType';
 import apiClient from './apiClient';
 import { Modification, Patchnote } from '@/types/patchNoteType';
 import authUtils from '../authUtils';
 
 class GameService {
+
+
+    async getGames(filters: GameFilters = {}): Promise<{ member: Game[]; totalItems: number; }> {
+        const params = new URLSearchParams();
+    
+        
+        // Iterate over each filter key-value pair
+        Object.entries(filters).forEach(([key, value]) => {
+            // Skip if the value is undefined or null
+            if (value === undefined || value === null) return;
+            // If the value is an array, append each item separately
+            if (Array.isArray(value)) {
+            value.forEach(val => params.append(key, val));
+            } else {
+            // Otherwise, append the value as a string
+            params.append(key, value.toString());
+            }
+        });
+    
+        const response = await apiClient.get(`/games?${params.toString()}`);
+        return response.data;
+    }
+
+    async getExtensions(filters: GameFilters = {}): Promise<{ member: Game[]; totalItems: number; }> {
+        const params = new URLSearchParams();
+    
+        
+        // Iterate over each filter key-value pair
+        Object.entries(filters).forEach(([key, value]) => {
+            // Skip if the value is undefined or null
+            if (value === undefined || value === null) return;
+            // If the value is an array, append each item separately
+            if (Array.isArray(value)) {
+            value.forEach(val => params.append(key, val));
+            } else {
+            // Otherwise, append the value as a string
+            params.append(key, value.toString());
+            }
+        });
+    
+        const response = await apiClient.get(`/games?${params.toString()}`);
+        return response.data;
+    }
+
+    async getGenres(): Promise<Array<{ id: string; name: string }>> {
+        const response = await apiClient.get('/genres');
+        return response.data.member;
+    }
+
 
 
     async getGameById(id: string): Promise<Game> {
