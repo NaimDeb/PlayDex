@@ -25,7 +25,16 @@ export function SearchResultCard({ game } : { game: Game}) {
           <div className="flex justify-between items-start">
         <div>
           <h3 className="text-2xl font-bold text-white">{game.title}</h3>
-          <p className="text-sm text-gray-400 mb-2">Sortie : {game.releasedAt}</p>
+            <p className="text-sm text-gray-400 mb-2">
+            Sortie :{" "}
+            {game.releasedAt
+              ? new Date(game.releasedAt).toLocaleDateString("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+              : "N/A"}
+            </p>
         </div>
         <div className="ml-2">
           <FollowButton gameId={game.id} />
