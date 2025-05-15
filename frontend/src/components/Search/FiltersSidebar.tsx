@@ -1,13 +1,26 @@
 import gameService from "@/lib/api/gameService";
+import React, { useEffect, useState } from "react";
 
-type FiltersSidebarProps = {
-  filters: any;
-  onChange: (filters: Partial<any>) => void;
+type Filters = {
+  genres?: string[];
+  companyName?: string;
+  releasedAfter?: string;
+  releasedBefore?: string;
 };
 
-const GENRES = await gameService.getGenres().then((res) => res.map((g) => g.name));
+type FiltersSidebarProps = {
+  filters: Filters;
+  onChange: (filters: Partial<Filters>) => void;
+};
 
-export default function FiltersSidebar({ filters, onChange }: FiltersSidebarProps) {
+const GENRES = await gameService
+  .getGenres()
+  .then((res) => res.map((g) => g.name));
+
+export default function FiltersSidebar({
+  filters,
+  onChange,
+}: FiltersSidebarProps) {
   // Handler pour les genres (checkbox)
   const handleGenreChange = (genre: string, checked: boolean) => {
     let newGenres = filters.genres ? [...filters.genres] : [];
@@ -19,9 +32,27 @@ export default function FiltersSidebar({ filters, onChange }: FiltersSidebarProp
     onChange({ genres: newGenres });
   };
 
-  // Handler pour la compagnie
+  // Debounced company name state
+  const [companyInput, setCompanyInput] = useState(filters.companyName || "");
+
+  // Update local input if filters.companyName changes externally
+  useEffect(() => {
+    setCompanyInput(filters.companyName || "");
+  }, [filters.companyName]);
+
+  // Debounce effect
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (companyInput !== filters.companyName) {
+        onChange({ companyName: companyInput });
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [companyInput, filters.companyName, onChange]);
+
+  // Handler pour la compagnie (updates local state)
   const handleCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ companyName: e.target.value });
+    setCompanyInput(e.target.value);
   };
 
   // Handler pour les dates
@@ -44,15 +75,18 @@ export default function FiltersSidebar({ filters, onChange }: FiltersSidebarProp
             className="flex flex-col gap-2"
             style={{ maxHeight: 180, overflowY: "auto" }}
           >
-            {GENRES.map((genre) => (
-              <label key={genre} className="flex items-center gap-2">
+            {GENRES.map((genre, idx) => (
+              <label
+                key={`${genre}-${idx}`}
+                className="flex items-center gap-2"
+              >
                 <input
                   type="checkbox"
                   name="genres.name[]"
                   value={genre}
                   className="accent-primary"
                   checked={filters.genres?.includes(genre) || false}
-                  onChange={e => handleGenreChange(genre, e.target.checked)}
+                  onChange={(e) => handleGenreChange(genre, e.target.checked)}
                 />
                 {genre}
               </label>
@@ -61,13 +95,13 @@ export default function FiltersSidebar({ filters, onChange }: FiltersSidebarProp
         </div>
         {/* Company filter */}
         <div className="mb-6">
-          <h3 className="font-semibold mb-2">Compagnie</h3>
+          <h3 className="font-semibold mb-2">Companie</h3>
           <input
             type="text"
             placeholder="Nom de la compagnie"
             className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1"
             name="companies.name"
-            value={filters.companyName || ""}
+            value={companyInput}
             onChange={handleCompanyChange}
           />
         </div>
