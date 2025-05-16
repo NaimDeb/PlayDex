@@ -148,10 +148,10 @@ export function Header() {
             </button>
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                <button className="hover:text-gray-200 flex items-center space-x-2">
+                <a href="/profile" className="hover:text-gray-200 flex items-center space-x-2">
                   <UserCircleIcon className="h-7 w-7" />
                   <span className="text-lg font-bold">{user?.username}</span>
-                </button>
+                </a>
                 <button onClick={() => logout && logout()} className="hover:text-red-400" title="Déconnexion">
                    <LogoutIcon className="h-6 w-6" />
                 </button>
@@ -170,7 +170,7 @@ export function Header() {
                {searchOpen ? <XIcon className="h-6 w-6" /> : <SearchIcon className="h-6 w-6" />}
              </button>
              {isAuthenticated ? (
-                  <a href="/profil" className="hover:text-gray-200">
+                  <a href="/profile" className="hover:text-gray-200">
                      <UserCircleIcon className="h-7 w-7" />
                   </a>
              ) : (
@@ -209,7 +209,7 @@ export function Header() {
                                 <ClipboardListIcon className="h-6 w-6" />
                                 <span>Ma liste</span>
                             </a>
-                            <a href="/profil" onClick={() => setMobileMenuOpen(false)} className="flex items-center space-x-2 hover:text-gray-200 px-2 py-1">
+                            <a href="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center space-x-2 hover:text-gray-200 px-2 py-1">
                                 <UserCircleIcon className="h-6 w-6" />
                                 <span>Profil ({user?.username})</span>
                             </a>
