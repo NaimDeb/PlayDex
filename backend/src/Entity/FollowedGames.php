@@ -54,7 +54,15 @@ use Symfony\Component\Serializer\Attribute\Groups;
             input: false,
 
 
-        )  
+        ) ,
+        new GetCollection(
+            uriTemplate: '/followed-games/absence',
+            normalizationContext: ['groups' => ['game:read', 'followedGames:read']],
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
+            security: "is_granted('ROLE_USER')",
+            provider: FollowedGamesAbsenceProvider::class,
+        ),
     ]
 )]
 #[ORM\Entity(repositoryClass: FollowedGamesRepository::class)]
@@ -75,6 +83,9 @@ class FollowedGames
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['followedGames:read'])]
     private ?Game $game = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastCheckedAt = null;
 
     
 
@@ -108,6 +119,18 @@ class FollowedGames
     public function setGame(?Game $game): static
     {
         $this->game = $game;
+
+        return $this;
+    }
+
+    public function getLastCheckedAt(): ?\DateTimeImmutable
+    {
+        return $this->lastCheckedAt;
+    }
+
+    public function setLastCheckedAt(?\DateTimeImmutable $lastCheckedAt): static
+    {
+        $this->lastCheckedAt = $lastCheckedAt;
 
         return $this;
     }
