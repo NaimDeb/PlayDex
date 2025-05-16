@@ -19,6 +19,7 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
+use App\State\Provider\GameLatestProvider;
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 #[ApiResource(
@@ -45,6 +46,13 @@ use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
             uriTemplate: '/games/{id}/patchnotes',
             normalizationContext: ['groups' => ['game:read','patchnote:read']],
             provider: GamePatchnotesProvider::class
+        ),
+        new Get(
+            name: 'getLatestGames',
+            uriTemplate: '/games/latest',
+            normalizationContext: ['groups' => ['game:read']],
+            paginationEnabled: false,
+            provider: GameLatestProvider::class
         )
     ]
 )]
