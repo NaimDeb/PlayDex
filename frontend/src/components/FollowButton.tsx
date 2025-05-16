@@ -41,8 +41,12 @@ type FollowButtonProps = {
     };
     
     return (
-        <button
-        onClick={handleFollow}
+    <button
+        onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleFollow();
+        }}
         disabled={loading}
         tabIndex={0}
         className={`flex items-center justify-center max-md:text-3xl text-off-white font-bold py-2 px-2 md:px-4 rounded-md transition-colors duration-150 ease-in-out border-2 border-gray-500/50 max-md:fixed max-md:right-5 max-md:bottom-5 ${
@@ -65,6 +69,6 @@ type FollowButtonProps = {
             </>
         )}
     </button>
-    );
+);
 
 }

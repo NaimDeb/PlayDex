@@ -16,6 +16,17 @@ class GameRepository extends ServiceEntityRepository
         parent::__construct($registry, Game::class);
     }
 
+
+    public function findLatest(int $limit = 8): array
+{
+    return $this->createQueryBuilder('g')
+        ->where('g.releasedAt IS NOT NULL')
+        ->orderBy('g.releasedAt', 'DESC')
+        ->setMaxResults($limit)
+        ->getQuery()
+        ->getResult();
+}
+
     //    /**
     //     * @return Game[] Returns an array of Game objects
     //     */
