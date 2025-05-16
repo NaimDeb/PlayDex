@@ -50,6 +50,24 @@ export default function Home() {
         </div>
         {/* Right side: Text content */}
         <div className="flex flex-col items-center justify-center px-12 text-center bg-black/20 p-4">
+          {isAuthenticated ? (
+        <>
+          <h1 className="text-2xl lg:text-4xl font-bold mb-4 w-full">
+            Bienvenue sur PlayDex !
+            <br />
+            Retrouvez toutes les nouveautés de vos jeux suivis.
+          </h1>
+          <div className="w-full flex justify-center">
+            <a
+          href="/profile"
+          className="bg-secondary hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+            >
+          Voir mon profil
+            </a>
+          </div>
+        </>
+          ) : (
+        <>
           <h1 className="text-2xl lg:text-4xl font-bold mb-4 w-full">
             Ne rate plus aucun patch !
             <br />
@@ -57,17 +75,23 @@ export default function Home() {
           </h1>
           <div className="w-full flex justify-center">
             <button className="bg-secondary hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
-              S&apos;inscrire
+          S&apos;inscrire
             </button>
           </div>
           <p className="mt-4 text-sm w-full">
             Déjà un compte ?{" "}
             <a href="#" className="underline">
-              Connectez-vous
+          Connectez-vous
             </a>
           </p>
+        </>
+          )}
         </div>
       </div>
+
+
+
+
       {/*
         Pendant mon absence Section - Show only if logged in
       */}
