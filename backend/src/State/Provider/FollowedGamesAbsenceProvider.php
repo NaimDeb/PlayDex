@@ -74,6 +74,9 @@ class FollowedGamesAbsenceProvider implements ProviderInterface
             }
         }
 
+        // Sort by newCount desc
+        usort($result, fn($a, $b) => $b['newCount'] <=> $a['newCount']);
+
         return $result;
     }
 }
