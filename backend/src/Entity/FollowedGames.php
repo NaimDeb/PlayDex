@@ -7,9 +7,11 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Link;
+use App\DataPersister\FollowedGamesCheckProcessor;
 use App\DataPersister\FollowedGamesDeleteProcessor;
 use App\DataPersister\FollowedGamesPersister;
 use App\Repository\FollowedGamesRepository;
+use App\State\Provider\FollowedGamesAbsenceProvider;
 use App\State\Provider\FollowedGamesProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -30,13 +32,13 @@ use Symfony\Component\Serializer\Attribute\Groups;
             uriTemplate: '/followed-games/{id}',
             security: "is_granted('ROLE_USER')",
             uriVariables: [
-            'id' => new Link(
-                fromClass: Game::class,
-                identifiers: ['id'],
-                toProperty: 'game'
-            )
+                'id' => new Link(
+                    fromClass: Game::class,
+                    identifiers: ['id'],
+                    toProperty: 'game'
+                )
             ],
-            processor : FollowedGamesPersister::class,
+            processor: FollowedGamesPersister::class,
             input: false,
         ),
         new Delete(
@@ -54,7 +56,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             input: false,
 
 
-        ) ,
+        ),
         new GetCollection(
             uriTemplate: '/followed-games/absence',
             normalizationContext: ['groups' => ['game:read', 'followedGames:read']],
@@ -62,6 +64,18 @@ use Symfony\Component\Serializer\Attribute\Groups;
             paginationItemsPerPage: 10,
             security: "is_granted('ROLE_USER')",
             provider: FollowedGamesAbsenceProvider::class,
+        ),
+        new Post(
+            uriTemplate: '/followed-games/{id}/check',
+            security: "is_granted('ROLE_USER')",
+            uriVariables: [
+                'id' => new Link(
+                    fromClass: FollowedGames::class,
+                    identifiers: ['id'],
+                )
+            ],
+            processor: FollowedGamesCheckProcessor::class,
+            input: false,
         ),
     ]
 )]
@@ -87,12 +101,9 @@ class FollowedGames
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastCheckedAt = null;
 
-    
 
-    public function __construct()
-    {
-       
-    }
+
+    public function __construct() {}
 
     public function getId(): ?int
     {
@@ -134,8 +145,4 @@ class FollowedGames
 
         return $this;
     }
-
-    
-
-   
 }
