@@ -11,6 +11,8 @@ import { GameArticleSkeleton } from "@/components/Skeletons/GameArticleSkeleton"
 import { GameInfoSection } from "@/components/ArticlePage/GameInfoSection";
 import { ExtensionsSection } from "@/components/ArticlePage/ExtensionsSection";
 import { UpdatesTimelineSection } from "@/components/ArticlePage/UpdatesTimelineSection";
+import { useFollowedGames } from "@/providers/FollowedGamesProvider";
+
 
 export default function ArticlePage({
   params,
@@ -18,10 +20,13 @@ export default function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { isAuthenticated } = useAuth();
+  const { followedGameIds } = useFollowedGames(); 
+
   const router = useRouter();
   const { slug } = use(params);
   const parts = slug.split("-");
   const id = parts.pop();
+  
 
   const [gameData, setGameData] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +82,19 @@ export default function ArticlePage({
     }
     loadData();
   }, [id]); // Re-fetch if id changes
+
+
+
+  useEffect(() => {
+  if (
+    isAuthenticated &&
+    id &&
+    gameData &&
+    followedGameIds.includes(id)
+  ) {
+    gameService.postCheckGame(id);
+  }
+}, [isAuthenticated, id, gameData, followedGameIds]);
 
   // --- Slug Logic ---
   const sluggified =
