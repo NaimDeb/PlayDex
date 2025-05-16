@@ -107,11 +107,38 @@ class GameService {
         const response = await apiClient.get(`/modifications/${id}`);
         return response.data;
     }
-    
+
+    async getFollowedGames(): Promise<Array<Game>> {
+        const config = authUtils.getAuthorization();
+        const response = await apiClient.get('/followed-games', config);
+        return response.data.member;
+    }
+
+    // Should be /games/latest endpoint but it gives me a 404 error for some reason
+    async getLatestGames(): Promise<Array<Game>> {
+        const response = await apiClient.get('/games?sort=-createdAt');
+        return response.data.member;
+    }
+
+    async getLatestReleases(): Promise<Array<Game>> {
+        const response = await apiClient.get('/latest-releases');
+        return response.data.member;
+    }
+
+    async getAbsenceGames(): Promise<Array<Game>> {
+        const config = authUtils.getAuthorization();
+        const response = await apiClient.get('/followed-games/absence', config);
+        return response.data.member;
+    }
+
+    async postCheckGame(id: string): Promise<Game> {
+        const config = authUtils.getAuthorization();
+        const response = await apiClient.post(`/followed-games/${id}/check`, {}, config);
+        return response.data;
+    }
+
 
 }
-
-
 
 const gameService = new GameService();
 export default gameService;
