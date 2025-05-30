@@ -40,6 +40,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
             securityMessage : "You must be logged in",
         )
         ,
+        new Get(
+            uriTemplate: '/users/{id}',
+            requirements: ['id' => '\d+'],
+            normalizationContext: ['groups' => ['user:read','otherUser:read']],
+            securityMessage : "You must be logged in",
+        ),
         new Delete(
             security: "is_granted('ROLE_USER') and object == user",
             securityMessage : "You must be logged in",
@@ -103,13 +109,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Patchnote>
      */
+
     #[ORM\OneToMany(targetEntity: Patchnote::class, mappedBy: 'createdBy')]
     private Collection $patchnotes;
-
+    
     /**
      * @var Collection<int, Modification>
      */
     #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'user', orphanRemoval: false)]
+    #[Groups(['otherUser:read'])]
     private Collection $modifications;
 
 
@@ -127,6 +135,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, FollowedGames>
      */
     #[ORM\OneToMany(targetEntity: FollowedGames::class, mappedBy: 'user', orphanRemoval: true)]
+    #[Groups(['otherUser:read'])]
     private Collection $followedGames;
 
 
