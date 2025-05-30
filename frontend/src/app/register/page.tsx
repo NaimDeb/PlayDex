@@ -3,6 +3,7 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export default function RegisterPage() {
     username?: string;
   }>({});
   const { register, error } = useAuth();
+  const { showMessage } = useFlashMessage();
   const router = useRouter();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -44,8 +46,17 @@ export default function RegisterPage() {
       return;
     }
     setLoading(true);
-    await register({ email, password, username });
+    const result = await register({ email, password, username });
     setLoading(false);
+    if (!error) {
+      showMessage("Inscription réussie !", "success");
+      router.push("/");
+    } else {
+      showMessage(
+        "Erreur d'inscription : Une erreur est survenue lors de l'inscription.",
+        "error"
+      );
+    }
   };
 
   return (

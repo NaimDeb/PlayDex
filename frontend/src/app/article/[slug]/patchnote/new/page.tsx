@@ -6,7 +6,7 @@ import { use, useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { redirect } from "next/navigation";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
-import {addToast} from "@heroui/toast";
+import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 
 import {
   buffCommand,
@@ -24,6 +24,7 @@ export default function ArticleModificationsPage({
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState(false); // State to track if the patch note title has changed
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { showMessage } = useFlashMessage();
 
   useEffect(() => {
     // get ID from slug
@@ -73,19 +74,12 @@ export default function ArticleModificationsPage({
 
     try {
       await gameService.postPatchnote(jsonObject); // Send the form data to the server
-    } catch{
-      addToast({
-        title: "Erreur lors de l'ajout de la patchnote",
-        description: "Une erreur est survenue lors de l'ajout de la patchnote.",
-      });
+    } catch {
+      showMessage("Erreur lors de l'ajout de la patchnote.", "error");
       return; // Exit the function on error
     } finally {
       setIsLoading(false);
-      addToast({
-        title: "Patchnote ajoutée avec succès !",
-        description: "La patchnote a bien été sauvegardée.",
-        color: "success",
-      });
+      showMessage("Patchnote ajoutée avec succès !", "success");
       redirect(`/article/${slug}`); // Redirect to referrer or fallback URL
     }
   }
@@ -140,7 +134,9 @@ export default function ArticleModificationsPage({
           </div>
         </div>
         <div
-          className={`transition-all duration-200 ${isLoading ? "pointer-events-none opacity-50 select-none" : ""}`}
+          className={`transition-all duration-200 ${
+            isLoading ? "pointer-events-none opacity-50 select-none" : ""
+          }`}
         >
           <form className="space-y-6" onSubmit={handleAddPatchnote}>
             <fieldset disabled={isLoading}>
@@ -222,7 +218,10 @@ export default function ArticleModificationsPage({
                 <MDEditor
                   value={content}
                   onChange={(newContent) => setContent(newContent || "")}
-                  textareaProps={{ autoCapitalize: "none", disabled: isLoading }}
+                  textareaProps={{
+                    autoCapitalize: "none",
+                    disabled: isLoading,
+                  }}
                   commands={[
                     defaultCommands.bold,
                     defaultCommands.italic,
