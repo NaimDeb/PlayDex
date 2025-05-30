@@ -86,7 +86,7 @@ export default function ProfilePage() {
     });
 
   // Fallback avatar if none is available
-  const avatarUrl = "/logo.png";
+  const avatarUrl = "/user_placeholder.svg";
 
   return (
     <div className="container px-4 py-8 mx-auto text-off-white">
@@ -201,34 +201,6 @@ export default function ProfilePage() {
                 updatesCount={data.newCount}
               />
             ))}
-          </div>
-        )}
-
-        {/* Pagination Placeholder */}
-        {!loading && !error && followedGames.length > 0 && (
-          <div className="flex items-center justify-center mt-12 space-x-1 sm:space-x-2">
-            <button
-              className="px-3 py-1 text-sm bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 sm:text-base"
-              disabled
-            >
-              {"<"}
-            </button>
-            <button className="px-3 py-1 text-sm text-white rounded-md sm:text-base [background-color:var(--color-primary)]">
-              1
-            </button>
-            <button className="px-3 py-1 text-sm bg-gray-700 rounded-md hover:bg-gray-600 sm:text-base">
-              2
-            </button>
-            <button className="px-3 py-1 text-sm bg-gray-700 rounded-md hover:bg-gray-600 sm:text-base">
-              3
-            </button>
-            <span className="px-1 text-gray-400 sm:px-2">...</span>
-            <button className="px-3 py-1 text-sm bg-gray-700 rounded-md hover:bg-gray-600 sm:text-base">
-              123
-            </button>
-            <button className="px-3 py-1 text-sm bg-gray-700 rounded-md hover:bg-gray-600 sm:text-base">
-              {">"}
-            </button>
           </div>
         )}
       </section>
