@@ -3,6 +3,7 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const { login, error } = useAuth();
+  const { showMessage } = useFlashMessage();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -29,8 +31,17 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    await login({ email, password, rememberMe });
+    const result = await login({ email, password, rememberMe });
     setLoading(false);
+    if (!error) {
+      showMessage("Connexion réussie !", "success");
+      router.push("/");
+    } else {
+      showMessage(
+        "Erreur de connexion : L'email ou le mot de passe est incorrect.",
+        "error"
+      );
+    }
   };
 
   return (
