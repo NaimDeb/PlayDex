@@ -81,9 +81,6 @@ export default function AccountPage() {
             <h1 className="text-3xl font-bold lg:text-4xl font-montserrat [color:var(--color-primary)]">
               {user?.username || "Utilisateur"}
             </h1>
-            <p className="mt-2 text-sm text-gray-300">
-              {user ? `ID: ${user.id}` : ""}
-            </p>
             <p className="text-sm text-gray-300">
               {user
                 ? `Utilisateur depuis le : ${
