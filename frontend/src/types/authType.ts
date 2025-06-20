@@ -5,6 +5,9 @@ export interface User {
   username: string;
   createdAt: string; // renommé de created_at à createdAt
   reputation: number;
+  isBanned?: boolean;
+  banReason?: string;
+  bannedUntil?: string;
 }
 
 export interface AuthState {
@@ -23,4 +26,15 @@ export interface RegisterFormData {
   email: string;
   password: string;
   username: string;
+}
+
+export interface BanUserData {
+  banReason: string;
+  bannedUntil?: string; // ISO date string, optional for permanent ban
+}
+
+export interface BanFormData {
+  banReason: string;
+  isPermanent: boolean;
+  bannedUntil?: string;
 }
