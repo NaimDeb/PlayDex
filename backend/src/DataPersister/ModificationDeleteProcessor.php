@@ -58,7 +58,6 @@ class ModificationDeleteProcessor implements ProcessorInterface
             $this->warningService->warnUserForDeletion(
                 target: $author,
                 admin: $admin,
-                reason: sprintf('Votre %s a été supprimé par un administrateur.', $data instanceof Patchnote ? 'patchnote' : 'modification')
             );
         }
     }
