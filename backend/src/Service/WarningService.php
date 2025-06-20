@@ -11,15 +11,14 @@ class WarningService
         private EntityManagerInterface $em
     ) {}
 
+    // Todo : Add reason for warning
     public function warnUserForDeletion(
         User $target,
         ?User $admin,
-        string $reason = 'Un de vos contenus a été supprimé.',
     ): void {
         $warning = new Warning();
         $warning->setReportedUserId($target);
         $warning->setWarnedBy($admin);
-        $warning->setReason($reason);
         $this->em->persist($warning);
     }
 }
