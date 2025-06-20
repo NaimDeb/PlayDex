@@ -17,6 +17,7 @@ use ApiPlatform\Metadata\Post;
 use App\DataPersister\UserDataPersister;
 use App\DataPersister\UserBanProcessor;
 use App\DataPersister\UserDeleteProcessor;
+use App\DataPersister\UserUnbanProcessor;
 use App\DataPersister\UserUpdateDataPersister;
 use App\State\Provider\MeProvider;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -70,6 +71,14 @@ use Symfony\Component\Serializer\Attribute\Groups;
             security: "is_granted('ROLE_ADMIN')",
             processor: UserBanProcessor::class,
             securityMessage: "You must be an admin to ban users",
+        ),
+        new Post(
+            uriTemplate: '/users/{id}/unban',
+            requirements: ['id' => '\d+'],
+            normalizationContext: ['groups' => ['user:read']],
+            security: "is_granted('ROLE_ADMIN')",
+            processor: UserUnbanProcessor::class,
+            securityMessage: "You must be an admin to unban users",
         )
     ]
 )]
