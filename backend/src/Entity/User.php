@@ -144,6 +144,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Warning::class, mappedBy: 'reportedUserId', orphanRemoval: true)]
     private Collection $warnings;
 
+    #[ORM\Column(nullable: true)]
+    private ?bool $isBanned = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $banReason = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $bannedUntil = null;
+
 
 
     public function __construct()
@@ -427,6 +436,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $warning->setReportedUserId(null);
             }
         }
+
+        return $this;
+    }
+
+    public function isBanned(): ?bool
+    {
+        return $this->isBanned;
+    }
+
+    public function setIsBanned(?bool $isBanned): static
+    {
+        $this->isBanned = $isBanned;
+
+        return $this;
+    }
+
+    public function getBanReason(): ?string
+    {
+        return $this->banReason;
+    }
+
+    public function setBanReason(?string $banReason): static
+    {
+        $this->banReason = $banReason;
+
+        return $this;
+    }
+
+    public function getBannedUntil(): ?\DateTimeImmutable
+    {
+        return $this->bannedUntil;
+    }
+
+    public function setBannedUntil(?\DateTimeImmutable $bannedUntil): static
+    {
+        $this->bannedUntil = $bannedUntil;
 
         return $this;
     }
