@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use App\DataPersister\DiffMatchPatchProcessor;
 use App\DataPersister\PatchnotePersister;
@@ -45,6 +46,11 @@ use Symfony\Component\Serializer\Attribute\Groups;
             denormalizationContext: ['groups' => ['patchnote:write']],
             normalizationContext: ['groups' => ['patchnote:read']],
             processor: DiffMatchPatchProcessor::class,
+        ),
+        new GetCollection(
+            security: "is_granted('ROLE_ADMIN')",
+            normalizationContext: ['groups' => ['patchnote:admin']],
+            filters: ['order']
         )
     ]
 )]
