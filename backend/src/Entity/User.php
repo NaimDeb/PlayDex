@@ -138,6 +138,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['otherUser:read'])]
     private Collection $followedGames;
 
+    /**
+     * @var Collection<int, Warning>
+     */
+    #[ORM\OneToMany(targetEntity: Warning::class, mappedBy: 'reportedUserId', orphanRemoval: true)]
+    private Collection $warnings;
+
 
 
     public function __construct()
@@ -147,6 +153,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->reports = new ArrayCollection();
         $this->isDeleted = false;
         $this->followedGames = new ArrayCollection();
+        $this->warnings = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -388,6 +395,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($followedGame->getUser() === $this) {
                 $followedGame->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Warning>
+     */
+    public function getWarnings(): Collection
+    {
+        return $this->warnings;
+    }
+
+    public function addWarning(Warning $warning): static
+    {
+        if (!$this->warnings->contains($warning)) {
+            $this->warnings->add($warning);
+            $warning->setReportedUserId($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWarning(Warning $warning): static
+    {
+        if ($this->warnings->removeElement($warning)) {
+            // set the owning side to null (unless already changed)
+            if ($warning->getReportedUserId() === $this) {
+                $warning->setReportedUserId(null);
             }
         }
 
