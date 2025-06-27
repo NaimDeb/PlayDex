@@ -38,13 +38,13 @@ use App\State\Provider\GameLatestProvider;
         new Get(
             name: 'getExtensions',
             uriTemplate: '/games/{id}/extensions',
-            normalizationContext: ['groups' => ['game:read','extension:read']],
+            normalizationContext: ['groups' => ['game:read', 'extension:read']],
             provider: GameExtensionsProvider::class
         ),
         new Get(
             name: 'getPatchnotes',
             uriTemplate: '/games/{id}/patchnotes',
-            normalizationContext: ['groups' => ['game:read','patchnote:read']],
+            normalizationContext: ['groups' => ['game:read', 'patchnote:read']],
             provider: GamePatchnotesProvider::class
         ),
         new Get(
@@ -65,7 +65,7 @@ use App\State\Provider\GameLatestProvider;
 ])]
 #[ApiFilter(DateFilter::class, properties: ['releasedAt', 'lastUpdatedAt'])]
 #[ApiFilter(OrderFilter::class, properties: [
-    'title', 
+    'title',
     'releasedAt' => ['nulls_comparison' => 'nulls_largest'],
     'lastUpdatedAt' => ['nulls_comparison' => 'nulls_largest']
 ])]
@@ -74,7 +74,7 @@ class Game
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups('game:read')]
+    #[Groups(['game:read', 'patchnote:read', 'modification:admin'])]
     private ?int $id = null;
 
     #[ORM\Column(nullable: true)]
@@ -86,7 +86,7 @@ class Game
     private ?int $apiId = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups('game:read', 'extension:read')]
+    #[Groups(['game:read', 'extension:read', 'patchnote:read', 'modification:admin'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -386,10 +386,4 @@ class Game
 
         return $this;
     }
-
-   
-
-
-
-
 }

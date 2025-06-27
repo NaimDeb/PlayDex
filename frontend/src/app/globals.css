@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
-
 @theme {
-  --foreground-rgb: oklch(0.0 0 0); /* Black in OKLCH */
+  --foreground-rgb: oklch(0 0 0); /* Black in OKLCH */
   --background-start-rgb: oklch(0.85 0 0); /* Light gray in OKLCH */
-  --background-end-rgb: oklch(1.0 0 0); /* White in OKLCH */
+  --background-end-rgb: oklch(1 0 0); /* White in OKLCH */
   --color-primary: oklch(0.53 0.2666 274.89); /* #4D40FF in OKLCH */
   --color-secondary: oklch(0.63 0.2032 278.18); /* #7173FF in OKLCH */
   --color-off-black: oklch(0.22 0 0); /* #1A1A1A in OKLCH */
@@ -13,7 +12,7 @@
 }
 
 .buff {
-  color: #22c55e; 
+  color: #22c55e;
   font-weight: bold;
 }
 .debuff {
@@ -22,7 +21,7 @@
 }
 
 .bg-hero {
-  background-image: url('/hero.png');
+  background-image: url("/hero.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -92,3 +91,76 @@
   }
 }
 
+/* Admin Dashboard Styles */
+.admin-dashboard {
+  min-height: 100vh;
+}
+
+.tab-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-button:hover {
+  transform: translateY(-1px);
+}
+
+.admin-table {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.admin-table thead tr {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+}
+
+.admin-table tbody tr:hover {
+  background-color: rgba(55, 65, 81, 0.5);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.admin-btn {
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.admin-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.ban-modal {
+  backdrop-filter: blur(4px);
+}
+
+.importance-badge {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pagination-btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #4b5563;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  cursor: not-allowed;
+}

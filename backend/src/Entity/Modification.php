@@ -13,7 +13,9 @@ use App\DataPersister\ModificationPersister;
 use App\DataPersister\ModificationDeleteProcessor;
 use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
+use App\State\Provider\AdminModificationProvider;
 use App\State\Provider\SoftDeletedStateProvider;
+use App\Repository\ReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -26,7 +28,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             uriTemplate: '/modifications/{id}',
             normalizationContext: ['groups' => ['modification:read']],
             security: "is_granted('ROLE_USER')",
-            provider : SoftDeletedStateProvider::class,
+            provider: SoftDeletedStateProvider::class,
         ),
         new GetCollection(
             uriTemplate: '/modifications',
@@ -34,7 +36,15 @@ use Symfony\Component\Serializer\Attribute\Groups;
             security: "is_granted('ROLE_USER')",
             paginationEnabled: true,
             paginationItemsPerPage: 10,
-            provider : SoftDeletedStateProvider::class,
+            provider: SoftDeletedStateProvider::class,
+        ),
+        new GetCollection(
+            uriTemplate: '/admin/modifications',
+            normalizationContext: ['groups' => ['modification:read', 'modification:admin', 'user:read']],
+            security: "is_granted('ROLE_ADMIN')",
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
+            provider: AdminModificationProvider::class,
         ),
         new Delete(
             uriTemplate: '/modifications/{id}',
@@ -68,7 +78,7 @@ class Modification implements ReportableInterface
 
     #[ORM\ManyToOne(inversedBy: 'modification')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['modification:write', 'modification:read'])]
+    #[Groups(['modification:write', 'modification:read', 'modification:admin'])]
     private ?Patchnote $patchnote = null;
 
     #[ORM\Column]
@@ -79,9 +89,14 @@ class Modification implements ReportableInterface
     #[Groups(['modification:read'])]
     private ?array $difference = null;
 
+    // Virtual property for report count (calculated dynamically)
+    #[Groups(['modification:admin'])]
+    private ?int $reportCount = null;
 
 
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->isDeleted = false;
         $this->createdAt = new \DateTimeImmutable();
     }
@@ -150,6 +165,18 @@ class Modification implements ReportableInterface
     public function setDifference(?array $difference): static
     {
         $this->difference = $difference;
+
+        return $this;
+    }
+
+    public function getReportCount(): ?int
+    {
+        return $this->reportCount;
+    }
+
+    public function setReportCount(?int $reportCount): static
+    {
+        $this->reportCount = $reportCount;
 
         return $this;
     }
