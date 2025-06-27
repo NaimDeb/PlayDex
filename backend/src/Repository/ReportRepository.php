@@ -16,6 +16,22 @@ class ReportRepository extends ServiceEntityRepository
         parent::__construct($registry, Report::class);
     }
 
+    /**
+     * Count reports for a specific entity
+     */
+    public function countReportsForEntity(string $entityType, int $entityId): int
+    {
+        return $this->createQueryBuilder('r')
+            ->select('COUNT(r.id)')
+            ->andWhere('r.reportableEntity = :entityType')
+            ->andWhere('r.reportableId = :entityId')
+            ->andWhere('r.isDeleted = false')
+            ->setParameter('entityType', $entityType)
+            ->setParameter('entityId', $entityId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     //    /**
     //     * @return Report[] Returns an array of Report objects
     //     */

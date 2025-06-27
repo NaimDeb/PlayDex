@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ReportPersister;
 use App\DataPersister\ReportDeleteProcessor;
 use App\Repository\ReportRepository;
+use App\State\Provider\AdminReportProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,11 +19,11 @@ use Symfony\Component\Serializer\Attribute\Groups;
     operations: [
         new GetCollection(
             uriTemplate: '/reports',
-            normalizationContext: ['groups' => ['report:read']],
+            normalizationContext: ['groups' => ['report:read', 'user:read']],
             denormalizationContext: ['groups' => ['report:write']],
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Only admins can view reports.',
-            provider : SoftDeletedStateProvider::class,
+            provider: AdminReportProvider::class,
         ),
         new Post(
             uriTemplate: '/reports',
@@ -72,6 +73,10 @@ class Report
 
     #[ORM\Column]
     private ?bool $isDeleted = null;
+
+    // Virtual property for entity details (populated by provider)
+    #[Groups(['report:read'])]
+    public ?array $entityDetails = null;
 
 
     public function __construct()
