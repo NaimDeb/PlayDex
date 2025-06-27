@@ -33,7 +33,9 @@ class AdminService {
     page?: number
   ): Promise<{ member: Modification[]; totalItems: number }> {
     const config = authUtils.getAuthorization();
-    const url = page ? `/modifications?page=${page}` : "/modifications";
+    const url = page
+      ? `/admin/modifications?page=${page}`
+      : "/admin/modifications";
 
     const response = await apiClient.get(url, config);
     return response.data;
@@ -66,6 +68,29 @@ class AdminService {
   async deletePatchnote(id: number): Promise<void> {
     const config = authUtils.getAuthorization();
     await apiClient.delete(`/patchnotes/${id}`, config);
+  }
+
+  /**
+   * Deletes a modification by ID
+   */
+  async deleteModification(id: number): Promise<void> {
+    const config = authUtils.getAuthorization();
+    await apiClient.delete(`/modifications/${id}`, config);
+  }
+
+  /**
+   * Gets reports for a specific reportable entity and ID
+   */
+  async getReportsForEntity(
+    entityType: string,
+    entityId: number
+  ): Promise<{ member: ReportData[]; totalItems: number }> {
+    const config = authUtils.getAuthorization();
+    const response = await apiClient.get(
+      `/reports?reportableEntity=${entityType}&reportableId=${entityId}`,
+      config
+    );
+    return response.data;
   }
   /**
    * Bans a user with a reason and optional duration

@@ -14,22 +14,31 @@ export interface Patchnote {
   content: string;
   releasedAt: Date;
   importance: "minor" | "major" | "hotfix";
-  game: string;
+  game: string | { title: string; id: number };
   smallDescription: string;
   createdBy?: {
     id: number;
     username: string;
+    isBanned?: boolean;
+    banReason?: string;
+    bannedUntil?: string;
   };
+  createdAt?: Date;
 }
 
 export interface Modification {
-  id: string;
+  id: number;
   difference: Array<[number, string]>;
   createdAt: Date;
   user: {
     id: number;
     username: string;
+    isBanned?: boolean;
+    banReason?: string;
+    bannedUntil?: string;
   };
+  patchnote?: Patchnote;
+  reportCount?: number;
 }
 
 export interface PatchnotePatchData {

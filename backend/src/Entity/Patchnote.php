@@ -39,7 +39,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ),
         new Get(
             normalizationContext: ['groups' => ['patchnote:read']],
-            provider : SoftDeletedStateProvider::class,
+            provider: SoftDeletedStateProvider::class,
         ),
         new Patch(
             security: "is_granted('ROLE_USER')",
@@ -49,7 +49,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ),
         new GetCollection(
             security: "is_granted('ROLE_ADMIN')",
-            normalizationContext: ['groups' => ['patchnote:admin']],
+            normalizationContext: ['groups' => ['patchnote:admin', 'patchnote:read', 'user:read']],
             filters: ['order']
         )
     ]
@@ -60,11 +60,11 @@ class Patchnote implements ReportableInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['patchnote:read'])]
+    #[Groups(['patchnote:read', 'modification:admin'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['patchnote:write', 'patchnote:read'])]
+    #[Groups(['patchnote:write', 'patchnote:read', 'modification:admin'])]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -76,11 +76,11 @@ class Patchnote implements ReportableInterface
     private ?\DateTimeImmutable $releasedAt = null;
 
     #[ORM\Column]
-    #[Groups(['patchnote:admin'])]
+    #[Groups(['patchnote:admin', 'patchnote:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne(inversedBy: 'patchnotes')]
-    #[Groups(['patchnote:admin'])]
+    #[Groups(['patchnote:admin', 'patchnote:read'])]
     private ?User $createdBy = null;
 
     #[ORM\Column(nullable: true, enumType: PatchNoteImportance::class)]
@@ -89,7 +89,7 @@ class Patchnote implements ReportableInterface
 
     #[ORM\ManyToOne(inversedBy: 'patchnotes')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['patchnote:write', 'patchnote:read'])]
+    #[Groups(['patchnote:write', 'patchnote:read', 'modification:admin'])]
     private ?Game $game = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]

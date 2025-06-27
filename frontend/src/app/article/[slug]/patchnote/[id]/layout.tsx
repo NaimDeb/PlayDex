@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useState, createContext, useContext, use as usePromise } from "react";
+import {
+  useEffect,
+  useState,
+  createContext,
+  useContext,
+  use as usePromise,
+} from "react";
 import Link from "next/link";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
 import gameService from "@/lib/api/gameService";
@@ -42,13 +48,22 @@ export default function PatchnoteLayout({
         const patchnoteData = await gameService.getPatchNoteById(id);
         setPatchnote(patchnoteData);
 
-        const gameId =
-          typeof patchnoteData.game === "string"
-            ? patchnoteData.game.split("/").pop() || patchnoteData.game
-            : patchnoteData.game;
+        // If game data is already included as an object, use it directly
+        if (
+          typeof patchnoteData.game === "object" &&
+          patchnoteData.game?.title
+        ) {
+          setGame(patchnoteData.game as Game);
+        } else {
+          // Otherwise, fetch the game data separately
+          const gameId =
+            typeof patchnoteData.game === "string"
+              ? patchnoteData.game.split("/").pop() || patchnoteData.game
+              : slug; // fallback to slug if we can't determine game ID
 
-        const gameData = await gameService.getGameById(gameId);
-        setGame(gameData);
+          const gameData = await gameService.getGameById(gameId.toString());
+          setGame(gameData);
+        }
       } catch {
         setPatchnote(null);
         setGame(null);
@@ -56,25 +71,31 @@ export default function PatchnoteLayout({
       setLoading(false);
     }
     fetchData();
-  }, [id]);
+  }, [id, slug]);
 
   const pathname = usePathname();
-
 
   return (
     <PatchnoteLayoutContext.Provider value={{ patchnote, game, loading }}>
       <div className="container mx-auto px-4 py-8 text-white">
         <Breadcrumbs underline="hover" className="mb-6">
           <BreadcrumbItem>
-            <Link href="/" className="text-gray-400 hover:underline">Accueil</Link>
+            <Link href="/" className="text-gray-400 hover:underline">
+              Accueil
+            </Link>
           </BreadcrumbItem>
           <BreadcrumbItem>
-            <Link href={`/article/${slug}`} className="text-gray-400 hover:underline">
+            <Link
+              href={`/article/${slug}`}
+              className="text-gray-400 hover:underline"
+            >
               {game?.title || "Jeu..."}
             </Link>
           </BreadcrumbItem>
           <BreadcrumbItem>
-            <span className="text-white">{patchnote?.title || "Patchnote..."}</span>
+            <span className="text-white">
+              {patchnote?.title || "Patchnote..."}
+            </span>
           </BreadcrumbItem>
           {pathname.endsWith("/modifications") && (
             <BreadcrumbItem>

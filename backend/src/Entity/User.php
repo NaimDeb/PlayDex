@@ -90,7 +90,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['user:read', 'modification:read'])]
+    #[Groups(['user:read', 'modification:read', 'patchnote:read'])]
     private ?int $id = null;
 
     /**
@@ -115,7 +115,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255, nullable: false)]
-    #[Groups(['user:read', 'user:write', 'user:update', 'modification:read'])]
+    #[Groups(['user:read', 'user:write', 'user:update', 'modification:read', 'patchnote:read'])]
     private ?string $username = null;
 
     #[ORM\Column]
@@ -164,16 +164,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Warning::class, mappedBy: 'reportedUserId', orphanRemoval: true)]
     private Collection $warnings;
     #[ORM\Column(nullable: true)]
-    #[Groups(['user:read', 'user:ban'])]
+    #[Groups(['user:read', 'user:ban', "patchnote:read", "modification:read"])]
     private ?bool $isBanned = null;
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user:read', 'user:ban'])]
+    #[Groups(['user:read', 'user:ban', 'patchnote:read', 'modification:read'])]
     #[Assert\NotBlank(groups: ['user:ban'], message: 'Ban reason is required')]
     #[Assert\Length(min: 5, max: 255, groups: ['user:ban'])]
     private ?string $banReason = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['user:read', 'user:ban'])]
+    #[Groups(['user:read', 'user:ban', 'patchnote:read', 'modification:read'])]
     private ?\DateTimeImmutable $bannedUntil = null;
 
 
