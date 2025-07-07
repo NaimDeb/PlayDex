@@ -49,11 +49,12 @@ export function FollowButton({ gameId }: FollowButtonProps) {
       }}
       disabled={loading}
       tabIndex={0}
-      className={`flex items-center justify-center max-md:text-3xl text-off-white font-bold py-2 px-2 md:px-4 rounded-md transition-colors duration-150 ease-in-out border-2 border-gray-500/50 max-md:fixed max-md:right-5 max-md:bottom-5 ${
-        loading
-          ? "bg-off-gray cursor-not-allowed"
-          : "bg-off-gray hover:bg-gray-600"
-      }`}
+      className={`flex items-center justify-center max-md:text-3xl text-off-white font-bold py-2 px-2 md:px-4 rounded-md transition-colors duration-150 ease-in-out border-2 border-gray-500/50
+        ${
+          loading
+            ? "bg-off-gray cursor-not-allowed"
+            : "bg-off-gray hover:bg-gray-600"
+        }`}
     >
       {loading ? (
         "Loading..."
