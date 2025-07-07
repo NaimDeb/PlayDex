@@ -1,4 +1,11 @@
 
+export interface FollowedGameWithCount {
+    followedGame: {
+        game: Game;
+    };
+    newCount: number;
+}
+
 export interface Game {
     id: number;
     apiId: number;
