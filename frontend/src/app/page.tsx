@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { ClassicCard } from "@/components/ArticleCard/ClassicCard";
 import { useAuth } from "@/providers/AuthProvider";
 import gameService from "@/lib/api/gameService";
-import { Game } from "@/types/gameType";
+import { FollowedGameWithCount, Game } from "@/types/gameType";
 import Link from "next/link";
 
 // Placeholder Card Component
@@ -17,7 +17,7 @@ const GameCardPlaceholder = () => (
 );
 
 export default function Home() {
-  const [followedGames, setFollowedGames] = useState<Game[]>([]);
+  const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
   // const [popularGames, setPopularGames] = useState<Game[]>([]);
   const [newGames, setNewGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,14 +97,14 @@ export default function Home() {
         Pendant mon absence Section - Show only if logged in
       */}
       {isAuthenticated && (
-        <section className="mb-12">
+        <section className="pl-4 mb-12 sm:px-16 lg:px-30">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-semibold">Pendant mon absence</h2>
             <a href="#" className="text-sm text-gray-400 hover:underline">
               Voir toute ma liste
             </a>
           </div>
-          <div className="flex pb-4 -mx-2 overflow-x-auto">
+          <div className="flex gap-3 pb-4 -mx-2 overflow-x-auto">
             {loading
               ? [...Array(6)].map((_, i) => (
                   <GameCardPlaceholder key={`followed-${i}`} />
@@ -145,14 +145,14 @@ export default function Home() {
       </section> */}
 
       {/* Nouveautées Section */}
-      <section className="mb-12">
+      <section className="pl-4 mb-12 sm:px-16 lg:px-30">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold">Nouveautées</h2>
           <a href="#" className="text-sm text-gray-400 hover:underline">
             Voir toutes les nouveautées
           </a>
         </div>
-        <div className="flex pb-4 -mx-2 overflow-x-auto">
+        <div className="flex gap-3 pb-4 -mx-2 overflow-x-auto">
           {loading
             ? [...Array(6)].map((_, i) => (
                 <GameCardPlaceholder key={`new-${i}`} />
