@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/providers/AuthProvider";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 
@@ -14,8 +14,15 @@ export default function LoginPage() {
 
   const router = useRouter();
 
-  const { login, error } = useAuth();
+  const { login, error, isAuthenticated } = useAuth();
   const { showMessage } = useFlashMessage();
+
+  useEffect(() => {
+    if (isAuthenticated && !error) {
+      showMessage("Connexion réussie !", "success");
+      // router.push("/") inutile ici, déjà fait dans le provider
+    }
+  }, [isAuthenticated, error, showMessage]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -31,17 +38,9 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    const result = await login({ email, password, rememberMe });
+    await login({ email, password, rememberMe });
     setLoading(false);
-    if (!error) {
-      showMessage("Connexion réussie !", "success");
-      router.push("/");
-    } else {
-      showMessage(
-        "Erreur de connexion : L'email ou le mot de passe est incorrect.",
-        "error"
-      );
-    }
+    // Ne rien faire ici, le message de succès ou d'erreur est géré par le provider et l'effet ci-dessus
   };
 
   return (
@@ -52,9 +51,7 @@ export default function LoginPage() {
         </h1>
         {(formError.email || error) && (
           <div className="px-4 py-3 mb-4 text-sm text-white border border-red-600 rounded-lg bg-red-500/90 animate-fade-in">
-            {formError.email
-              ? formError.email
-              : "L'email ou le mot de passe est incorrect."}
+            {formError.email ? formError.email : error}
           </div>
         )}
         <form onSubmit={handleSubmit} className="space-y-6">
