@@ -21,7 +21,7 @@ class UserChecker implements UserCheckerInterface
         }
 
         if ($user->isDeleted() === true) {
-            throw new CustomUserMessageAccountStatusException('Votre compte a été supprimé.');
+            throw new CustomUserMessageAccountStatusException('Votre compte a été supprimé. Si c\'est une erreur, veuillez contacter le support.');
         }
 
         // Check if user is banned
@@ -32,7 +32,19 @@ class UserChecker implements UserCheckerInterface
 
     public function checkPostAuth(UserInterface $user): void
     {
-        // Additional checks after authentication can go here
+
+        $this->setLastLogin($user);
+        
+    }
+
+
+    private function setLastLogin(User $user): void
+    {
+        $now = new \DateTimeImmutable();
+        $user->setLastLoginAt($now);
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
+
     }
 
     private function handleBannedUser(User $user): void
