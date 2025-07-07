@@ -27,13 +27,13 @@ class UserRepositoryTest extends KernelTestCase
         $user->setUsername('testuser');
         $user->setPassword('hashedpassword');
         $user->setCreatedAt(new \DateTimeImmutable());
-        
+
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
         // Test finding by email
         $foundUser = $this->userRepository->findOneBy(['email' => 'test@example.com']);
-        
+
         $this->assertInstanceOf(User::class, $foundUser);
         $this->assertEquals('test@example.com', $foundUser->getEmail());
         $this->assertEquals('testuser', $foundUser->getUsername());
@@ -51,13 +51,13 @@ class UserRepositoryTest extends KernelTestCase
         $user->setUsername('testuser2');
         $user->setPassword('hashedpassword');
         $user->setCreatedAt(new \DateTimeImmutable());
-        
+
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
         // Test finding by username
         $foundUser = $this->userRepository->findOneBy(['username' => 'testuser2']);
-        
+
         $this->assertInstanceOf(User::class, $foundUser);
         $this->assertEquals('testuser2', $foundUser->getUsername());
 
@@ -74,7 +74,7 @@ class UserRepositoryTest extends KernelTestCase
         $user->setUsername('testuser3');
         $user->setPassword('oldpassword');
         $user->setCreatedAt(new \DateTimeImmutable());
-        
+
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
@@ -83,7 +83,7 @@ class UserRepositoryTest extends KernelTestCase
 
         // Test password upgrade
         $this->userRepository->upgradePassword($user, $newPassword);
-        
+
         $this->assertEquals($newPassword, $user->getPassword());
         $this->assertNotEquals($oldPassword, $user->getPassword());
 

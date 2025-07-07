@@ -25,7 +25,7 @@ class GameTest extends TestCase
     {
         $title = 'Test Game Title';
         $this->game->setTitle($title);
-        
+
         $this->assertEquals($title, $this->game->getTitle());
     }
 
@@ -33,7 +33,7 @@ class GameTest extends TestCase
     {
         $description = 'This is a test game description';
         $this->game->setDescription($description);
-        
+
         $this->assertEquals($description, $this->game->getDescription());
     }
 
@@ -41,7 +41,7 @@ class GameTest extends TestCase
     {
         $imageUrl = 'https://example.com/image.jpg';
         $this->game->setImageUrl($imageUrl);
-        
+
         $this->assertEquals($imageUrl, $this->game->getImageUrl());
     }
 
@@ -49,7 +49,7 @@ class GameTest extends TestCase
     {
         $releaseDate = new \DateTimeImmutable('2023-01-01');
         $this->game->setReleasedAt($releaseDate);
-        
+
         $this->assertEquals($releaseDate, $this->game->getReleasedAt());
     }
 
@@ -57,14 +57,14 @@ class GameTest extends TestCase
     {
         $apiId = 12345;
         $this->game->setApiId($apiId);
-        
+
         $this->assertEquals($apiId, $this->game->getApiId());
     }
 
     public function testPatchnotesCollection(): void
     {
         $patchnotes = $this->game->getPatchnotes();
-        
+
         $this->assertCount(0, $patchnotes);
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $patchnotes);
     }
@@ -72,7 +72,7 @@ class GameTest extends TestCase
     public function testGenresCollection(): void
     {
         $genres = $this->game->getGenres();
-        
+
         $this->assertCount(0, $genres);
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $genres);
     }
@@ -80,7 +80,7 @@ class GameTest extends TestCase
     public function testCompaniesCollection(): void
     {
         $companies = $this->game->getCompanies();
-        
+
         $this->assertCount(0, $companies);
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $companies);
     }
@@ -88,7 +88,7 @@ class GameTest extends TestCase
     public function testFollowedGamesCollection(): void
     {
         $followedGames = $this->game->getFollowedGames();
-        
+
         $this->assertCount(0, $followedGames);
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $followedGames);
     }

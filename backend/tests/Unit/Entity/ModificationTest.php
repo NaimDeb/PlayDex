@@ -27,9 +27,9 @@ class ModificationTest extends TestCase
     {
         $user = new User();
         $user->setUsername('modificationuser');
-        
+
         $this->modification->setUser($user);
-        
+
         $this->assertSame($user, $this->modification->getUser());
     }
 
@@ -37,9 +37,9 @@ class ModificationTest extends TestCase
     {
         $patchnote = new Patchnote();
         $patchnote->setTitle('Test Patchnote');
-        
+
         $this->modification->setPatchnote($patchnote);
-        
+
         $this->assertSame($patchnote, $this->modification->getPatchnote());
     }
 
@@ -50,9 +50,9 @@ class ModificationTest extends TestCase
             [0, 'unchanged text'],
             [1, 'added text']
         ];
-        
+
         $this->modification->setDifference($difference);
-        
+
         $this->assertEquals($difference, $this->modification->getDifference());
     }
 
@@ -60,14 +60,14 @@ class ModificationTest extends TestCase
     {
         $date = new \DateTimeImmutable();
         $this->modification->setCreatedAt($date);
-        
+
         $this->assertEquals($date, $this->modification->getCreatedAt());
     }
 
     public function testSoftDeleteFunctionality(): void
     {
         $this->assertFalse($this->modification->isDeleted());
-        
+
         $this->modification->setIsDeleted(true);
         $this->assertTrue($this->modification->isDeleted());
     }
