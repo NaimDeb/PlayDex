@@ -27,7 +27,7 @@ class PatchnoteTest extends TestCase
     {
         $title = 'Test Patchnote Title';
         $this->patchnote->setTitle($title);
-        
+
         $this->assertEquals($title, $this->patchnote->getTitle());
     }
 
@@ -35,7 +35,7 @@ class PatchnoteTest extends TestCase
     {
         $content = 'This is a test patchnote content';
         $this->patchnote->setContent($content);
-        
+
         $this->assertEquals($content, $this->patchnote->getContent());
     }
 
@@ -43,7 +43,7 @@ class PatchnoteTest extends TestCase
     {
         $importance = PatchNoteImportance::Major;
         $this->patchnote->setImportance($importance);
-        
+
         $this->assertEquals($importance, $this->patchnote->getImportance());
     }
 
@@ -51,9 +51,9 @@ class PatchnoteTest extends TestCase
     {
         $game = new Game();
         $game->setTitle('Test Game');
-        
+
         $this->patchnote->setGame($game);
-        
+
         $this->assertSame($game, $this->patchnote->getGame());
     }
 
@@ -61,9 +61,9 @@ class PatchnoteTest extends TestCase
     {
         $user = new User();
         $user->setUsername('testuser');
-        
+
         $this->patchnote->setCreatedBy($user);
-        
+
         $this->assertSame($user, $this->patchnote->getCreatedBy());
     }
 
@@ -71,7 +71,7 @@ class PatchnoteTest extends TestCase
     {
         $date = new \DateTimeImmutable();
         $this->patchnote->setCreatedAt($date);
-        
+
         $this->assertEquals($date, $this->patchnote->getCreatedAt());
     }
 
@@ -79,14 +79,14 @@ class PatchnoteTest extends TestCase
     {
         $releaseDate = new \DateTimeImmutable();
         $this->patchnote->setReleasedAt($releaseDate);
-        
+
         $this->assertEquals($releaseDate, $this->patchnote->getReleasedAt());
     }
 
     public function testSoftDeleteFunctionality(): void
     {
         $this->assertFalse($this->patchnote->isDeleted());
-        
+
         $this->patchnote->setIsDeleted(true);
         $this->assertTrue($this->patchnote->isDeleted());
     }
@@ -95,14 +95,14 @@ class PatchnoteTest extends TestCase
     {
         $description = 'Small description for patch';
         $this->patchnote->setSmallDescription($description);
-        
+
         $this->assertEquals($description, $this->patchnote->getSmallDescription());
     }
 
     public function testModificationsCollection(): void
     {
         $modifications = $this->patchnote->getModification();
-        
+
         $this->assertCount(0, $modifications);
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $modifications);
     }

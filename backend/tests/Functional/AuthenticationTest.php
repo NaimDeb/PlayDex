@@ -21,14 +21,14 @@ class AuthenticationTest extends WebTestCase
     {
         // Create a test user
         $passwordHasher = static::getContainer()->get(UserPasswordHasherInterface::class);
-        
+
         $user = new User();
         $user->setEmail('test@login.com');
         $user->setUsername('loginuser');
         $user->setCreatedAt(new \DateTimeImmutable());
         $hashedPassword = $passwordHasher->hashPassword($user, 'testpassword');
         $user->setPassword($hashedPassword);
-        
+
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
@@ -43,9 +43,9 @@ class AuthenticationTest extends WebTestCase
         // The response could be successful login or 404 if route doesn't exist
         // This tests that the API endpoint is accessible
         $this->assertTrue(
-            $this->client->getResponse()->isSuccessful() || 
-            $this->client->getResponse()->getStatusCode() === 404 ||
-            $this->client->getResponse()->getStatusCode() === 401
+            $this->client->getResponse()->isSuccessful() ||
+                $this->client->getResponse()->getStatusCode() === 404 ||
+                $this->client->getResponse()->getStatusCode() === 401
         );
 
         // Cleanup
@@ -57,11 +57,11 @@ class AuthenticationTest extends WebTestCase
     {
         // Try to access a protected endpoint without authentication
         $this->client->request('GET', '/api/admin/users');
-        
+
         // Should return 401 Unauthorized or 403 Forbidden
         $this->assertTrue(
             $this->client->getResponse()->getStatusCode() === 401 ||
-            $this->client->getResponse()->getStatusCode() === 403
+                $this->client->getResponse()->getStatusCode() === 403
         );
     }
 
@@ -78,10 +78,10 @@ class AuthenticationTest extends WebTestCase
 
         // The response could be successful registration, 404 if route doesn't exist, or validation error
         $this->assertTrue(
-            $this->client->getResponse()->isSuccessful() || 
-            $this->client->getResponse()->getStatusCode() === 404 ||
-            $this->client->getResponse()->getStatusCode() === 400 ||
-            $this->client->getResponse()->getStatusCode() === 422
+            $this->client->getResponse()->isSuccessful() ||
+                $this->client->getResponse()->getStatusCode() === 404 ||
+                $this->client->getResponse()->getStatusCode() === 400 ||
+                $this->client->getResponse()->getStatusCode() === 422
         );
 
         // If user was created, clean it up

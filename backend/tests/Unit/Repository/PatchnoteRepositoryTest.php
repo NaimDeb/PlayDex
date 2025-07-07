@@ -62,7 +62,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
 
         // Test finding non-deleted patchnotes
         $activePatchnotes = $this->patchnoteRepository->findBy(['isDeleted' => false]);
-        
+
         $this->assertCount(1, $activePatchnotes);
         $this->assertEquals('Active Patchnote', $activePatchnotes[0]->getTitle());
 
@@ -115,7 +115,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         // Test finding patchnotes by game
         $game1Patches = $this->patchnoteRepository->findBy(['game' => $game1]);
         $game2Patches = $this->patchnoteRepository->findBy(['game' => $game2]);
-        
+
         $this->assertCount(1, $game1Patches);
         $this->assertCount(1, $game2Patches);
         $this->assertEquals('Game 1 Patch', $game1Patches[0]->getTitle());
