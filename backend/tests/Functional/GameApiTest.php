@@ -29,10 +29,10 @@ class GameApiTest extends WebTestCase
 
         // Test GET request
         $this->client->request('GET', '/api/games/' . $game->getId());
-        
+
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertEquals('API Test Game', $responseData['title']);
         $this->assertEquals('This is a test game for API', $responseData['description']);
@@ -46,10 +46,10 @@ class GameApiTest extends WebTestCase
     {
         // Test GET collection
         $this->client->request('GET', '/api/games');
-        
+
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('hydra:member', $responseData);
         $this->assertArrayHasKey('hydra:totalItems', $responseData);
@@ -65,7 +65,7 @@ class GameApiTest extends WebTestCase
 
         // Test GET game patchnotes
         $this->client->request('GET', '/api/games/' . $game->getId() . '/patchnotes');
-        
+
         $this->assertResponseIsSuccessful();
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('hydra:member', $responseData);
@@ -85,7 +85,7 @@ class GameApiTest extends WebTestCase
 
         // Test GET game extensions
         $this->client->request('GET', '/api/games/' . $game->getId() . '/extensions');
-        
+
         $this->assertResponseIsSuccessful();
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('hydra:member', $responseData);
@@ -98,14 +98,14 @@ class GameApiTest extends WebTestCase
     public function testGetNonExistentGame(): void
     {
         $this->client->request('GET', '/api/games/99999');
-        
+
         $this->assertResponseStatusCodeSame(404);
     }
 
     public function testGetLatestGames(): void
     {
         $this->client->request('GET', '/api/games/latest');
-        
+
         $this->assertResponseIsSuccessful();
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertIsArray($responseData);

@@ -24,7 +24,7 @@ class UserTest extends TestCase
     {
         $email = 'test@example.com';
         $this->user->setEmail($email);
-        
+
         $this->assertEquals($email, $this->user->getEmail());
     }
 
@@ -32,7 +32,7 @@ class UserTest extends TestCase
     {
         $username = 'testuser';
         $this->user->setUsername($username);
-        
+
         $this->assertEquals($username, $this->user->getUsername());
     }
 
@@ -40,14 +40,14 @@ class UserTest extends TestCase
     {
         $password = 'hashedpassword';
         $this->user->setPassword($password);
-        
+
         $this->assertEquals($password, $this->user->getPassword());
     }
 
     public function testDefaultRoles(): void
     {
         $roles = $this->user->getRoles();
-        
+
         $this->assertContains('ROLE_USER', $roles);
         $this->assertCount(1, $roles);
     }
@@ -56,7 +56,7 @@ class UserTest extends TestCase
     {
         $roles = ['ROLE_USER', 'ROLE_ADMIN'];
         $this->user->setRoles($roles);
-        
+
         $this->assertEquals($roles, $this->user->getRoles());
     }
 
@@ -64,17 +64,17 @@ class UserTest extends TestCase
     {
         $email = 'test@example.com';
         $this->user->setEmail($email);
-        
+
         $this->assertEquals($email, $this->user->getUserIdentifier());
     }
 
     public function testBanFunctionality(): void
     {
         $this->assertFalse($this->user->isBanned());
-        
+
         $this->user->setIsBanned(true);
         $this->assertTrue($this->user->isBanned());
-        
+
         $banDate = new \DateTimeImmutable('+1 week');
         $this->user->setBannedUntil($banDate);
         $this->assertEquals($banDate, $this->user->getBannedUntil());
@@ -84,14 +84,14 @@ class UserTest extends TestCase
     {
         $reputation = 100;
         $this->user->setReputation($reputation);
-        
+
         $this->assertEquals($reputation, $this->user->getReputation());
     }
 
     public function testCreatedAtIsSetOnCreation(): void
     {
         $this->user->setCreatedAt(new \DateTimeImmutable());
-        
+
         $this->assertInstanceOf(\DateTimeImmutable::class, $this->user->getCreatedAt());
     }
 }

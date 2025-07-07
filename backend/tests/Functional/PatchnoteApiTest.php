@@ -47,10 +47,10 @@ class PatchnoteApiTest extends WebTestCase
 
         // Test GET request
         $this->client->request('GET', '/api/patchnotes/' . $patchnote->getId());
-        
+
         $this->assertResponseIsSuccessful();
         $this->assertResponseHeaderSame('content-type', 'application/ld+json; charset=utf-8');
-        
+
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertEquals('API Test Patchnote', $responseData['title']);
         $this->assertEquals('This is a test patchnote for API', $responseData['content']);
@@ -66,18 +66,18 @@ class PatchnoteApiTest extends WebTestCase
     {
         // Test GET collection without authentication (should work for public endpoint)
         $this->client->request('GET', '/api/patchnotes');
-        
+
         // This might return 403 if authentication is required, which is expected
         $this->assertTrue(
-            $this->client->getResponse()->isSuccessful() || 
-            $this->client->getResponse()->getStatusCode() === 403
+            $this->client->getResponse()->isSuccessful() ||
+                $this->client->getResponse()->getStatusCode() === 403
         );
     }
 
     public function testGetNonExistentPatchnote(): void
     {
         $this->client->request('GET', '/api/patchnotes/99999');
-        
+
         $this->assertResponseStatusCodeSame(404);
     }
 
