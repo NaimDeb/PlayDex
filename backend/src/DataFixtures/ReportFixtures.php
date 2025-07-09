@@ -60,7 +60,7 @@ class ReportFixtures extends Fixture implements DependentFixtureInterface
         $report->setReportableId($reportableId);
         $report->setReportableEntity($reportableEntity);
         $report->setIsDeleted(false);
-        
+
         return $report;
     }
 
