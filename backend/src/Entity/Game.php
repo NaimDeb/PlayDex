@@ -20,6 +20,7 @@ use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
 use App\State\Provider\GameLatestProvider;
+use App\Filter\NotNullReleasedAtFilter;
 
 #[ORM\Entity(repositoryClass: GameRepository::class)]
 #[ApiResource(
@@ -46,13 +47,6 @@ use App\State\Provider\GameLatestProvider;
             uriTemplate: '/games/{id}/patchnotes',
             normalizationContext: ['groups' => ['game:read', 'patchnote:read']],
             provider: GamePatchnotesProvider::class
-        ),
-        new Get(
-            name: 'getLatestGames',
-            uriTemplate: '/games/latest',
-            normalizationContext: ['groups' => ['game:read']],
-            paginationEnabled: false,
-            provider: GameLatestProvider::class
         )
     ]
 )]
@@ -67,8 +61,10 @@ use App\State\Provider\GameLatestProvider;
 #[ApiFilter(OrderFilter::class, properties: [
     'title',
     'releasedAt' => ['nulls_comparison' => 'nulls_largest'],
-    'lastUpdatedAt' => ['nulls_comparison' => 'nulls_largest']
+    'lastUpdatedAt' => ['nulls_comparison' => 'nulls_largest'],
+    'id'
 ])]
+
 class Game
 {
     #[ORM\Id]

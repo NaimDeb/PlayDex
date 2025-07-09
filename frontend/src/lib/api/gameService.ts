@@ -132,7 +132,7 @@ class GameService {
   }
 
   async getLatestReleases(): Promise<Array<Game>> {
-    const response = await apiClient.get("/latest-releases");
+    const response = await apiClient.get("/games?page=1&order%5Bid%5D=desc");
     return response.data.member;
   }
 
