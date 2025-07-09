@@ -130,7 +130,7 @@ export function Header() {
     <>
       <header className="relative flex w-full h-16 overflow-hidden text-white bg-secondary">
         {/* 1. Logo (toujours visible) */}
-        <div className="bg-[#18181b] h-full flex items-center px-2 z-30 relative shrink-0">
+        <div className="relative z-30 flex items-center h-full px-2 bg- shrink-0 bg-off-black">
           {/* Assure-toi que Logo est un lien vers l'accueil */}
           <Link href="/" aria-label="Accueil PlayDex">
             <Logo width={64} />
