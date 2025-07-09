@@ -31,13 +31,17 @@ export default function RegisterPage() {
       newFormError.email = "Veuillez entrer une adresse email valide.";
       hasError = true;
     }
-    if (!password || password.length < 6) {
+    if (!password || password.length < 8) {
       newFormError.password =
-        "Le mot de passe doit contenir au moins 6 caractères.";
+        "Le mot de passe doit contenir au moins 8 caractères.";
       hasError = true;
     }
-    if (!username || username.length < 3) {
-      newFormError.username = "Le pseudo doit contenir au moins 3 caractères.";
+    if (!username || username.length < 4) {
+      newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
+      hasError = true;
+    }
+    if (username.length > 100) {
+      newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
       hasError = true;
     }
     setFormError(newFormError);
@@ -61,7 +65,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="w-full max-w-lg p-8 bg-offgray shadow-2xl border-4 border-secondary rounded-xl relative overflow-hidden">
+      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
         <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
           Inscription
         </h1>
@@ -157,7 +161,7 @@ export default function RegisterPage() {
           <div>
             <button
               type="submit"
-              className="w-full px-4 py-3 text-lg font-bold text-offwhite transition-colors rounded-lg shadow-md bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
+              className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-offwhite bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
               disabled={loading}
             >
               {loading ? "Chargement..." : "S'inscrire"}
