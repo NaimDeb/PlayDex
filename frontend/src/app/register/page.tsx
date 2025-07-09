@@ -15,6 +15,7 @@ export default function RegisterPage() {
     password?: string;
     username?: string;
   }>({});
+  // Assume register returns: Promise<{ status?: number; description?: string; error?: string } | undefined>
   const { register, error } = useAuth();
   const { showMessage } = useFlashMessage();
   const router = useRouter();
@@ -36,6 +37,19 @@ export default function RegisterPage() {
         "Le mot de passe doit contenir au moins 8 caractères.";
       hasError = true;
     }
+
+    if (password.length > 100) {
+      newFormError.password =
+        "Le mot de passe doit contenir contenir moins de 100 caractères.";
+      hasError = true;
+    }
+
+    if (password.search(/[A-Z]/) < 0) {
+      newFormError.password =
+        "Le mot de passe doit contenir au moins une majuscule.";
+      hasError = true;
+    }
+
     if (!username || username.length < 4) {
       newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
       hasError = true;
@@ -49,18 +63,29 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
+
     setLoading(true);
-    const result = await register({ email, password, username });
+    const result = (await register({ email, password, username })) as
+      | { status?: number; description?: string; error?: string }
+      | undefined;
     setLoading(false);
-    if (!error) {
-      showMessage("Inscription réussie !", "success");
-      router.push("/");
-    } else {
+
+    if (result !== undefined && result.status === 422 && result.description) {
+      showMessage(result.description, "error");
+      return;
+    }
+
+    // Si le status n'est pas 201 (créé), ou s'il y a une erreur, affiche une erreur
+    if (!result || result.status !== 201 || result.error || error) {
       showMessage(
         "Erreur d'inscription : Une erreur est survenue lors de l'inscription.",
         "error"
       );
+      return;
     }
+
+    showMessage("Inscription réussie !", "success");
+    router.push("/");
   };
 
   return (
