@@ -55,6 +55,9 @@ class DiffMatchPatchProcessor implements ProcessorInterface
         $dmp = new DiffMatchPatch();
         $diffs = $dmp->diff_main($oldContent, $newContent, false);
 
+        // Todo : Use json_encode to not use th deprecated Array format, need to change the DB column.
+        // $diffs(json_encode($diffs, JSON_PRETTY_PRINT));
+
         $this->modifyPatchnote($oldPatchnote, $modifiedPatchnote);
         $this->persistModification($diffs, $user, $oldPatchnote);
 
