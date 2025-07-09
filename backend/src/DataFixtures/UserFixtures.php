@@ -116,7 +116,7 @@ class UserFixtures extends Fixture
         $user->setLastLoginAt($lastLoginAt);
         $user->setReputation((string) $reputation);
         $user->setIsDeleted(false);
-        
+
         return $user;
     }
 }

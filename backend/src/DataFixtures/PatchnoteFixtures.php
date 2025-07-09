@@ -104,7 +104,7 @@ class PatchnoteFixtures extends Fixture implements DependentFixtureInterface
         $patchnote->setCreatedBy($createdBy);
         $patchnote->setGame($game);
         $patchnote->setIsDeleted(false);
-        
+
         return $patchnote;
     }
 
