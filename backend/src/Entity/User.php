@@ -98,6 +98,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column(length: 180, nullable: false)]
     #[Groups(['user:read', 'user:write', 'user:update'])]
+    #[Assert\NotBlank(message: 'L\'email est requis')]
+    #[Assert\Email(message: 'L\'email "{{ value }}" n\'est pas une adresse email valide.')]
     private ?string $email = null;
 
     /**
@@ -112,10 +114,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Groups(['user:write', 'user:update'])]
+    #[Assert\Length(min: 8, max: 100)]
     private ?string $password = null;
 
     #[ORM\Column(length: 255, nullable: false)]
     #[Groups(['user:read', 'user:write', 'user:update', 'modification:read', 'patchnote:read'])]
+    #[Assert\Length(min: 5, max: 100)]
     private ?string $username = null;
 
     #[ORM\Column]

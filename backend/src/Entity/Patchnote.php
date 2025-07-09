@@ -21,6 +21,8 @@ use App\DataPersister\PatchnoteDeleteProcessor;
 use App\Interfaces\ReportableInterface;
 use App\State\Provider\SoftDeletedStateProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
 
 
 // Todo : check security
@@ -65,14 +67,18 @@ class Patchnote implements ReportableInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['patchnote:write', 'patchnote:read', 'modification:admin'])]
+    #[Assert\NotBlank(message: 'Un titre est requis')]
     private ?string $title = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['patchnote:write', 'patchnote:read'])]
+    #[Assert\NotBlank(message: 'Un contenu est requis')]
     private ?string $content = null;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['patchnote:write', 'patchnote:read'])]
+    #[Assert\NotBlank(message: 'Une date de sortie est requise')]
+    #[Assert\Type(\DateTimeImmutable::class, message: 'La date de sortie doit être une date.')]
     private ?\DateTimeImmutable $releasedAt = null;
 
     #[ORM\Column]
@@ -85,6 +91,7 @@ class Patchnote implements ReportableInterface
 
     #[ORM\Column(nullable: true, enumType: PatchNoteImportance::class)]
     #[Groups(['patchnote:write', 'patchnote:read'])]
+    #[Assert\Choice(choices: ['minor', 'major', 'hotfix'], groups: ['patchnote:write'], message: 'L\'importance doit être une valeur valide.')]
     private ?PatchNoteImportance $importance = null;
 
     #[ORM\ManyToOne(inversedBy: 'patchnotes')]
@@ -94,6 +101,7 @@ class Patchnote implements ReportableInterface
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Groups(['patchnote:write', 'patchnote:read'])]
+    #[Assert\Length(max: 300)]
     private ?string $smallDescription = null;
 
     /**
