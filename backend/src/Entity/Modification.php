@@ -85,7 +85,7 @@ class Modification implements ReportableInterface
     #[Groups(['modification:read'])]
     private ?bool $isDeleted = null;
 
-    #[ORM\Column(type: Types::ARRAY, nullable: true)]
+    #[ORM\Column(type: Types::JSON, nullable: true)]
     #[Groups(['modification:read'])]
     private ?array $difference = null;
 
