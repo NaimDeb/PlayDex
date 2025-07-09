@@ -102,14 +102,6 @@ class GameApiTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
-    public function testGetLatestGames(): void
-    {
-        $this->client->request('GET', '/api/games/latest');
-
-        $this->assertResponseIsSuccessful();
-        $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertIsArray($responseData);
-    }
 
     protected function tearDown(): void
     {

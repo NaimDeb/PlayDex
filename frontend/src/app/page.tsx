@@ -32,7 +32,7 @@ export default function Home() {
           ? gameService.getAbsenceGames?.() ?? []
           : Promise.resolve([]),
         // Todo : Change to getLatestReleases quand l'endpoint marchera
-        gameService.getLatestGames(),
+        gameService.getLatestReleases(),
       ]);
       setFollowedGames(followed);
       // setPopularGames(popular);
@@ -144,12 +144,12 @@ export default function Home() {
         </div>
       </section> */}
 
-      {/* Nouveautées Section */}
+      {/* Derniers jeux ajoutés Section */}
       <section className="pl-4 mb-12 sm:px-16 lg:px-30">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Nouveautées</h2>
-          <a href="#" className="text-sm text-gray-400 hover:underline">
-            Voir toutes les nouveautées
+          <h2 className="text-2xl font-semibold">Derniers jeux ajoutés</h2>
+          <a href="/search?category=jeux" className="text-sm text-gray-400 hover:underline">
+            Voir tous les derniers jeux ajoutés
           </a>
         </div>
         <div className="flex gap-3 pb-4 -mx-2 overflow-x-auto">
