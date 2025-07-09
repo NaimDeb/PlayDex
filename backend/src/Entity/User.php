@@ -22,6 +22,7 @@ use App\DataPersister\UserUpdateDataPersister;
 use App\State\Provider\MeProvider;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -85,6 +86,14 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 // Todo : add asserts to properties
 
+#[UniqueEntity(
+    fields: ['email'],
+    message: 'L\'email "{{ value }}" est déjà utilisé.'
+)]
+#[UniqueEntity(
+    fields: ['username'],
+    message: 'Le nom d\'utilisateur "{{ value }}" est déjà utilisé.'
+)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -114,7 +123,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     #[Groups(['user:write', 'user:update'])]
-    #[Assert\Length(min: 8, max: 100)]
+    #[Assert\Regex(
+        pattern: '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,100}$/',
+        message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
+    )]
     private ?string $password = null;
 
     #[ORM\Column(length: 255, nullable: false)]
