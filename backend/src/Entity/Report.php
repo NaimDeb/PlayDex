@@ -14,6 +14,7 @@ use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiResource(
     operations: [
@@ -57,6 +58,7 @@ class Report
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups(['report:write', 'report:read'])]
+    #[Assert\NotBlank(message: 'Il faut fournir une raison pour le signalement.')]
     private ?string $reason = null;
 
     #[ORM\Column]
