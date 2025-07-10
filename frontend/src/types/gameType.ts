@@ -1,9 +1,7 @@
 
 export interface FollowedGameWithCount {
-    followedGame: {
-        game: Game;
-    };
-    newCount: number;
+    game: Game;
+    newPatchnoteCount: number;
 }
 
 export interface Game {

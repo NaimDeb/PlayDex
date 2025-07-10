@@ -29,9 +29,8 @@ export default function Home() {
       setLoading(true);
       const [followed, nouveautes] = await Promise.all([
         isAuthenticated
-          ? gameService.getAbsenceGames?.() ?? []
+          ? gameService.getFollowedGames?.() ?? []
           : Promise.resolve([]),
-        // Todo : Change to getLatestReleases quand l'endpoint marchera
         gameService.getLatestReleases(),
       ]);
       setFollowedGames(followed);
@@ -99,10 +98,10 @@ export default function Home() {
       {isAuthenticated && (
         <section className="pl-4 mb-12 sm:px-16 lg:px-30">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Pendant mon absence</h2>
-            <a href="#" className="text-sm text-gray-400 hover:underline">
+            <h2 className="text-2xl font-semibold">Ma liste</h2>
+            <Link href="/profile" className="text-sm text-gray-400 hover:underline">
               Voir toute ma liste
-            </a>
+            </Link>
           </div>
           <div className="flex gap-3 pb-4 -mx-2 overflow-x-auto">
             {loading
@@ -111,9 +110,9 @@ export default function Home() {
                 ))
               : followedGames.map((data) => (
                   <ClassicCard
-                    key={data.followedGame.game.id}
-                    game={data.followedGame.game}
-                    updatesCount={data.newCount}
+                    key={data.game.id}
+                    game={data.game}
+                    updatesCount={data.newPatchnoteCount}
                     isAuthenticated={isAuthenticated}
                   />
                 ))}
