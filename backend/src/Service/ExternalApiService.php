@@ -33,8 +33,8 @@ class ExternalApiService
     private function getIgdbHeaders(): array
     {
         return [
-            'Authorization' => 'Bearer ' . $this->params->get('IGDB_API_KEY'),
-            'Client-ID' => $this->params->get('IGDB_CLIENT_ID'),
+            'Authorization' => 'Bearer ' . $this->params->get('IGDB_ACCESS_TOKEN'),
+            'Client-ID' => $this->params->get('TWITCH_CLIENT_ID'),
             'Content-Type' => 'application/json',
             'Accept' => '*/*'
         ];
@@ -66,11 +66,10 @@ class ExternalApiService
             'limit' => $limit,
             'offset' => $offset
         ]);
-    
 
-            $response = $this->makeIgdbRequest('/games', $body);
-            return json_decode($response->getContent(), true);
 
+        $response = $this->makeIgdbRequest('/games', $body);
+        return json_decode($response->getContent(), true);
     }
 
     public function getIgdbExtensions(int $limit, int $offset = 0, ?int $from = null)
@@ -165,6 +164,4 @@ class ExternalApiService
     {
         return $this->getCount('/companies', $from ? 'where updated_at >= ' . $from : '');
     }
-
-    
 }
