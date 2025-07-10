@@ -57,14 +57,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 
         ),
-        new GetCollection(
-            uriTemplate: '/followed-games/absence',
-            normalizationContext: ['groups' => ['game:read', 'followedGames:read']],
-            paginationEnabled: true,
-            paginationItemsPerPage: 10,
-            security: "is_granted('ROLE_USER')",
-            provider: FollowedGamesAbsenceProvider::class,
-        ),
         new Post(
             uriTemplate: '/followed-games/{id}/check',
             security: "is_granted('ROLE_USER')",
@@ -144,5 +136,26 @@ class FollowedGames
         $this->lastCheckedAt = $lastCheckedAt;
 
         return $this;
+    }
+
+    #[Groups(['followedGames:read'])]
+    public function getNewPatchnoteCount(): int
+    {
+        $lastCheckedAt = $this->getLastCheckedAt();
+        $game = $this->getGame();
+        
+        if (!$game) return 0;
+
+        $patchnotes = $game->getPatchnotes();
+        $count = 0;
+
+        foreach ($patchnotes as $patchnote) {
+            if (!$lastCheckedAt || $patchnote->getCreatedAt() > $lastCheckedAt) {
+                $count++;
+            }
+        }
+
+        return $count;
+
     }
 }
