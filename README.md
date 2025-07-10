@@ -94,4 +94,15 @@ Follow these steps to set up the backend:
         openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
         ```
 
+8. **Launch the scheduler**:
+
+    To get the games automatically, you can launch the SYmfony scheduler that will launch the get-igdb-data command every day at midnight UTC:
+
+    - ```bash
+      cd backend/
+      php bin/console scheduler:start
+      ```
+
+
+
 Your backend is now ready to use!

@@ -11,11 +11,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Scheduler\Attribute\AsCronTask;
 
 #[AsCommand(
     name: 'app:get-igdb-data',
     description: 'Executes all IGDB import commands in the correct order',
 )]
+#[AsCronTask(expression:'0 0 * * *', timezone: 'UTC')]
 class GetIgdbDataCommand extends Command
 {
 
