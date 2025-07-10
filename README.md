@@ -48,7 +48,7 @@ Follow these steps to set up the backend:
      ```env
      STEAM_API_KEY=your_steam_api_key
      TWITCH_CLIENT_ID=your_twitch_client_id
-     TWITCH_ACCESS_TOKEN=your_igdb_access_token
+     IGDB_ACCESS_TOKEN=your_igdb_access_token
      DATABASE_URL=mysql://db_user:db_password@127.0.0.1:3306/db_name
      ```
 
