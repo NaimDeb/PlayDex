@@ -8,6 +8,9 @@ framework:
     #esi: true
     #fragments: true
 
+    scheduler:
+        enabled: true
+
 when@test:
     framework:
         test: true
