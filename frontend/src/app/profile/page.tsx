@@ -2,20 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import gameService from "@/lib/api/gameService";
-import { Game } from "@/types/gameType";
+import { FollowedGameWithCount } from "@/types/gameType";
 import { ClassicCard } from "@/components/ArticleCard";
 import { useAuth } from "@/providers/AuthProvider";
 import Image from "next/image";
 
-// Add the type for absence games
-interface AbsenceGame {
-  followedGame: { game: Game };
-  newCount: number;
-}
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
-  const [followedGames, setFollowedGames] = useState<AbsenceGame[]>([]);
+  const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,19 +22,13 @@ export default function ProfilePage() {
     const fetchGames = async () => {
       try {
         setLoading(true);
-        // Use getAbsenceGames and cast to AbsenceGame[]
-        const games = await gameService.getAbsenceGames();
-        // If the response is an array of Game (fallback), map to AbsenceGame shape
+        const games = await gameService.getFollowedGames();
         if (
           Array.isArray(games) &&
           games.length > 0 &&
-          Object.prototype.hasOwnProperty.call(games[0], "followedGame")
+          Object.prototype.hasOwnProperty.call(games[0], "game")
         ) {
-          setFollowedGames(games as unknown as AbsenceGame[]);
-        } else if (Array.isArray(games)) {
-          setFollowedGames(
-            games.map((g: Game) => ({ followedGame: { game: g }, newCount: 0 }))
-          );
+          setFollowedGames(games as FollowedGameWithCount[]);
         } else {
           setFollowedGames([]);
         }
@@ -60,11 +49,11 @@ export default function ProfilePage() {
   // Fonction pour filtrer et trier les jeux suivis
   const filteredAndSortedGames = followedGames
     .filter((data) =>
-      data.followedGame.game.title.toLowerCase().includes(search.toLowerCase())
+      data.game.title.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
-      const gA = a.followedGame.game;
-      const gB = b.followedGame.game;
+      const gA = a.game;
+      const gB = b.game;
       switch (sort) {
         case "date-desc":
           return (
@@ -193,10 +182,10 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredAndSortedGames.map((data) => (
               <ClassicCard
-                key={data.followedGame.game.id}
-                game={data.followedGame.game}
+                key={data.game.id}
+                game={data.game}
                 isAuthenticated={!!user}
-                updatesCount={data.newCount}
+                updatesCount={data.newPatchnoteCount}
               />
             ))}
           </div>
