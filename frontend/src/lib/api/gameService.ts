@@ -1,4 +1,4 @@
-import { Extension, Game, GameFilters } from "@/types/gameType";
+import { Extension, Game, GameFilters, FollowedGameWithCount } from "@/types/gameType";
 import apiClient from "./apiClient";
 import { Modification, Patchnote } from "@/types/patchNoteType";
 import authUtils from "../authUtils";
@@ -119,7 +119,7 @@ class GameService {
     return response.data;
   }
 
-  async getFollowedGames(): Promise<Array<Game>> {
+  async getFollowedGames(): Promise<Array<FollowedGameWithCount>> {
     const config = authUtils.getAuthorization();
     const response = await apiClient.get("/followed-games", config);
     return response.data.member;
@@ -133,12 +133,6 @@ class GameService {
 
   async getLatestReleases(): Promise<Array<Game>> {
     const response = await apiClient.get("/games?page=1&order%5Bid%5D=desc");
-    return response.data.member;
-  }
-
-  async getAbsenceGames(): Promise<Array<Game>> {
-    const config = authUtils.getAuthorization();
-    const response = await apiClient.get("/followed-games/absence", config);
     return response.data.member;
   }
 
