@@ -52,7 +52,7 @@ export function ClassicCard({
         <div className="absolute z-10 flex flex-col items-end space-y-1 top-2 right-2">
           {/* Updates Badge */}
           {updatesCount > 0 && (
-            <span className="px-2 py-1 text-xs font-bold text-black bg-yellow-400 rounded-full shadow">
+            <span className="px-2 py-1 font-bold text-black bg-yellow-400 rounded-full shadow text-md">
               {updatesCount > 99 ? "99+" : updatesCount} updates
             </span>
           )}
