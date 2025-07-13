@@ -34,14 +34,14 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={`${montserrat.variable} ${radioCanada.variable} antialiased bg-off-black text-off-white min-h-screen`}
+        className={`${montserrat.variable} ${radioCanada.variable} antialiased bg-off-black text-off-white min-h-screen flex flex-col`}
       >
         <HeroUIProvider>
           <AuthProvider>
             <FollowedGamesProvider>
               <FlashMessageProvider>
                 <Header />
-                <main>{children}</main>
+                <main className="flex-1">{children}</main>
                 <Footer />
               </FlashMessageProvider>
             </FollowedGamesProvider>
