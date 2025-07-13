@@ -68,8 +68,21 @@ class UserService {
   async patchUserProfile(data: Partial<User>) {
     const config = authUtils.getAuthorization();
 
+    // Override content type for PATCH requests to use merge-patch+json
+    const patchConfig = {
+      ...config,
+      headers: {
+        ...config.headers,
+        "Content-Type": "application/merge-patch+json",
+      },
+    };
+
     try {
-      const response = await apiClient.patch(`/users/${data.id}`, data, config);
+      const response = await apiClient.patch(
+        `/users/${data.id}`,
+        data,
+        patchConfig
+      );
       return response;
     } catch (error) {
       console.error("Error updating user profile:", error);

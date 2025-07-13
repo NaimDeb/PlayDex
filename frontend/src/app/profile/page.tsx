@@ -6,6 +6,7 @@ import { FollowedGameWithCount } from "@/types/gameType";
 import { ClassicCard } from "@/components/ArticleCard";
 import { useAuth } from "@/providers/AuthProvider";
 import Image from "next/image";
+import Link from "next/link";
 
 
 export default function ProfilePage() {
@@ -116,9 +117,12 @@ export default function ProfilePage() {
             </p>
           </div>
           <div className="flex flex-col self-center mt-4 space-y-3 md:mt-0 md:self-start">
-            <button className="w-full px-6 py-2 font-semibold text-white transition duration-150 ease-in-out rounded-md md:w-auto whitespace-nowrap [background-color:var(--color-primary)]">
+            <Link 
+              href="/profile/edit"
+              className="w-full px-6 py-2 font-semibold text-white transition duration-150 ease-in-out rounded-md md:w-auto whitespace-nowrap [background-color:var(--color-primary)] text-center hover:opacity-90"
+            >
               Modifier le profil
-            </button>
+            </Link>
             <button
               className="w-full px-6 py-2 font-semibold text-white transition duration-150 ease-in-out rounded-md md:w-auto [background-color:var(--destructive)]"
               onClick={logout}
