@@ -16,7 +16,6 @@ class AuthenticationTest extends WebTestCase
         $this->client = static::createClient();
         $this->entityManager = static::getContainer()->get('doctrine')->getManager();
     }
-
     public function testLoginWithValidCredentials(): void
     {
         // Create a test user
