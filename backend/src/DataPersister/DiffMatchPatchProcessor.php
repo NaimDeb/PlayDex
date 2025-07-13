@@ -55,6 +55,14 @@ class DiffMatchPatchProcessor implements ProcessorInterface
         $dmp = new DiffMatchPatch();
         $diffs = $dmp->diff_main($oldContent, $newContent, false);
 
+        // Apply semantic cleanup to improve human readability
+        // This reduces semantically trivial equalities and improves word boundaries
+        $dmp->diff_cleanupSemantic($diffs);
+
+        // Apply efficiency cleanup to reduce operationally trivial equalities
+        // This merges small changes that are close together
+        $dmp->diff_cleanupEfficiency($diffs);
+
         // Todo : Use json_encode to not use th deprecated Array format, need to change the DB column.
         // $diffs(json_encode($diffs, JSON_PRETTY_PRINT));
 

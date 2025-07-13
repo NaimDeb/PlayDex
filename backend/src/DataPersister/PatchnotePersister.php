@@ -28,16 +28,10 @@ class PatchnotePersister implements ProcessorInterface
             if (!$user) {
                 throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException('Not authenticated');
             }
-
-
             // Roles
             $data->setCreatedBy($user);
-
             // initialise createdAt
             $data->setCreatedAt(new \DateTimeImmutable());
-
-
-
             $this->entityManager->persist($data);
             $this->entityManager->flush();
         }
