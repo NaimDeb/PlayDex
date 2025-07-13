@@ -26,7 +26,17 @@ final class UserUpdateDataPersister implements ProcessorInterface
              */
             $currentUser = $this->security->getUser();
 
+            // Update username if provided
+            if ($data->getUsername()) {
+                $currentUser->setUsername($data->getUsername());
+            }
 
+            // Update email if provided
+            if ($data->getEmail()) {
+                $currentUser->setEmail($data->getEmail());
+            }
+
+            // Update password if provided
             if ($data->getPassword()) {
                 $hashedPassword = $this->passwordHasher->hashPassword($currentUser, $data->getPassword());
                 $currentUser->setPassword($hashedPassword);
