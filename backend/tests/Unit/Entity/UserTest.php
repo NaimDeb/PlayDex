@@ -8,10 +8,12 @@ use PHPUnit\Framework\TestCase;
 class UserTest extends TestCase
 {
     private User $user;
+    private static \Symfony\Component\Validator\Validator\ValidatorInterface $validator;
 
     protected function setUp(): void
     {
         $this->user = new User();
+        self::$validator = self::getContainer()->get('validator');
     }
 
     public function testUserCreation(): void
@@ -93,5 +95,17 @@ class UserTest extends TestCase
         $this->user->setCreatedAt(new \DateTimeImmutable());
 
         $this->assertInstanceOf(\DateTimeImmutable::class, $this->user->getCreatedAt());
+    }
+
+    
+    public function testEmailConstraints(): void
+    {
+        $user = new User();
+
+        $errorList = self::$validator->validate($user);
+
+        $this->assertCount(2, $errorList);
+        $this->assertEquals('L\'email est requis', $errorList[0]->getMessage());
+        $this->assertEquals('L\'email "{{ value }}" n\'est pas une adresse email valide.', $errorList[1]->getMessage());
     }
 }
