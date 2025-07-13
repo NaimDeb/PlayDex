@@ -92,5 +92,4 @@ class GameTest extends TestCase
         $this->assertCount(0, $followedGames);
         $this->assertInstanceOf(\Doctrine\Common\Collections\Collection::class, $followedGames);
     }
-
 }
