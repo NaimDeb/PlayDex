@@ -16,6 +16,12 @@ class GameApiTest extends WebTestCase
         $this->entityManager = static::getContainer()->get('doctrine')->getManager();
     }
 
+    protected static function getKernelClass(): string
+    {
+        return \App\Kernel::class;
+    }
+
+
     public function testGetGame(): void
     {
         // Create test data
@@ -41,6 +47,7 @@ class GameApiTest extends WebTestCase
         $this->entityManager->remove($game);
         $this->entityManager->flush();
     }
+
 
     public function testGetGamesCollection(): void
     {
