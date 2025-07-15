@@ -4,17 +4,25 @@ import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{
     email?: string;
     password?: string;
     username?: string;
-  }>({});
+    acceptTerms?: string;
+  }>({
+    email: undefined,
+    password: undefined,
+    username: undefined,
+    acceptTerms: undefined,
+  });
   // Assume register returns: Promise<{ status?: number; description?: string; error?: string } | undefined>
   const { register, error } = useAuth();
   const { showMessage } = useFlashMessage();
@@ -27,6 +35,7 @@ export default function RegisterPage() {
       email?: string;
       password?: string;
       username?: string;
+      acceptTerms?: string;
     } = {};
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       newFormError.email = "Veuillez entrer une adresse email valide.";
@@ -56,6 +65,11 @@ export default function RegisterPage() {
     }
     if (username.length > 100) {
       newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
+      hasError = true;
+    }
+    if (!acceptTerms) {
+      newFormError.acceptTerms =
+        "Vous devez accepter les conditions d'utilisation.";
       hasError = true;
     }
     setFormError(newFormError);
@@ -180,6 +194,44 @@ export default function RegisterPage() {
             {formError.username && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
                 {formError.username}
+              </p>
+            )}
+          </div>
+          <div>
+            <div className="flex items-start space-x-2">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(e) => setAcceptTerms(e.target.checked)}
+                className={`mt-1 w-4 h-4 text-primary bg-offwhite border-secondary rounded focus:ring-primary focus:ring-2 ${
+                  formError.acceptTerms
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+              />
+              <label htmlFor="acceptTerms" className="text-sm text-offwhite">
+                J&#39;accepte les{" "}
+                <Link
+                  href="/terms"
+                  className="font-semibold underline text-primary hover:text-secondary"
+                  target="_blank"
+                >
+                  conditions d&#39;utilisation
+                </Link>{" "}
+                et les{" "}
+                <Link
+                  href="/privacy"
+                  className="font-semibold underline text-primary hover:text-secondary"
+                  target="_blank"
+                >
+                  termes de confidentialité
+                </Link>
+              </label>
+            </div>
+            {formError.acceptTerms && (
+              <p className="mt-1 text-xs text-red-400 animate-fade-in">
+                {formError.acceptTerms}
               </p>
             )}
           </div>
