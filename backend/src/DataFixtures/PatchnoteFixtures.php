@@ -15,11 +15,11 @@ class PatchnoteFixtures extends Fixture implements DependentFixtureInterface
     public function load(ObjectManager $manager): void
     {
         // Create a set of test games
-        $game1 = $manager->getRepository(Game::class)->findOneBy(['title' => 'Cyberpunk 2077']);
+        $game1 = $manager->getRepository(Game::class)->findOneBy(['title' => 'Overwatch 2']);
         $game2 = $manager->getRepository(Game::class)->findOneBy(['title' => 'The Witcher 3: Wild Hunt']);
         $game3 = $manager->getRepository(Game::class)->findOneBy(['title' => 'Baldur\'s Gate 3']);
 
-        // Create patchnotes for Game 1 (Cyberpunk 2077)
+        // Create patchnotes for Game 1 (Overwatch 2)
         $patchnote1 = $this->createPatchnote(
             'Major Update 2.1',
             'Introducing new gameplay mechanics and major bug fixes',
