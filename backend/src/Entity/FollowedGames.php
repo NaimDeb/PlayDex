@@ -31,13 +31,6 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Post(
             uriTemplate: '/followed-games/{id}',
             security: "is_granted('ROLE_USER')",
-            uriVariables: [
-                'id' => new Link(
-                    fromClass: Game::class,
-                    identifiers: ['id'],
-                    toProperty: 'game'
-                )
-            ],
             processor: FollowedGamesPersister::class,
             input: false,
         ),
@@ -72,7 +65,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ]
 )]
 #[ORM\Entity(repositoryClass: FollowedGamesRepository::class)]
-// #[ORM\UniqueConstraint(name: "user_game_unique", columns: ["user_id", "game_id"])]
+#[ORM\UniqueConstraint(name: "user_game_unique", columns: ["user_id", "game_id"])]
 class FollowedGames
 {
     #[ORM\Id]
