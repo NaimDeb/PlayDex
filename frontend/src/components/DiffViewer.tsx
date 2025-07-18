@@ -1,4 +1,5 @@
 import React from "react";
+// ! A refactoriser, le cleanup est redondant avec diff_cleanupSemantic
 
 type DiffArray = [number, string][];
 
@@ -339,6 +340,7 @@ export default function DiffViewer({ diff }: DiffViewerProps) {
   const cleaned = semanticCleanup(diff);
 
   // Group consecutive changes for better visual presentation
+  // ! 
   const groupedChanges: Array<{
     type: "unchanged" | "modified";
     items: DiffArray;
