@@ -1,0 +1,41 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Test Service{% endblock %}
+
+{% block body %}
+<div class="container mx-auto p-8 max-w-4xl">
+    <h1 class="text-3xl font-bold mb-8">Service Test Page</h1>
+    
+    <div class="grid grid-cols-2 gap-8">
+        <!-- Input Section -->
+        <div class="flex flex-col">
+            <h2 class="text-xl font-bold mb-4">Input</h2>
+            <form method="POST" class="h-full flex flex-col">
+                <textarea 
+                    name="input" 
+                    class="flex-1 p-4 border border-gray-300 rounded-lg resize-none"
+                    placeholder="Enter your input here..."
+                >{{ input }}</textarea>
+                <button 
+                    type="submit" 
+                    class="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+                >
+                    Process
+                </button>
+            </form>
+        </div>
+
+        <!-- Output Section -->
+        <div class="flex flex-col">
+            <h2 class="text-xl font-bold mb-4">Output</h2>
+            <div class="flex-1 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                {% if output %}
+                    <p class="whitespace-pre-wrap">{{ output }}</p>
+                {% else %}
+                    <p class="text-gray-400 italic">Output will appear here after processing...</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
