@@ -1,3 +1,7 @@
+# PlayDex
+
+PlayDex is a website that tries to group all video game patch notes in a normalized manner. Follow your favorite games to get the patch notes as soon as they release.
+
 ## Frontend Installation
 
 Follow these steps to set up the frontend:
@@ -33,7 +37,6 @@ Follow these steps to set up the frontend:
 Your frontend is now ready to use!
 
 ## Backend Installation
-
 Follow these steps to set up the backend:
 
 1. **Get Your API Keys**:
