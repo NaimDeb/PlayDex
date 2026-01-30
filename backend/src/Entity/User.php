@@ -19,6 +19,8 @@ use App\DataPersister\UserBanProcessor;
 use App\DataPersister\UserDeleteProcessor;
 use App\DataPersister\UserUnbanProcessor;
 use App\DataPersister\UserUpdateDataPersister;
+use App\Interfaces\Entity\BannableInterface;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\State\Provider\MeProvider;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -94,7 +96,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
     fields: ['username'],
     message: 'Le nom d\'utilisateur "{{ value }}" est déjà utilisé.'
 )]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDeletableInterface, BannableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -418,6 +420,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsDeleted(bool $isDeleted): static
     {
         $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+    public function delete(): static
+    {
+        $this->isDeleted = true;
+
+        return $this;
+    }
+
+    public function restore(): static
+    {
+        $this->isDeleted = false;
 
         return $this;
     }

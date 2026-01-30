@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Service;
 
-use App\Dto\PatchnoteDto;
 use App\Entity\Game;
 
 /**
@@ -16,7 +15,7 @@ interface PatchnoteSourceInterface
     /**
      * Fetch patchnotes for a game from the external source.
      *
-     * @return PatchnoteDto[]
+     * @return array<int, array<string, mixed>>
      */
     public function fetchPatchnotes(Game $game, ?\DateTimeInterface $since = null): array;
 

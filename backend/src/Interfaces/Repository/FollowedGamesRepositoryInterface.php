@@ -10,10 +10,9 @@ use App\Entity\User;
 
 /**
  * Interface for FollowedGames repository.
- *
- * @extends RepositoryInterface<FollowedGames>
+ * Defines business-specific query methods for followed games.
  */
-interface FollowedGamesRepositoryInterface extends RepositoryInterface
+interface FollowedGamesRepositoryInterface
 {
     /**
      * Find all games followed by a user.
