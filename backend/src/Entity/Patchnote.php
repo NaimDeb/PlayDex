@@ -18,6 +18,8 @@ use ApiPlatform\Metadata\Patch;
 use App\DataPersister\DiffMatchPatchProcessor;
 use App\DataPersister\PatchnotePersister;
 use App\DataPersister\PatchnoteDeleteProcessor;
+use App\Interfaces\Entity\OwnableInterface;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\State\Provider\SoftDeletedStateProvider;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -57,7 +59,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ]
 )]
 
-class Patchnote implements ReportableInterface
+class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -262,5 +264,34 @@ class Patchnote implements ReportableInterface
         $this->isDeleted = $isDeleted;
 
         return $this;
+    }
+
+    public function delete(): static
+    {
+        $this->isDeleted = true;
+
+        return $this;
+    }
+
+    public function restore(): static
+    {
+        $this->isDeleted = false;
+
+        return $this;
+    }
+
+    public function getReportableType(): string
+    {
+        return 'Patchnote';
+    }
+
+    public function getReportableTitle(): string
+    {
+        return $this->title ?? '';
+    }
+
+    public function getReportableOwner(): ?User
+    {
+        return $this->createdBy;
     }
 }

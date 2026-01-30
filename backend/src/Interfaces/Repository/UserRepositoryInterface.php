@@ -5,14 +5,12 @@ declare(strict_types=1);
 namespace App\Interfaces\Repository;
 
 use App\Entity\User;
-use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 
 /**
  * Interface for User repository.
- *
- * @extends SoftDeletableRepositoryInterface<User>
+ * Defines business-specific query methods for users.
  */
-interface UserRepositoryInterface extends SoftDeletableRepositoryInterface, PasswordUpgraderInterface
+interface UserRepositoryInterface
 {
     /**
      * Find a user by email.

@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ReportPersister;
 use App\DataPersister\ReportDeleteProcessor;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Repository\ReportRepository;
 use App\State\Provider\AdminReportProvider;
 use App\State\Provider\SoftDeletedStateProvider;
@@ -44,7 +45,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
 )]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
-class Report
+class Report implements SoftDeletableInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -159,6 +160,20 @@ class Report
     public function setIsDeleted(bool $isDeleted): static
     {
         $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+    public function delete(): static
+    {
+        $this->isDeleted = true;
+
+        return $this;
+    }
+
+    public function restore(): static
+    {
+        $this->isDeleted = false;
 
         return $this;
     }

@@ -11,6 +11,7 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ModificationPersister;
 use App\DataPersister\ModificationDeleteProcessor;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
 use App\State\Provider\AdminModificationProvider;
@@ -55,7 +56,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 )]
 
 #[ApiFilter(SearchFilter::class, properties: ['patchnote.id' => 'exact'])]
-class Modification implements ReportableInterface
+class Modification implements ReportableInterface, SoftDeletableInterface
 {
 
 
@@ -179,5 +180,34 @@ class Modification implements ReportableInterface
         $this->reportCount = $reportCount;
 
         return $this;
+    }
+
+    public function delete(): static
+    {
+        $this->isDeleted = true;
+
+        return $this;
+    }
+
+    public function restore(): static
+    {
+        $this->isDeleted = false;
+
+        return $this;
+    }
+
+    public function getReportableType(): string
+    {
+        return 'Modification';
+    }
+
+    public function getReportableTitle(): string
+    {
+        return 'Modification #' . $this->id;
+    }
+
+    public function getReportableOwner(): ?User
+    {
+        return $this->user;
     }
 }

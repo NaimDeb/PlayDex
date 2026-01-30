@@ -9,10 +9,9 @@ use App\Entity\Warning;
 
 /**
  * Interface for Warning repository.
- *
- * @extends RepositoryInterface<Warning>
+ * Defines business-specific query methods for warnings.
  */
-interface WarningRepositoryInterface extends RepositoryInterface
+interface WarningRepositoryInterface
 {
     /**
      * Find all warnings for a user.

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Strategy;
 
-use App\Dto\ReportEnrichedDto;
 use App\Entity\Report;
 
 /**
@@ -20,6 +19,8 @@ interface ReportEnricherInterface
 
     /**
      * Enrich a report with additional entity-specific data.
+     *
+     * @return array<string, mixed> Enriched report data
      */
-    public function enrich(Report $report, object $entity): ReportEnrichedDto;
+    public function enrich(Report $report, object $entity): array;
 }

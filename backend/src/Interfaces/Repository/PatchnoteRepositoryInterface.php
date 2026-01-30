@@ -10,10 +10,9 @@ use App\Entity\User;
 
 /**
  * Interface for Patchnote repository.
- *
- * @extends SoftDeletableRepositoryInterface<Patchnote>
+ * Defines business-specific query methods for patchnotes.
  */
-interface PatchnoteRepositoryInterface extends SoftDeletableRepositoryInterface
+interface PatchnoteRepositoryInterface
 {
     /**
      * Find all active (non-deleted) patchnotes for a game.
