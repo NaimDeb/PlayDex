@@ -9,10 +9,9 @@ use App\Entity\User;
 
 /**
  * Interface for Report repository.
- *
- * @extends SoftDeletableRepositoryInterface<Report>
+ * Defines business-specific query methods for reports.
  */
-interface ReportRepositoryInterface extends SoftDeletableRepositoryInterface
+interface ReportRepositoryInterface
 {
     /**
      * Find all reports made by a user.

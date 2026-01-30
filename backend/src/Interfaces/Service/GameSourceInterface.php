@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Interfaces\Service;
 
-use App\Dto\GameDto;
-
 /**
  * Interface for external game data sources (IGDB, Steam, etc.).
  * Implements the Adapter pattern for different game APIs.
@@ -15,14 +13,16 @@ interface GameSourceInterface
     /**
      * Fetch multiple games from the source.
      *
-     * @return GameDto[]
+     * @return array<int, array<string, mixed>>
      */
     public function fetchGames(int $limit, int $offset): array;
 
     /**
      * Fetch a single game by its external ID.
+     *
+     * @return array<string, mixed>|null
      */
-    public function fetchGame(string $externalId): ?GameDto;
+    public function fetchGame(string $externalId): ?array;
 
     /**
      * Get the total count of games available.

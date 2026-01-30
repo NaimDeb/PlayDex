@@ -8,10 +8,9 @@ use App\Entity\Game;
 
 /**
  * Interface for Game repository.
- *
- * @extends RepositoryInterface<Game>
+ * Defines business-specific query methods for games.
  */
-interface GameRepositoryInterface extends RepositoryInterface
+interface GameRepositoryInterface
 {
     /**
      * Find a game by its API ID (IGDB).

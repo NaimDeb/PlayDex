@@ -10,10 +10,9 @@ use App\Entity\User;
 
 /**
  * Interface for Modification repository.
- *
- * @extends SoftDeletableRepositoryInterface<Modification>
+ * Defines business-specific query methods for modifications.
  */
-interface ModificationRepositoryInterface extends SoftDeletableRepositoryInterface
+interface ModificationRepositoryInterface
 {
     /**
      * Find all modifications for a patchnote.
