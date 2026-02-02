@@ -14,6 +14,18 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Handles deletion of FollowedGames relationships.
+ *
+ * Responsibilities:
+ * - Validates that the authenticated user exists
+ * - Retrieves the game by ID from URI variables
+ * - Validates the followed game relationship exists
+ * - Removes the follow relationship
+ * - Persists changes to the database
+ *
+ * Note: This is a Processor, not a Persister. Handles deletion logic rather than creation.
+ */
 class FollowedGamesDeleteProcessor implements ProcessorInterface
 {
     public function __construct(

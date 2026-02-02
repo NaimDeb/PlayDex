@@ -14,6 +14,19 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Handles the creation of FollowedGames relationships.
+ *
+ * Responsibilities:
+ * - Validates that the authenticated user exists
+ * - Retrieves the game by ID from URI variables
+ * - Prevents duplicate follow relationships (idempotency)
+ * - Associates the user with the game
+ * - Persists the relationship to the database
+ *
+ * Note: This class implements ProcessorInterface directly. Should extend AbstractDataPersister
+ * to inherit common persist() and getAuthenticatedUser() methods.
+ */
 class FollowedGamesPersister implements ProcessorInterface
 {
     public function __construct(

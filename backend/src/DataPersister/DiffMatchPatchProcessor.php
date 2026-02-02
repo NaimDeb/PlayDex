@@ -17,6 +17,20 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\KernelEvents;
 
+/**
+ * Handles diff calculation between patchnote versions using DiffMatchPatch algorithm.
+ *
+ * Responsibilities:
+ * - Validates incoming modification data for patchnotes
+ * - Calculates the diff between original and modified patchnote content
+ * - Uses DiffMatchPatch library for accurate line-level diffs
+ * - Computes a diff score for the modification
+ * - Persists diff data to the database
+ * - Returns formatted response with diff results
+ *
+ * Note: This is a specialized Processor for diff calculation.
+ * Does not inherit from AbstractDataPersister as it has unique requirements.
+ */
 class DiffMatchPatchProcessor implements ProcessorInterface
 {
 
@@ -95,7 +109,7 @@ class DiffMatchPatchProcessor implements ProcessorInterface
         $modification->setDifference($difference);
         $modification->setUser($user);
         $modification->setPatchnote($patchnote);
-        $modification->setCreatedAt(new \DateTimeImmutable());
+        $modification->setCreatedAtValue();
 
         $this->entityManager->persist($modification);
     }
