@@ -9,7 +9,7 @@ use App\Entity\Report;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use App\Service\WarningService;
+use App\Service\SoftDeleteService;
 
 /**
  * Handles deletion (soft-delete) of Patchnote entities.
@@ -17,7 +17,7 @@ use App\Service\WarningService;
  * Responsibilities:
  * - Validates that the patchnote exists
  * - Prevents deletion of already-deleted patchnotes
- * - Creates warning records for associated modifications and reports
+ * - Cascades soft-deletion to related modifications and reports
  * - Marks patchnote as deleted (soft-delete)
  * - Persists changes to the database
  */
@@ -25,7 +25,7 @@ class PatchnoteDeleteProcessor extends AbstractDataPersister
 {
     public function __construct(
         EntityManagerInterface $entityManager,
-        private WarningService $warningService,
+        private SoftDeleteService $softDeleteService,
         Security $security
     ) {
         parent::__construct($entityManager, $security);
@@ -41,46 +41,12 @@ class PatchnoteDeleteProcessor extends AbstractDataPersister
             throw new BadRequestHttpException('This patchnote has already been deleted.');
         }
 
-        $data->setIsDeleted(true);
-
         foreach ($data->getModification() as $modification) {
             $modification->setIsDeleted(true);
             $this->entityManager->persist($modification);
-
-            $reports = $this->entityManager->getRepository(Report::class)->findBy([
-                'reportableEntity' => 'Modification',
-                'reportableId' => $modification->getId(),
-                'isDeleted' => false
-            ]);
-
-            foreach ($reports as $report) {
-                $report->setIsDeleted(true);
-                $this->entityManager->persist($report);
-            }
+            $this->softDeleteService->softDeleteRelatedReports('Modification', $modification->getId());
         }
 
-        $reports = $this->entityManager->getRepository(Report::class)->findBy([
-            'reportableEntity' => 'Patchnote',
-            'reportableId' => $data->getId(),
-            'isDeleted' => false
-        ]);
-
-        foreach ($reports as $report) {
-            $report->setIsDeleted(true);
-            $this->entityManager->persist($report);
-        }
-
-        $this->entityManager->persist($data);
-        $this->entityManager->flush();
-
-        $author = $data->getCreatedBy();
-        $admin = $this->security->getUser();
-
-        if ($author && $author !== $admin) {
-            $this->warningService->warnUserForDeletion(
-                target: $author,
-                admin: $admin,
-            );
-        }
+        $this->softDeleteService->softDeleteWithReports($data, 'Patchnote', 'createdBy');
     }
 }
