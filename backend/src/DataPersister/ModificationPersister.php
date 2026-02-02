@@ -12,6 +12,19 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+/**
+ * Handles the creation of Modification entities (changes to patchnotes).
+ *
+ * Responsibilities:
+ * - Validates incoming Modification data
+ * - Associates the modification with the authenticated user
+ * - Sets creation timestamp
+ * - Persists the modification to the database
+ * - TODO: Implement complex validation and diff calculation logic
+ *
+ * Note: This class implements ProcessorInterface directly. Should extend AbstractDataPersister
+ * to inherit common persist() and getAuthenticatedUser() methods.
+ */
 class ModificationPersister implements ProcessorInterface
 {
     public function __construct(
@@ -35,7 +48,7 @@ class ModificationPersister implements ProcessorInterface
             $data->setUser($user);
 
             // initialise createdAt
-            $data->setCreatedAt(new \DateTimeImmutable());
+            $data->setCreatedAtValue();
 
 
 

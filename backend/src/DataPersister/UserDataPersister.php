@@ -10,6 +10,19 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+/**
+ * Handles the creation and initialization of User entities.
+ *
+ * Responsibilities:
+ * - Hashes the user password using bcrypt
+ * - Assigns default ROLE_USER role
+ * - Initializes reputation points (0)
+ * - Sets creation timestamp
+ * - Persists the user to the database
+ *
+ * Note: This class implements ProcessorInterface directly. Should extend AbstractDataPersister
+ * to inherit common persist() and getAuthenticatedUser() methods.
+ */
 class UserDataPersister implements ProcessorInterface
 {
     public function __construct(
@@ -36,7 +49,7 @@ class UserDataPersister implements ProcessorInterface
 
 
             // initialise createdAt
-            $data->setCreatedAt(new \DateTimeImmutable());
+            $data->setCreatedAtValue();
 
 
 

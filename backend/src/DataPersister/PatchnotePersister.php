@@ -11,6 +11,18 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+/**
+ * Handles the creation and initialization of Patchnote entities.
+ *
+ * Responsibilities:
+ * - Validates incoming Patchnote data
+ * - Associates the patchnote with the authenticated user (creator)
+ * - Sets creation timestamp
+ * - Persists the patchnote to the database
+ *
+ * Note: This class implements ProcessorInterface directly. Should extend AbstractDataPersister
+ * to inherit common persist() and getAuthenticatedUser() methods.
+ */
 class PatchnotePersister implements ProcessorInterface
 {
     public function __construct(
@@ -31,7 +43,7 @@ class PatchnotePersister implements ProcessorInterface
             // Roles
             $data->setCreatedBy($user);
             // initialise createdAt
-            $data->setCreatedAt(new \DateTimeImmutable());
+            $data->setCreatedAtValue();
             $this->entityManager->persist($data);
             $this->entityManager->flush();
         }

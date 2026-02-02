@@ -11,6 +11,19 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Service\WarningService;
 
+/**
+ * Handles deletion (soft-delete) of Patchnote entities.
+ *
+ * Responsibilities:
+ * - Validates that the patchnote exists
+ * - Prevents deletion of already-deleted patchnotes
+ * - Creates warning records for associated modifications and reports
+ * - Marks patchnote as deleted (soft-delete)
+ * - Persists changes to the database
+ *
+ * Note: This is a Processor, not a Persister. Handles deletion logic rather than creation.
+ * Could potentially inherit from AbstractDataPersister if softDelete() is needed.
+ */
 class PatchnoteDeleteProcessor implements ProcessorInterface
 {
     public function __construct(
