@@ -90,7 +90,7 @@ class UserTest extends TestCase
 
     public function testCreatedAtIsSetOnCreation(): void
     {
-        $this->user->setCreatedAt(new \DateTimeImmutable());
+        $this->user->setCreatedAtValue();
 
         $this->assertInstanceOf(\DateTimeImmutable::class, $this->user->getCreatedAt());
     }

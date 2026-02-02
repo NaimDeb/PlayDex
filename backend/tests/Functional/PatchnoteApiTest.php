@@ -30,7 +30,7 @@ class PatchnoteApiTest extends WebTestCase
         $user->setEmail('api@example.com');
         $user->setUsername('apiuser');
         $user->setPassword('password');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
         $this->entityManager->persist($user);
 
         $patchnote = new Patchnote();
@@ -38,7 +38,7 @@ class PatchnoteApiTest extends WebTestCase
         $patchnote->setContent('This is a test patchnote for API');
         $patchnote->setGame($game);
         $patchnote->setCreatedBy($user);
-        $patchnote->setCreatedAt(new \DateTimeImmutable());
+        $patchnote->setCreatedAtValue();
         $patchnote->setImportance(PatchNoteImportance::Major);
         $patchnote->setIsDeleted(false);
         $this->entityManager->persist($patchnote);

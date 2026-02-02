@@ -25,7 +25,7 @@ class AuthenticationTest extends WebTestCase
         $user = new User();
         $user->setEmail('test@login.com');
         $user->setUsername('loginuser');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
         $hashedPassword = $passwordHasher->hashPassword($user, 'testpassword');
         $user->setPassword($hashedPassword);
 
