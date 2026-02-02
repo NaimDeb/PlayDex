@@ -26,7 +26,7 @@ class UserRepositoryTest extends KernelTestCase
         $user->setEmail('test@example.com');
         $user->setUsername('testuser');
         $user->setPassword('hashedpassword');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -50,7 +50,7 @@ class UserRepositoryTest extends KernelTestCase
         $user->setEmail('test2@example.com');
         $user->setUsername('testuser2');
         $user->setPassword('hashedpassword');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
@@ -73,7 +73,7 @@ class UserRepositoryTest extends KernelTestCase
         $user->setEmail('test3@example.com');
         $user->setUsername('testuser3');
         $user->setPassword('oldpassword');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
