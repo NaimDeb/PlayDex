@@ -2,13 +2,10 @@
 
 namespace App\DataPersister;
 
+use AbstractDataPersister;
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProcessorInterface;
 use App\Entity\FollowedGames;
 use App\Entity\Game;
-use App\Entity\Patchnote;
-use App\Entity\User;
-
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -23,46 +20,40 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * - Validates the followed game relationship exists
  * - Removes the follow relationship
  * - Persists changes to the database
- *
- * Note: This is a Processor, not a Persister. Handles deletion logic rather than creation.
  */
-class FollowedGamesDeleteProcessor implements ProcessorInterface
+class FollowedGamesDeleteProcessor extends AbstractDataPersister
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly Security $security,
-    ) {}
+        EntityManagerInterface $entityManager,
+        Security $security,
+    ) {
+        parent::__construct($entityManager, $security);
+    }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): void
-{
-    if ($data instanceof FollowedGames) {
+    {
+        if ($data instanceof FollowedGames) {
+            $user = $this->getAuthenticatedUser();
 
-        /**
-         * @var User $user
-         */
-        $user = $this->security->getUser();
+            $gameId = $uriVariables['id'] ?? null;
+            if ($gameId === null) {
+                throw new BadRequestHttpException('Game ID is required');
+            }
 
-        $gameId = $uriVariables['id'] ?? null;
-        if ($gameId === null) {
-            throw new BadRequestHttpException('Game ID is required');
-        }
+            $game = $this->entityManager->getRepository(Game::class)->find($gameId);
+            if (!$game) {
+                throw new NotFoundHttpException('Game not found');
+            }
 
-        $game = $this->entityManager->getRepository(Game::class)->find($gameId);
-        if (!$game) {
-            throw new NotFoundHttpException('Game not found');
-        }
+            $existingFollowedGame = $this->entityManager->getRepository(FollowedGames::class)
+                ->findOneBy(['user' => $user, 'game' => $game]);
 
-        // Find the followed game entry for this specific user and game
-        $existingFollowedGame = $this->entityManager->getRepository(FollowedGames::class)
-            ->findOneBy(['user' => $user, 'game' => $game]);
-        
-        if ($existingFollowedGame) {
-            // Remove the followed game from the database
-            $this->entityManager->remove($existingFollowedGame);
-            $this->entityManager->flush();
-        } else {
-            throw new NotFoundHttpException('You are not following this game.');
+            if ($existingFollowedGame) {
+                $this->entityManager->remove($existingFollowedGame);
+                $this->entityManager->flush();
+            } else {
+                throw new NotFoundHttpException('You are not following this game.');
+            }
         }
     }
-}
 }

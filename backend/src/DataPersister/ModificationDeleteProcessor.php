@@ -2,10 +2,9 @@
 
 namespace App\DataPersister;
 
+use AbstractDataPersister;
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Modification;
-use App\Entity\Patchnote;
 use App\Entity\Report;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -21,17 +20,16 @@ use App\Service\WarningService;
  * - Creates warning records for associated reports
  * - Marks modification as deleted (soft-delete)
  * - Persists changes to the database
- *
- * Note: This is a Processor, not a Persister. Handles deletion logic rather than creation.
- * Could potentially inherit from AbstractDataPersister if softDelete() is needed.
  */
-class ModificationDeleteProcessor implements ProcessorInterface
+class ModificationDeleteProcessor extends AbstractDataPersister
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        EntityManagerInterface $entityManager,
         private WarningService $warningService,
-        private Security $security 
-    ) {}
+        Security $security
+    ) {
+        parent::__construct($entityManager, $security);
+    }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): void
     {
@@ -39,32 +37,27 @@ class ModificationDeleteProcessor implements ProcessorInterface
             return;
         }
 
-        // Check if already deleted
         if ($data->isDeleted()) {
             throw new BadRequestHttpException('This modification has already been deleted.');
         }
 
-        // Soft delete the modification
         $data->setIsDeleted(true);
 
-        // Find related reports for this modification
         $reports = $this->entityManager->getRepository(Report::class)->findBy([
             'reportableEntity' => 'Modification',
             'reportableId' => $data->getId(),
             'isDeleted' => false
         ]);
 
-        // Soft delete related reports
         foreach ($reports as $report) {
             $report->setIsDeleted(true);
             $this->entityManager->persist($report);
         }
 
-        // Save all changes
         $this->entityManager->persist($data);
         $this->entityManager->flush();
 
-        $author = $data->getUser(); 
+        $author = $data->getUser();
         $admin = $this->security->getUser();
 
         if ($author && $author !== $admin) {

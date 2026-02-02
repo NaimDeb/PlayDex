@@ -2,8 +2,8 @@
 
 namespace App\DataPersister;
 
+use AbstractDataPersister;
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Report;
 use App\Interfaces\ReportableInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,47 +19,37 @@ use Symfony\Bundle\SecurityBundle\Security;
  * - Prevents duplicate reports from the same user
  * - Associates the report with the reporting user
  * - Persists the report to the database
- *
- * Note: This class implements ProcessorInterface directly. Should extend AbstractDataPersister
- * to inherit common persist() and getAuthenticatedUser() methods.
  */
-class ReportPersister implements ProcessorInterface
+class ReportPersister extends AbstractDataPersister
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly Security $security,
-    ) {}
+        EntityManagerInterface $entityManager,
+        Security $security,
+    ) {
+        parent::__construct($entityManager, $security);
+    }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): Report
     {
-        // Check if the data is an instance of Report
         if (!$data instanceof Report) {
             return $data;
         }
 
-        // Check if the user is authenticated
-        $user = $this->security->getUser();
-        if (!$user) {
-            throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException('Not authenticated');
-        }
+        $user = $this->getAuthenticatedUser();
 
-        // Validate the reportable entity class and ID
         $reportableEntityClass = "App\\Entity\\" . $data->getReportableEntity();
         if (!class_exists($reportableEntityClass) || !in_array(ReportableInterface::class, class_implements($reportableEntityClass))) {
             throw new \InvalidArgumentException("{$reportableEntityClass} does not implement ReportableInterface.");
         }
 
-
         $repository = $this->entityManager->getRepository($reportableEntityClass);
         $reportableId = $data->getReportableId();
         $entity = $repository->find($reportableId);
 
-        // Check if the entity exists
         if (!$entity) {
             throw new \InvalidArgumentException('The entity with the ID: ' . $reportableId . ' does not exist.');
         }
 
-        // Check if the user has already reported this entity
         $existingReport = $this->entityManager->getRepository(Report::class)->findOneBy([
             'reportedBy' => $user,
             'reportableId' => $reportableId,
@@ -70,13 +60,11 @@ class ReportPersister implements ProcessorInterface
             throw new \InvalidArgumentException('You have already reported this entity.');
         }
 
-        // Set the reportable entity and ID
         $data->setReportedBy($user);
         $data->setReportedAt(new \DateTimeImmutable());
         $data->setReportableEntity($reportableEntityClass);
 
-        $this->entityManager->persist($data);
-        $this->entityManager->flush();
+        $this->persist($data);
 
         return $data;
     }
