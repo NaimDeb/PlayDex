@@ -1016,7 +1016,7 @@ class AuditLogSubscriber implements EventSubscriberInterface
 | Tâche | Fichiers | Patterns |
 |-------|----------|----------|
 | Créer interfaces de base | `src/Interfaces/` | DIP | X
-| Implémenter traits | `SoftDeletableTrait`, `TimestampableTrait` | DRY |
+| Implémenter traits | `SoftDeletableTrait`, `TimestampableTrait` | DRY | X
 | Base AbstractDataPersister | `src/DataPersister/AbstractDataPersister.php` | Template Method |
 | Extraire configuration | `src/Config/ApiConfig.php` | DRY |
 | Custom Password Validator | `src/Validator/Constraints/` | SRP |
