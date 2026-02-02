@@ -12,6 +12,18 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Checks if the authenticated user is already following a game.
+ *
+ * Responsibilities:
+ * - Validates that the authenticated user exists
+ * - Retrieves the game by ID from URI variables
+ * - Checks if the user already follows the game
+ * - Returns early if no duplicate follow exists (idempotency check)
+ *
+ * Note: This is a custom Processor for validation/check operations.
+ * Not a Persister and doesn't inherit from AbstractDataPersister.
+ */
 class FollowedGamesCheckProcessor implements ProcessorInterface
 {
     private EntityManagerInterface $entityManager;

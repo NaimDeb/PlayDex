@@ -12,6 +12,19 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Service\WarningService;
 
+/**
+ * Handles deletion (soft-delete) of Modification entities.
+ *
+ * Responsibilities:
+ * - Validates that the modification exists
+ * - Prevents deletion of already-deleted modifications
+ * - Creates warning records for associated reports
+ * - Marks modification as deleted (soft-delete)
+ * - Persists changes to the database
+ *
+ * Note: This is a Processor, not a Persister. Handles deletion logic rather than creation.
+ * Could potentially inherit from AbstractDataPersister if softDelete() is needed.
+ */
 class ModificationDeleteProcessor implements ProcessorInterface
 {
     public function __construct(

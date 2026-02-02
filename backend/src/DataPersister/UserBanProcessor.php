@@ -8,6 +8,19 @@ use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
+/**
+ * Handles banning of User accounts.
+ *
+ * Responsibilities:
+ * - Validates that the user ID is provided
+ * - Retrieves the user to ban from the database
+ * - Updates user's ban status and sets ban timestamp
+ * - Verifies user permissions for ban operation
+ * - Persists changes to the database
+ *
+ * Note: This is a custom Processor for moderation actions.
+ * Could potentially inherit from AbstractDataPersister for persist() method.
+ */
 final class UserBanProcessor implements ProcessorInterface
 {
     public function __construct(
