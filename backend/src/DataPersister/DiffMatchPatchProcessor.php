@@ -2,8 +2,8 @@
 
 namespace App\DataPersister;
 
+use AbstractDataPersister;
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Symfony\EventListener\EventPriorities;
 use App\Entity\Modification;
 use App\Entity\Patchnote;
@@ -27,58 +27,39 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * - Computes a diff score for the modification
  * - Persists diff data to the database
  * - Returns formatted response with diff results
- *
- * Note: This is a specialized Processor for diff calculation.
- * Does not inherit from AbstractDataPersister as it has unique requirements.
  */
-class DiffMatchPatchProcessor implements ProcessorInterface
+class DiffMatchPatchProcessor extends AbstractDataPersister
 {
-
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private readonly Security $security,
+        EntityManagerInterface $entityManager,
+        Security $security,
         private RequestStack $requestStack,
-    ) {}
+    ) {
+        parent::__construct($entityManager, $security);
+    }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): void
     {
-        $user = $this->security->getUser();
-
-        if (!$user) {
-            throw new BadRequestHttpException('You are not logged in');
-        }
+        $user = $this->getAuthenticatedUser();
 
         /**
          * @var Patchnote $modifiedPatchnote
          */
         $modifiedPatchnote = $data;
 
-        // Ensure we're getting the original unmodified entity from the database
-        // Detach any tracked entity with same ID first
         if ($this->entityManager->contains($modifiedPatchnote)) {
             $this->entityManager->detach($modifiedPatchnote);
         }
 
-        // Get a clean copy from the database
         $oldPatchnote = $this->entityManager->getRepository(Patchnote::class)->findOneBy(['id' => $modifiedPatchnote->getId()]);
 
         $oldContent = $oldPatchnote ? $oldPatchnote->getContent() : '';
         $newContent = $modifiedPatchnote->getContent();
 
-
         $dmp = new DiffMatchPatch();
         $diffs = $dmp->diff_main($oldContent, $newContent, false);
-
-        // Apply semantic cleanup to improve human readability
-        // This reduces semantically trivial equalities and improves word boundaries
         $dmp->diff_cleanupSemantic($diffs);
-
-        // Apply efficiency cleanup to reduce operationally trivial equalities
-        // This merges small changes that are close together
         $dmp->diff_cleanupEfficiency($diffs);
-
-        // Todo : Use json_encode to not use th deprecated Array format, need to change the DB column.
-        // $diffs(json_encode($diffs, JSON_PRETTY_PRINT));
 
         $this->modifyPatchnote($oldPatchnote, $modifiedPatchnote);
         $this->persistModification($diffs, $user, $oldPatchnote);
