@@ -17,7 +17,7 @@ abstract class AbstractDataPersister implements ProcessorInterface
 {
     public function __construct(
         protected EntityManagerInterface $entityManager,
-        protected Security $security,
+        protected ?Security $security = null,
     ) {}
 
     protected function getAuthenticatedUser(): User
