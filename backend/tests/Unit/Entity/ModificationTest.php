@@ -79,17 +79,17 @@ class ModificationTest extends TestCase
         $user->setUsername('testuser');
         $user->setEmail('test@example.com');
         $user->setPassword('password');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
 
         $patchnote = new Patchnote();
         $patchnote->setTitle('Test Patchnote');
         $patchnote->setContent('Original content');
-        $patchnote->setCreatedAt(new \DateTimeImmutable());
+        $patchnote->setCreatedAtValue();
 
         // Set up modification
         $this->modification->setUser($user);
         $this->modification->setPatchnote($patchnote);
-        $this->modification->setCreatedAt(new \DateTimeImmutable());
+        $this->modification->setCreatedAtValue();
         $this->modification->setDifference([
             [-1, 'Original'],
             [1, 'Modified']
