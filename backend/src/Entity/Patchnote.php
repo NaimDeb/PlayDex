@@ -25,8 +25,7 @@ use App\State\Provider\SoftDeletedStateProvider;
 use SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-
-
+use TimestampableTrait;
 
 // Todo : check security
 
@@ -63,6 +62,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
     use SoftDeletableTrait;
+    use TimestampableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -159,18 +159,6 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
     public function setReleasedAt(?\DateTimeImmutable $releasedAt): static
     {
         $this->releasedAt = $releasedAt;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
 
         return $this;
     }
