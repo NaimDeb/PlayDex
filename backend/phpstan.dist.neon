@@ -1,0 +1,11 @@
+parameters:
+    level: 5
+
+    paths:
+        - src/
+
+    excludePaths:
+        - var/
+        - vendor/
+        - bin/
+        - config/
