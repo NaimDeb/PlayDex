@@ -22,6 +22,7 @@ use App\Interfaces\Entity\OwnableInterface;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\State\Provider\SoftDeletedStateProvider;
+use SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -61,6 +62,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
+    use SoftDeletableTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -112,16 +115,12 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
     #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'patchnote', orphanRemoval: true)]
     private Collection $modification;
 
-    #[ORM\Column]
-    private ?bool $isDeleted = null;
+
 
     public function __construct()
     {
         $this->modification = new ArrayCollection();
-        $this->isDeleted = false;
     }
-
-
 
     public function getId(): ?int
     {
@@ -250,32 +249,6 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
                 $modification->setPatchnote(null);
             }
         }
-
-        return $this;
-    }
-
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
-    }
-
-    public function setIsDeleted(bool $isDeleted): static
-    {
-        $this->isDeleted = $isDeleted;
-
-        return $this;
-    }
-
-    public function delete(): static
-    {
-        $this->isDeleted = true;
-
-        return $this;
-    }
-
-    public function restore(): static
-    {
-        $this->isDeleted = false;
 
         return $this;
     }

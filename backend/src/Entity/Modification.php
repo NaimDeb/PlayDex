@@ -19,6 +19,7 @@ use App\State\Provider\SoftDeletedStateProvider;
 use App\Repository\ReportRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 
@@ -59,6 +60,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 class Modification implements ReportableInterface, SoftDeletableInterface
 {
 
+    use SoftDeletableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -82,10 +84,6 @@ class Modification implements ReportableInterface, SoftDeletableInterface
     #[Groups(['modification:write', 'modification:read', 'modification:admin'])]
     private ?Patchnote $patchnote = null;
 
-    #[ORM\Column]
-    #[Groups(['modification:read'])]
-    private ?bool $isDeleted = null;
-
     #[ORM\Column(type: Types::ARRAY, nullable: true)]
     #[Groups(['modification:read'])]
     private ?array $difference = null;
@@ -94,11 +92,10 @@ class Modification implements ReportableInterface, SoftDeletableInterface
     #[Groups(['modification:admin'])]
     private ?int $reportCount = null;
 
-
+    
 
     public function __construct()
     {
-        $this->isDeleted = false;
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -106,8 +103,6 @@ class Modification implements ReportableInterface, SoftDeletableInterface
     {
         return $this->id;
     }
-
-
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
@@ -145,12 +140,6 @@ class Modification implements ReportableInterface, SoftDeletableInterface
         return $this;
     }
 
-    #[Groups(['modification:read'])]
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
-    }
-
     public function setIsDeleted(bool $isDeleted): static
     {
         $this->isDeleted = $isDeleted;
@@ -178,20 +167,6 @@ class Modification implements ReportableInterface, SoftDeletableInterface
     public function setReportCount(?int $reportCount): static
     {
         $this->reportCount = $reportCount;
-
-        return $this;
-    }
-
-    public function delete(): static
-    {
-        $this->isDeleted = true;
-
-        return $this;
-    }
-
-    public function restore(): static
-    {
-        $this->isDeleted = false;
 
         return $this;
     }
