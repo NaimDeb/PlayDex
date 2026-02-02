@@ -58,8 +58,7 @@ class ModificationTest extends TestCase
 
     public function testCreatedAtIsSet(): void
     {
-        $date = new \DateTimeImmutable();
-        $this->modification->setCreatedAt($date);
+        $this->modification->setCreatedAtValue();
 
         $this->assertEquals($date, $this->modification->getCreatedAt());
     }
