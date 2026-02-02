@@ -21,7 +21,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
-
+use TimestampableTrait;
 
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
 #[ApiResource(
@@ -61,6 +61,7 @@ class Modification implements ReportableInterface, SoftDeletableInterface
 {
 
     use SoftDeletableTrait;
+    use TimestampableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -92,7 +93,7 @@ class Modification implements ReportableInterface, SoftDeletableInterface
     #[Groups(['modification:admin'])]
     private ?int $reportCount = null;
 
-    
+
 
     public function __construct()
     {
@@ -102,18 +103,6 @@ class Modification implements ReportableInterface, SoftDeletableInterface
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
     }
 
     public function getUser(): ?User
