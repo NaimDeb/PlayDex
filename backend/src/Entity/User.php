@@ -22,6 +22,7 @@ use App\DataPersister\UserUpdateDataPersister;
 use App\Interfaces\Entity\BannableInterface;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\State\Provider\MeProvider;
+use SoftDeletableTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -98,6 +99,8 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDeletableInterface, BannableInterface
 {
+    use SoftDeletableTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -204,7 +207,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
         $this->patchnotes = new ArrayCollection();
         $this->modifications = new ArrayCollection();
         $this->reports = new ArrayCollection();
-        $this->isDeleted = false;
         $this->followedGames = new ArrayCollection();
         $this->warnings = new ArrayCollection();
     }
@@ -408,32 +410,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
                 $report->setReportedBy(null);
             }
         }
-
-        return $this;
-    }
-
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
-    }
-
-    public function setIsDeleted(bool $isDeleted): static
-    {
-        $this->isDeleted = $isDeleted;
-
-        return $this;
-    }
-
-    public function delete(): static
-    {
-        $this->isDeleted = true;
-
-        return $this;
-    }
-
-    public function restore(): static
-    {
-        $this->isDeleted = false;
 
         return $this;
     }
