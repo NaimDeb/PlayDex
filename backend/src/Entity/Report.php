@@ -14,6 +14,7 @@ use App\State\Provider\AdminReportProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -47,6 +48,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
 class Report implements SoftDeletableInterface
 {
+    use SoftDeletableTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -74,9 +77,6 @@ class Report implements SoftDeletableInterface
     #[Groups(['report:write', 'report:read'])]
     private ?string $reportableEntity = null;
 
-    #[ORM\Column]
-    private ?bool $isDeleted = null;
-
     // Virtual property for entity details (populated by provider)
     #[Groups(['report:read'])]
     public ?array $entityDetails = null;
@@ -84,7 +84,6 @@ class Report implements SoftDeletableInterface
 
     public function __construct()
     {
-        $this->isDeleted = false;
     }
 
     public function getId(): ?int
@@ -152,29 +151,4 @@ class Report implements SoftDeletableInterface
         return $this;
     }
 
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
-    }
-
-    public function setIsDeleted(bool $isDeleted): static
-    {
-        $this->isDeleted = $isDeleted;
-
-        return $this;
-    }
-
-    public function delete(): static
-    {
-        $this->isDeleted = true;
-
-        return $this;
-    }
-
-    public function restore(): static
-    {
-        $this->isDeleted = false;
-
-        return $this;
-    }
 }
