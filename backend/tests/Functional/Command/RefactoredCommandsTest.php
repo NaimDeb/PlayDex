@@ -7,65 +7,42 @@ use App\Command\GetCompaniesFromIgdbCommand;
 use App\Command\GetGamesFromIgdbCommand;
 use App\Command\GetExtensionsFromIgdbCommand;
 use App\Config\Api\DataImportRegistry;
-use App\Config\Api\IgdbGenreDefinition;
-use App\Config\Api\IgdbCompanyDefinition;
-use App\Config\Api\IgdbGameDefinition;
-use App\Config\Api\IgdbExtensionDefinition;
+use App\Config\Api\IGDB\IgdbGenreDefinition;
+use App\Config\Api\IGDB\IgdbCompanyDefinition;
+use App\Config\Api\IGDB\IgdbGameDefinition;
+use App\Config\Api\IGDB\IgdbExtensionDefinition;
 use App\Service\Api\IgdbGenreFetcher;
 use App\Service\Api\IgdbCompanyFetcher;
 use App\Service\Api\IgdbGameFetcher;
 use App\Service\Api\IgdbExtensionFetcher;
-use App\Service\Api\IgdbDataProcessor;
-use App\Service\Api\IgdbGenreStorage;
-use App\Service\Api\IgdbCompanyStorage;
-use App\Service\Api\IgdbGameStorage;
-use App\Service\Api\IgdbExtensionStorage;
+use App\Service\Processor\IgdbDataProcessor;
+use App\Service\Storage\IgdbGenreStorage;
+use App\Service\Storage\IgdbCompanyStorage;
+use App\Service\Storage\IgdbGameStorage;
+use App\Service\Storage\IgdbExtensionStorage;
 use App\Service\ExternalApiService;
 use App\Service\IgdbDataProcessorService;
 use App\Service\DatabaseOperationService;
+use App\Service\ProgressBarHandlerService;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use PHPUnit\Framework\TestCase;
 
 class RefactoredCommandsTest extends TestCase
 {
-    private DataImportRegistry $registry;
+    private ProgressBarHandlerService|\PHPUnit\Framework\MockObject\MockObject $progressHandler;
+    private DatabaseOperationService|\PHPUnit\Framework\MockObject\MockObject $databaseService;
+    private ContainerInterface|\PHPUnit\Framework\MockObject\MockObject $container;
     private ExternalApiService|\PHPUnit\Framework\MockObject\MockObject $externalApiService;
     private IgdbDataProcessorService|\PHPUnit\Framework\MockObject\MockObject $igdbProcessorService;
-    private DatabaseOperationService|\PHPUnit\Framework\MockObject\MockObject $databaseService;
 
     protected function setUp(): void
     {
+        $this->progressHandler = $this->createMock(ProgressBarHandlerService::class);
+        $this->databaseService = $this->createMock(DatabaseOperationService::class);
+        $this->container = $this->createMock(ContainerInterface::class);
         $this->externalApiService = $this->createMock(ExternalApiService::class);
         $this->igdbProcessorService = $this->createMock(IgdbDataProcessorService::class);
-        $this->databaseService = $this->createMock(DatabaseOperationService::class);
-
-        $this->registry = new DataImportRegistry();
-        $this->registerAllDefinitions();
-    }
-
-    private function registerAllDefinitions(): void
-    {
-        $this->registry
-            ->register(new IgdbGenreDefinition(
-                new IgdbGenreFetcher($this->externalApiService),
-                new IgdbDataProcessor($this->igdbProcessorService),
-                new IgdbGenreStorage($this->databaseService)
-            ))
-            ->register(new IgdbCompanyDefinition(
-                new IgdbCompanyFetcher($this->externalApiService),
-                new IgdbDataProcessor($this->igdbProcessorService),
-                new IgdbCompanyStorage($this->databaseService)
-            ))
-            ->register(new IgdbGameDefinition(
-                new IgdbGameFetcher($this->externalApiService),
-                new IgdbDataProcessor($this->igdbProcessorService),
-                new IgdbGameStorage($this->databaseService)
-            ))
-            ->register(new IgdbExtensionDefinition(
-                new IgdbExtensionFetcher($this->externalApiService),
-                new IgdbDataProcessor($this->igdbProcessorService),
-                new IgdbExtensionStorage($this->databaseService)
-            ));
     }
 
     public function testGetGenresCommandExecutes(): void
@@ -91,9 +68,9 @@ class RefactoredCommandsTest extends TestCase
             ->willReturn(true);
 
         $command = new GetGenresFromIgdbCommand(
-            $this->registry->get('genres')->getFetcher(),
-            $this->registry->get('genres')->getProcessor(),
-            $this->registry->get('genres')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -125,9 +102,9 @@ class RefactoredCommandsTest extends TestCase
             ->willReturn(true);
 
         $command = new GetCompaniesFromIgdbCommand(
-            $this->registry->get('companies')->getFetcher(),
-            $this->registry->get('companies')->getProcessor(),
-            $this->registry->get('companies')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -159,9 +136,9 @@ class RefactoredCommandsTest extends TestCase
             ->willReturn(true);
 
         $command = new GetGamesFromIgdbCommand(
-            $this->registry->get('games')->getFetcher(),
-            $this->registry->get('games')->getProcessor(),
-            $this->registry->get('games')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -193,9 +170,9 @@ class RefactoredCommandsTest extends TestCase
             ->willReturn(true);
 
         $command = new GetExtensionsFromIgdbCommand(
-            $this->registry->get('extensions')->getFetcher(),
-            $this->registry->get('extensions')->getProcessor(),
-            $this->registry->get('extensions')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -215,9 +192,9 @@ class RefactoredCommandsTest extends TestCase
             ->willReturn(0);
 
         $command = new GetGenresFromIgdbCommand(
-            $this->registry->get('genres')->getFetcher(),
-            $this->registry->get('genres')->getProcessor(),
-            $this->registry->get('genres')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -249,9 +226,9 @@ class RefactoredCommandsTest extends TestCase
             ->willReturn(true);
 
         $command = new GetGenresFromIgdbCommand(
-            $this->registry->get('genres')->getFetcher(),
-            $this->registry->get('genres')->getProcessor(),
-            $this->registry->get('genres')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -273,9 +250,9 @@ class RefactoredCommandsTest extends TestCase
             ->method('getIgdbGenres');
 
         $command = new GetGenresFromIgdbCommand(
-            $this->registry->get('genres')->getFetcher(),
-            $this->registry->get('genres')->getProcessor(),
-            $this->registry->get('genres')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -292,9 +269,9 @@ class RefactoredCommandsTest extends TestCase
             ->willThrowException(new \Exception('API Error'));
 
         $command = new GetGenresFromIgdbCommand(
-            $this->registry->get('genres')->getFetcher(),
-            $this->registry->get('genres')->getProcessor(),
-            $this->registry->get('genres')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $tester = new CommandTester($command);
@@ -306,27 +283,27 @@ class RefactoredCommandsTest extends TestCase
     public function testAllCommandsCanBeRegisteredSimultaneously(): void
     {
         $genreCommand = new GetGenresFromIgdbCommand(
-            $this->registry->get('genres')->getFetcher(),
-            $this->registry->get('genres')->getProcessor(),
-            $this->registry->get('genres')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $companyCommand = new GetCompaniesFromIgdbCommand(
-            $this->registry->get('companies')->getFetcher(),
-            $this->registry->get('companies')->getProcessor(),
-            $this->registry->get('companies')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $gameCommand = new GetGamesFromIgdbCommand(
-            $this->registry->get('games')->getFetcher(),
-            $this->registry->get('games')->getProcessor(),
-            $this->registry->get('games')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         $extensionCommand = new GetExtensionsFromIgdbCommand(
-            $this->registry->get('extensions')->getFetcher(),
-            $this->registry->get('extensions')->getProcessor(),
-            $this->registry->get('extensions')->getStorage()
+            $this->progressHandler,
+            $this->databaseService,
+            $this->container
         );
 
         // All commands should exist and be properly initialized
