@@ -11,20 +11,146 @@ parameters:
 services:
   # default configuration for services in *this* file
   _defaults:
-    autowire: true # Automatically injects dependencies in your services.
+    autowire: false
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  # Alias for ContainerInterface
+  Symfony\Component\DependencyInjection\ContainerInterface: "@service_container"
+
   App\Command\GetIgdbDataCommand:
+    autowire: false
     tags:
       - { name: "console.command" }
+    arguments:
+      - '@App\Repository\UpdateHistoryRepository'
+      - "@app.config.api.igdb.registry"
+
+  # Refactored IGDB Commands
+  App\Command\GetGenresFromIgdbCommand:
+    autowire: false
+    tags:
+      - { name: "console.command" }
+    arguments:
+      - '@App\Service\ProgressBarHandlerService'
+      - '@App\Service\DatabaseOperationService'
+      - "@service_container"
+
+  App\Command\GetCompaniesFromIgdbCommand:
+    autowire: false
+    tags:
+      - { name: "console.command" }
+    arguments:
+      - '@App\Service\ProgressBarHandlerService'
+      - '@App\Service\DatabaseOperationService'
+      - "@service_container"
+
+  App\Command\GetGamesFromIgdbCommand:
+    autowire: false
+    tags:
+      - { name: "console.command" }
+    arguments:
+      - '@App\Service\ProgressBarHandlerService'
+      - '@App\Service\DatabaseOperationService'
+      - "@service_container"
+
+  App\Command\GetExtensionsFromIgdbCommand:
+    autowire: false
+    tags:
+      - { name: "console.command" }
+    arguments:
+      - '@App\Service\ProgressBarHandlerService'
+      - '@App\Service\DatabaseOperationService'
+      - "@service_container"
 
   # makes classes in src/ available to be used as services
   # this creates a service per class whose id is the fully-qualified class name
   App\:
     resource: "../src/"
+    autowire: true
+    autoconfigure: true
     exclude:
       - "../src/DependencyInjection/"
       - "../src/Entity/"
+      - "../src/Config/"
       - "../src/Kernel.php"
+      - "../src/Command/"
+
+  # IGDB Data Import Services Configuration
+  # Fetchers
+  app.api.igdb.genre_fetcher:
+    class: App\Service\Api\IgdbGenreFetcher
+    arguments:
+      - '@App\Service\ExternalApiService'
+
+  app.api.igdb.company_fetcher:
+    class: App\Service\Api\IgdbCompanyFetcher
+    arguments:
+      - '@App\Service\ExternalApiService'
+
+  app.api.igdb.game_fetcher:
+    class: App\Service\Api\IgdbGameFetcher
+    arguments:
+      - '@App\Service\ExternalApiService'
+
+  app.api.igdb.extension_fetcher:
+    class: App\Service\Api\IgdbExtensionFetcher
+    arguments:
+      - '@App\Service\ExternalApiService'
+
+  # Processor
+  app.processor.igdb_data_processor:
+    class: App\Service\Processor\IgdbDataProcessor
+    arguments:
+      - '@App\Service\IgdbDataProcessorService'
+
+  # Storage Classes
+  app.storage.igdb_genre_storage:
+    class: App\Service\Storage\IgdbGenreStorage
+    arguments:
+      - '@App\Service\DatabaseOperationService'
+      - '@App\Service\IgdbDataProcessorService'
+
+  app.storage.igdb_company_storage:
+    class: App\Service\Storage\IgdbCompanyStorage
+    arguments:
+      - '@App\Service\DatabaseOperationService'
+      - '@App\Service\IgdbDataProcessorService'
+
+  app.storage.igdb_game_storage:
+    class: App\Service\Storage\IgdbGameStorage
+    arguments:
+      - '@App\Service\DatabaseOperationService'
+      - '@App\Service\IgdbDataProcessorService'
+
+  app.storage.igdb_extension_storage:
+    class: App\Service\Storage\IgdbExtensionStorage
+    arguments:
+      - '@App\Service\DatabaseOperationService'
+      - '@App\Service\IgdbDataProcessorService'
+
+  # Data Import Definitions
+  App\Config\Api\DataImportDefinition: ~
+
+  App\Config\Api\IGDB\IgdbGenreDefinition: ~
+
+  App\Config\Api\IGDB\IgdbCompanyDefinition: ~
+
+  App\Config\Api\IGDB\IgdbGameDefinition: ~
+
+  App\Config\Api\IGDB\IgdbExtensionDefinition: ~
+
+  # Data Import Registry
+  app.config.api.igdb.registry:
+    class: App\Config\Api\DataImportRegistry
+    autowire: false
+    autoconfigure: false
+    arguments:
+      - "IGDB"
+    calls:
+      - [register, ['@App\Config\Api\IGDB\IgdbGenreDefinition']]
+      - [register, ['@App\Config\Api\IGDB\IgdbCompanyDefinition']]
+      - [register, ['@App\Config\Api\IGDB\IgdbGameDefinition']]
+      - [register, ['@App\Config\Api\IGDB\IgdbExtensionDefinition']]
 
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones

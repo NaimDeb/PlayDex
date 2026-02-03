@@ -1,8 +1,11 @@
 <?php
+
+namespace App\Traits;
+
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * TimeStampableTrait
+ * TimestampableTrait
  *
  * A trait that provides timestamp functionality to models or classes.
  * This trait automatically handles the creation and modification timestamps
