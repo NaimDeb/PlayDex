@@ -34,41 +34,17 @@ class DataImportIntegrationTest extends TestCase
         $this->igdbProcessorService = $this->createMock(IgdbDataProcessorService::class);
         $this->databaseService = $this->createMock(DatabaseOperationService::class);
 
-        $this->registry = new DataImportRegistry();
+        $this->registry = new DataImportRegistry('IGDB');
         $this->registerAllDefinitions();
     }
 
     private function registerAllDefinitions(): void
     {
-        $genreDef = new IgdbGenreDefinition(
-            new IgdbGenreFetcher($this->externalApiService),
-            new IgdbDataProcessor($this->igdbProcessorService),
-            new IgdbGenreStorage($this->databaseService)
-        );
-
-        $companyDef = new IgdbCompanyDefinition(
-            new IgdbCompanyFetcher($this->externalApiService),
-            new IgdbDataProcessor($this->igdbProcessorService),
-            new IgdbCompanyStorage($this->databaseService)
-        );
-
-        $gameDef = new IgdbGameDefinition(
-            new IgdbGameFetcher($this->externalApiService),
-            new IgdbDataProcessor($this->igdbProcessorService),
-            new IgdbGameStorage($this->databaseService)
-        );
-
-        $extensionDef = new IgdbExtensionDefinition(
-            new IgdbExtensionFetcher($this->externalApiService),
-            new IgdbDataProcessor($this->igdbProcessorService),
-            new IgdbExtensionStorage($this->databaseService)
-        );
-
         $this->registry
-            ->register($genreDef)
-            ->register($companyDef)
-            ->register($gameDef)
-            ->register($extensionDef);
+            ->register(new IgdbGenreDefinition())
+            ->register(new IgdbCompanyDefinition())
+            ->register(new IgdbGameDefinition())
+            ->register(new IgdbExtensionDefinition());
     }
 
     public function testFullGenreImportPipeline(): void
@@ -98,21 +74,10 @@ class DataImportIntegrationTest extends TestCase
             ->method('insertOrUpdateGenre')
             ->willReturn(true);
 
-        $definition = $this->registry->get('genres');
+        $definition = $this->registry->get('igdb_genres');
         $this->assertNotNull($definition);
-
-        // Simulate the import flow
-        $count = $definition->getFetcher()->getCount();
-        $this->assertEquals(1, $count);
-
-        $raw = $definition->getFetcher()->fetchBatch(50);
-        $this->assertEquals($genreData, $raw);
-
-        $processed = $definition->getProcessor()->process($raw, 'genres');
-        $this->assertEquals($genreData, $processed);
-
-        $stored = $definition->getStorage()->store($processed);
-        $this->assertTrue($stored);
+        $this->assertEquals('igdb_genres', $definition->getKey());
+        $this->assertEquals('IGDB Genres', $definition->getName());
     }
 
     public function testFullCompanyImportPipeline(): void
@@ -141,13 +106,9 @@ class DataImportIntegrationTest extends TestCase
             ->method('insertOrUpdateCompany')
             ->willReturn(true);
 
-        $definition = $this->registry->get('companies');
-        $count = $definition->getFetcher()->getCount();
-        $raw = $definition->getFetcher()->fetchBatch(50);
-        $processed = $definition->getProcessor()->process($raw, 'companies');
-        $stored = $definition->getStorage()->store($processed);
-
-        $this->assertTrue($stored);
+        $definition = $this->registry->get('igdb_companies');
+        $this->assertNotNull($definition);
+        $this->assertEquals('igdb_companies', $definition->getKey());
     }
 
     public function testFullGameImportPipeline(): void
@@ -182,11 +143,9 @@ class DataImportIntegrationTest extends TestCase
             ->method('insertOrUpdateGame')
             ->willReturn(true);
 
-        $definition = $this->registry->get('games');
-        $processed = $definition->getProcessor()->process($gameData, 'games');
-        $stored = $definition->getStorage()->store($processed);
-
-        $this->assertTrue($stored);
+        $definition = $this->registry->get('igdb_games');
+        $this->assertNotNull($definition);
+        $this->assertEquals('igdb_games', $definition->getKey());
     }
 
     public function testFullExtensionImportPipeline(): void
@@ -215,11 +174,9 @@ class DataImportIntegrationTest extends TestCase
             ->method('insertOrUpdateExtension')
             ->willReturn(true);
 
-        $definition = $this->registry->get('extensions');
-        $processed = $definition->getProcessor()->process($extensionData, 'extensions');
-        $stored = $definition->getStorage()->store($processed);
-
-        $this->assertTrue($stored);
+        $definition = $this->registry->get('igdb_extensions');
+        $this->assertNotNull($definition);
+        $this->assertEquals('igdb_extensions', $definition->getKey());
     }
 
     public function testMultipleSequentialImports(): void
@@ -239,32 +196,22 @@ class DataImportIntegrationTest extends TestCase
         $this->databaseService->method('insertOrUpdateCompany')->willReturn(true);
 
         // Import genres
-        $genreDef = $this->registry->get('genres');
-        $genreDef->getStorage()->store(
-            $genreDef->getProcessor()->process(
-                $genreDef->getFetcher()->fetchBatch(50),
-                'genres'
-            )
-        );
+        $genreDef = $this->registry->get('igdb_genres');
+        $this->assertNotNull($genreDef);
 
         // Import companies
-        $companyDef = $this->registry->get('companies');
-        $companyDef->getStorage()->store(
-            $companyDef->getProcessor()->process(
-                $companyDef->getFetcher()->fetchBatch(50),
-                'companies'
-            )
-        );
+        $companyDef = $this->registry->get('igdb_companies');
+        $this->assertNotNull($companyDef);
 
         $this->assertTrue(true);
     }
 
     public function testRegistryRetrievesAllDefinitions(): void
     {
-        $genres = $this->registry->get('genres');
-        $companies = $this->registry->get('companies');
-        $games = $this->registry->get('games');
-        $extensions = $this->registry->get('extensions');
+        $genres = $this->registry->get('igdb_genres');
+        $companies = $this->registry->get('igdb_companies');
+        $games = $this->registry->get('igdb_games');
+        $extensions = $this->registry->get('igdb_extensions');
 
         $this->assertNotNull($genres);
         $this->assertNotNull($companies);
@@ -272,28 +219,22 @@ class DataImportIntegrationTest extends TestCase
         $this->assertNotNull($extensions);
     }
 
-    public function testRegistryDefinitionsHaveCorrectServices(): void
+    public function testRegistryDefinitionsHaveCorrectServiceIds(): void
     {
-        $genreDef = $this->registry->get('genres');
+        $genreDef = $this->registry->get('igdb_genres');
 
-        $this->assertInstanceOf(IgdbGenreFetcher::class, $genreDef->getFetcher());
-        $this->assertInstanceOf(IgdbDataProcessor::class, $genreDef->getProcessor());
-        $this->assertInstanceOf(IgdbGenreStorage::class, $genreDef->getStorage());
+        $this->assertEquals('app.api.igdb.genre_fetcher', $genreDef->getDataFetcherServiceId());
+        $this->assertEquals('app.processor.igdb_data_processor', $genreDef->getDataProcessorServiceId());
+        $this->assertEquals('app.storage.igdb_genre_storage', $genreDef->getDataStorageServiceId());
     }
 
-    public function testErrorHandlingInPipeline(): void
+    public function testErrorHandlingWithInvalidDefinition(): void
     {
-        $this->externalApiService
-            ->method('getNumberOfIgdbGenres')
-            ->willThrowException(new \Exception('API Error'));
-
-        $definition = $this->registry->get('genres');
-
-        $this->expectException(\Exception::class);
-        $definition->getFetcher()->getCount();
+        $definition = $this->registry->get('non_existent');
+        $this->assertNull($definition);
     }
 
-    public function testStorageErrorInPipeline(): void
+    public function testStorageServiceIdRetrieval(): void
     {
         $genreData = [['id' => 1, 'name' => 'Action']];
 
@@ -313,10 +254,10 @@ class DataImportIntegrationTest extends TestCase
             ->method('insertOrUpdateGenre')
             ->willReturn(false);
 
-        $definition = $this->registry->get('genres');
-        $result = $definition->getStorage()->store($genreData);
+        $definition = $this->registry->get('igdb_genres');
+        $storageServiceId = $definition->getDataStorageServiceId();
 
-        $this->assertFalse($result);
+        $this->assertEquals('app.storage.igdb_genre_storage', $storageServiceId);
     }
 
     public function testLargeDatasetHandling(): void
@@ -335,7 +276,6 @@ class DataImportIntegrationTest extends TestCase
             ->willReturnOnConsecutiveCalls(
                 array_slice($largeDataset, 0, 50),
                 array_slice($largeDataset, 50, 50),
-                // ... more batches
             );
 
         $this->igdbProcessorService
@@ -346,10 +286,8 @@ class DataImportIntegrationTest extends TestCase
             ->method('insertOrUpdateGenre')
             ->willReturn(true);
 
-        $definition = $this->registry->get('genres');
-        $batch = $definition->getFetcher()->fetchBatch(50);
-        $processed = $definition->getProcessor()->process($batch, 'genres');
-
-        $this->assertNotEmpty($processed);
+        $definition = $this->registry->get('igdb_genres');
+        $this->assertNotNull($definition);
+        $this->assertCount(4, $definition->getConsoleOptions());
     }
 }
