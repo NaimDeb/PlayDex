@@ -22,11 +22,11 @@ use App\DataPersister\UserUpdateDataPersister;
 use App\Interfaces\Entity\BannableInterface;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\State\Provider\MeProvider;
-use SoftDeletableTrait;
+use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use TimestampableTrait;
+use App\Traits\TimestampableTrait;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
