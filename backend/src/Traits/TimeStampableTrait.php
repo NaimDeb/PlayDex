@@ -27,7 +27,7 @@ trait TimestampableTrait
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function setCreatedAt(DateTimeImmutable $date): void
+    public function setCreatedAt(\DateTimeImmutable $date): void
     {
         $this->createdAt = $date;
     }
