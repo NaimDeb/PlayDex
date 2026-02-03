@@ -17,11 +17,11 @@ use App\Repository\ModificationRepository;
 use App\State\Provider\AdminModificationProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use App\Repository\ReportRepository;
+use App\Traits\SoftDeletableTrait;
+use App\Traits\TimestampableTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
-use TimestampableTrait;
 
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
 #[ApiResource(

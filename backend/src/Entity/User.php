@@ -171,9 +171,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
     #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reportedBy', orphanRemoval: true)]
     private Collection $reports;
 
-    #[ORM\Column]
-    private ?bool $isDeleted = null;
-
     /**
      * @var Collection<int, FollowedGames>
      */
