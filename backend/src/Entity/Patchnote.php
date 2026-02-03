@@ -22,10 +22,10 @@ use App\Interfaces\Entity\OwnableInterface;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\State\Provider\SoftDeletedStateProvider;
-use SoftDeletableTrait;
+use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use TimestampableTrait;
+use App\Traits\TimestampableTrait;
 
 // Todo : check security
 

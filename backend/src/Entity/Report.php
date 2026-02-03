@@ -14,7 +14,7 @@ use App\State\Provider\AdminReportProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use SoftDeletableTrait;
+use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 

@@ -3,22 +3,22 @@
 namespace App\Tests\Functional\Command;
 
 use App\Config\Api\DataImportRegistry;
-use App\Config\Api\IgdbGenreDefinition;
-use App\Config\Api\IgdbCompanyDefinition;
-use App\Config\Api\IgdbGameDefinition;
-use App\Config\Api\IgdbExtensionDefinition;
-use App\Service\Api\IgdbGenreFetcher;
+use App\Config\Api\IGDB\IgdbCompanyDefinition;
+use App\Config\Api\IGDB\IgdbExtensionDefinition;
+use App\Config\Api\IGDB\IgdbGameDefinition;
+use App\Config\Api\IGDB\IgdbGenreDefinition;
 use App\Service\Api\IgdbCompanyFetcher;
-use App\Service\Api\IgdbGameFetcher;
 use App\Service\Api\IgdbExtensionFetcher;
-use App\Service\Api\IgdbDataProcessor;
-use App\Service\Api\IgdbGenreStorage;
-use App\Service\Api\IgdbCompanyStorage;
-use App\Service\Api\IgdbGameStorage;
-use App\Service\Api\IgdbExtensionStorage;
+use App\Service\Api\IgdbGameFetcher;
+use App\Service\Api\IgdbGenreFetcher;
+use App\Service\DatabaseOperationService;
 use App\Service\ExternalApiService;
 use App\Service\IgdbDataProcessorService;
-use App\Service\DatabaseOperationService;
+use App\Service\Processor\IgdbDataProcessor;
+use App\Service\Storage\IgdbCompanyStorage;
+use App\Service\Storage\IgdbExtensionStorage;
+use App\Service\Storage\IgdbGameStorage;
+use App\Service\Storage\IgdbGenreStorage;
 use PHPUnit\Framework\TestCase;
 
 class DataImportIntegrationTest extends TestCase
