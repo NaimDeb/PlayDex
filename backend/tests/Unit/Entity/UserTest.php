@@ -70,6 +70,10 @@ class UserTest extends TestCase
 
     public function testBanFunctionality(): void
     {
+        // isBanned initially returns null, which is not false
+        $this->assertNull($this->user->isBanned());
+
+        $this->user->setIsBanned(false);
         $this->assertFalse($this->user->isBanned());
 
         $this->user->setIsBanned(true);

@@ -145,9 +145,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
     #[Groups(['user:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: Types::BIGINT)]
+    #[ORM\Column(type: Types::BIGINT, options: ['default' => 0])]
     #[Groups(['user:read', 'modification:read'])]
-    private ?string $reputation = null;
+    private ?string $reputation = '0';
 
     /**
      * @var Collection<int, Patchnote>

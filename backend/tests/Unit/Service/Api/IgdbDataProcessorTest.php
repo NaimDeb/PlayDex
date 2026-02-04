@@ -30,20 +30,10 @@ class IgdbDataProcessorTest extends TestCase
             ['id' => 2, 'name' => 'Adventure', 'created_at' => 1609459200],
         ];
 
-        $processedData = [
-            ['id' => 1, 'name' => 'Action', 'created_at' => 1609459200, 'processed' => true],
-            ['id' => 2, 'name' => 'Adventure', 'created_at' => 1609459200, 'processed' => true],
-        ];
+        // processBatch just returns the data as-is
+        $result = $this->processor->processBatch($rawData);
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGenres')
-            ->with($rawData)
-            ->willReturn($processedData);
-
-        $result = $this->processor->process($rawData, 'genres');
-
-        $this->assertEquals($processedData, $result);
+        $this->assertEquals($rawData, $result);
         $this->assertCount(2, $result);
     }
 
@@ -53,19 +43,9 @@ class IgdbDataProcessorTest extends TestCase
             ['id' => 1, 'name' => 'Nintendo', 'created_at' => 1609459200],
         ];
 
-        $processedData = [
-            ['id' => 1, 'name' => 'Nintendo', 'created_at' => 1609459200, 'processed' => true],
-        ];
+        $result = $this->processor->processBatch($rawData);
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processCompanies')
-            ->with($rawData)
-            ->willReturn($processedData);
-
-        $result = $this->processor->process($rawData, 'companies');
-
-        $this->assertEquals($processedData, $result);
+        $this->assertEquals($rawData, $result);
     }
 
     public function testProcessGameData(): void
@@ -80,26 +60,9 @@ class IgdbDataProcessorTest extends TestCase
             ],
         ];
 
-        $processedData = [
-            [
-                'id' => 1,
-                'name' => 'The Legend of Zelda',
-                'created_at' => 1609459200,
-                'genres' => [1, 2],
-                'companies' => [1],
-                'processed' => true,
-            ],
-        ];
+        $result = $this->processor->processBatch($rawData);
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGames')
-            ->with($rawData)
-            ->willReturn($processedData);
-
-        $result = $this->processor->process($rawData, 'games');
-
-        $this->assertEquals($processedData, $result);
+        $this->assertEquals($rawData, $result);
     }
 
     public function testProcessExtensionData(): void
@@ -108,32 +71,16 @@ class IgdbDataProcessorTest extends TestCase
             ['id' => 1, 'name' => 'DLC 1', 'game' => 1, 'created_at' => 1609459200],
         ];
 
-        $processedData = [
-            ['id' => 1, 'name' => 'DLC 1', 'game' => 1, 'created_at' => 1609459200, 'processed' => true],
-        ];
+        $result = $this->processor->processBatch($rawData);
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processExtensions')
-            ->with($rawData)
-            ->willReturn($processedData);
-
-        $result = $this->processor->process($rawData, 'extensions');
-
-        $this->assertEquals($processedData, $result);
+        $this->assertEquals($rawData, $result);
     }
 
     public function testProcessEmptyData(): void
     {
         $rawData = [];
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGenres')
-            ->with([])
-            ->willReturn([]);
-
-        $result = $this->processor->process($rawData, 'genres');
+        $result = $this->processor->processBatch($rawData);
 
         $this->assertIsArray($result);
         $this->assertEmpty($result);
@@ -151,12 +98,7 @@ class IgdbDataProcessorTest extends TestCase
             ],
         ];
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGenres')
-            ->willReturnArgument(0);
-
-        $result = $this->processor->process($rawData, 'genres');
+        $result = $this->processor->processBatch($rawData);
 
         $this->assertArrayHasKey('id', $result[0]);
         $this->assertArrayHasKey('name', $result[0]);
@@ -171,12 +113,7 @@ class IgdbDataProcessorTest extends TestCase
         ];
         $dataCopy = $originalData;
 
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGenres')
-            ->willReturnArgument(0);
-
-        $this->processor->process($originalData, 'genres');
+        $this->processor->processBatch($originalData);
 
         $this->assertEquals($dataCopy, $originalData);
     }

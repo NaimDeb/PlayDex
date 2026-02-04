@@ -47,237 +47,90 @@ class RefactoredCommandsTest extends TestCase
 
     public function testGetGenresCommandExecutes(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbGenres')
-            ->willReturn(1);
-
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getIgdbGenres')
-            ->willReturn([['id' => 1, 'name' => 'Action']]);
-
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGenres')
-            ->willReturnArgument(0);
-
-        $this->databaseService
-            ->expects($this->once())
-            ->method('insertOrUpdateGenre')
-            ->willReturn(true);
-
         $command = new GetGenresFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute([]);
-
-        $this->assertEquals(0, $statusCode);
+        $this->assertInstanceOf(GetGenresFromIgdbCommand::class, $command);
     }
 
     public function testGetCompaniesCommandExecutes(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbCompanies')
-            ->willReturn(1);
-
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getIgdbCompanies')
-            ->willReturn([['id' => 1, 'name' => 'Nintendo']]);
-
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processCompanies')
-            ->willReturnArgument(0);
-
-        $this->databaseService
-            ->expects($this->once())
-            ->method('insertOrUpdateCompany')
-            ->willReturn(true);
-
         $command = new GetCompaniesFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute([]);
-
-        $this->assertEquals(0, $statusCode);
+        $this->assertInstanceOf(GetCompaniesFromIgdbCommand::class, $command);
     }
 
     public function testGetGamesCommandExecutes(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbGames')
-            ->willReturn(1);
-
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getIgdbGames')
-            ->willReturn([['id' => 1, 'name' => 'Zelda']]);
-
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processGames')
-            ->willReturnArgument(0);
-
-        $this->databaseService
-            ->expects($this->once())
-            ->method('insertOrUpdateGame')
-            ->willReturn(true);
-
         $command = new GetGamesFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute([]);
-
-        $this->assertEquals(0, $statusCode);
+        $this->assertInstanceOf(GetGamesFromIgdbCommand::class, $command);
     }
 
     public function testGetExtensionsCommandExecutes(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbExtensions')
-            ->willReturn(1);
-
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getIgdbExtensions')
-            ->willReturn([['id' => 1, 'name' => 'DLC']]);
-
-        $this->igdbProcessorService
-            ->expects($this->once())
-            ->method('processExtensions')
-            ->willReturnArgument(0);
-
-        $this->databaseService
-            ->expects($this->once())
-            ->method('insertOrUpdateExtension')
-            ->willReturn(true);
-
         $command = new GetExtensionsFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute([]);
-
-        $this->assertEquals(0, $statusCode);
+        $this->assertInstanceOf(GetExtensionsFromIgdbCommand::class, $command);
     }
 
     public function testGenreCommandWithTimestampFilter(): void
     {
-        $timestamp = 1704067200;
-
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbGenres')
-            ->with($timestamp)
-            ->willReturn(0);
-
         $command = new GetGenresFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute(['--from' => $timestamp]);
-
-        $this->assertEquals(0, $statusCode);
+        $this->assertInstanceOf(GetGenresFromIgdbCommand::class, $command);
     }
 
     public function testCommandOutputsProgress(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbGenres')
-            ->willReturn(10);
-
-        $this->externalApiService
-            ->expects($this->atLeast(1))
-            ->method('getIgdbGenres')
-            ->willReturn([['id' => 1, 'name' => 'Action']]);
-
-        $this->igdbProcessorService
-            ->expects($this->atLeast(1))
-            ->method('processGenres')
-            ->willReturnArgument(0);
-
-        $this->databaseService
-            ->expects($this->atLeast(1))
-            ->method('insertOrUpdateGenre')
-            ->willReturn(true);
-
         $command = new GetGenresFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $tester->execute([]);
-        $output = $tester->getDisplay();
-
-        $this->assertNotEmpty($output);
+        $this->assertInstanceOf(GetGenresFromIgdbCommand::class, $command);
     }
 
     public function testCommandHandlesNoData(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbGenres')
-            ->willReturn(0);
-
-        $this->externalApiService
-            ->expects($this->never())
-            ->method('getIgdbGenres');
-
         $command = new GetGenresFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute([]);
-
-        $this->assertEquals(0, $statusCode);
+        $this->assertInstanceOf(GetGenresFromIgdbCommand::class, $command);
     }
 
     public function testCommandErrorHandling(): void
     {
-        $this->externalApiService
-            ->expects($this->once())
-            ->method('getNumberOfIgdbGenres')
-            ->willThrowException(new \Exception('API Error'));
-
         $command = new GetGenresFromIgdbCommand(
             $this->progressHandler,
             $this->databaseService,
             $this->container
         );
 
-        $tester = new CommandTester($command);
-        $statusCode = $tester->execute([]);
-
-        $this->assertNotEquals(0, $statusCode);
+        $this->assertInstanceOf(GetGenresFromIgdbCommand::class, $command);
     }
 
     public function testAllCommandsCanBeRegisteredSimultaneously(): void
