@@ -1,5 +1,6 @@
 <?php
 
+namespace App\Config; 
 final readonly class ApiConfig {
 
 // Pagination
