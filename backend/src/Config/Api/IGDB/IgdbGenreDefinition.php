@@ -26,16 +26,16 @@ class IgdbGenreDefinition extends DataImportDefinition
 
     public function getDataFetcherServiceId(): string
     {
-        return 'app.api.igdb.genre_fetcher';
+        return 'App\Service\Api\IgdbGenreFetcher';
     }
 
     public function getDataProcessorServiceId(): string
     {
-        return 'app.processor.igdb_data_processor';
+        return 'App\Service\Processor\IgdbDataProcessor';
     }
 
     public function getDataStorageServiceId(): string
     {
-        return 'app.storage.igdb_genre_storage';
+        return 'App\Service\Storage\IgdbGenreStorage';
     }
 }

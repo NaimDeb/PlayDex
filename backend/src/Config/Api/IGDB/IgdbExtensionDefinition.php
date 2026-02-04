@@ -27,17 +27,17 @@ class IgdbExtensionDefinition extends DataImportDefinition
 
     public function getDataFetcherServiceId(): string
     {
-        return 'app.api.igdb.extension_fetcher';
+        return 'App\Service\Api\IgdbExtensionFetcher';
     }
 
     public function getDataProcessorServiceId(): string
     {
-        return 'app.processor.igdb_data_processor';
+        return 'App\Service\Processor\IgdbDataProcessor';
     }
 
     public function getDataStorageServiceId(): string
     {
-        return 'app.storage.igdb_extension_storage';
+        return 'App\Service\Storage\IgdbExtensionStorage';
     }
 
     public function getConsoleOptions(): array
