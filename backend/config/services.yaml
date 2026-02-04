@@ -11,56 +11,66 @@ parameters:
 services:
   # default configuration for services in *this* file
   _defaults:
-    autowire: false
+    autowire: true
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
   # Alias for ContainerInterface
   Symfony\Component\DependencyInjection\ContainerInterface: "@service_container"
 
-  App\Command\GetIgdbDataCommand:
-    autowire: false
-    tags:
-      - { name: "console.command" }
+  # Command Factory
+  App\Command\Factory\DataImportCommandFactory:
     arguments:
       - '@App\Repository\UpdateHistoryRepository'
       - "@app.config.api.igdb.registry"
-
-  # Refactored IGDB Commands
-  App\Command\GetGenresFromIgdbCommand:
-    autowire: false
-    tags:
-      - { name: "console.command" }
-    arguments:
       - '@App\Service\ProgressBarHandlerService'
       - '@App\Service\DatabaseOperationService'
       - "@service_container"
+
+  # IGDB Commands - Created via Factory
+  App\Command\GetIgdbDataCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetIgdbDataCommand",
+      ]
+    tags:
+      - { name: "console.command", lazy: false }
+
+  App\Command\GetGenresFromIgdbCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetGenresFromIgdbCommand",
+      ]
+    tags:
+      - { name: "console.command" }
 
   App\Command\GetCompaniesFromIgdbCommand:
-    autowire: false
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetCompaniesFromIgdbCommand",
+      ]
     tags:
       - { name: "console.command" }
-    arguments:
-      - '@App\Service\ProgressBarHandlerService'
-      - '@App\Service\DatabaseOperationService'
-      - "@service_container"
 
   App\Command\GetGamesFromIgdbCommand:
-    autowire: false
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetGamesFromIgdbCommand",
+      ]
     tags:
       - { name: "console.command" }
-    arguments:
-      - '@App\Service\ProgressBarHandlerService'
-      - '@App\Service\DatabaseOperationService'
-      - "@service_container"
 
   App\Command\GetExtensionsFromIgdbCommand:
-    autowire: false
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetExtensionsFromIgdbCommand",
+      ]
     tags:
       - { name: "console.command" }
-    arguments:
-      - '@App\Service\ProgressBarHandlerService'
-      - '@App\Service\DatabaseOperationService'
-      - "@service_container"
 
   # makes classes in src/ available to be used as services
   # this creates a service per class whose id is the fully-qualified class name
@@ -75,74 +85,35 @@ services:
       - "../src/Kernel.php"
       - "../src/Command/"
 
-  # IGDB Data Import Services Configuration
-  # Fetchers
-  app.api.igdb.genre_fetcher:
-    class: App\Service\Api\IgdbGenreFetcher
-    arguments:
-      - '@App\Service\ExternalApiService'
+  # Make API/Storage/Processor services public so they can be fetched from container
+  App\Service\Api\:
+    resource: "../src/Service/Api/"
+    autowire: true
+    autoconfigure: true
+    public: true
 
-  app.api.igdb.company_fetcher:
-    class: App\Service\Api\IgdbCompanyFetcher
-    arguments:
-      - '@App\Service\ExternalApiService'
+  App\Service\Storage\:
+    resource: "../src/Service/Storage/"
+    autowire: true
+    autoconfigure: true
+    public: true
 
-  app.api.igdb.game_fetcher:
-    class: App\Service\Api\IgdbGameFetcher
-    arguments:
-      - '@App\Service\ExternalApiService'
+  App\Service\Processor\:
+    resource: "../src/Service/Processor/"
+    autowire: true
+    autoconfigure: true
+    public: true
 
-  app.api.igdb.extension_fetcher:
-    class: App\Service\Api\IgdbExtensionFetcher
-    arguments:
-      - '@App\Service\ExternalApiService'
-
-  # Processor
-  app.processor.igdb_data_processor:
-    class: App\Service\Processor\IgdbDataProcessor
-    arguments:
-      - '@App\Service\IgdbDataProcessorService'
-
-  # Storage Classes
-  app.storage.igdb_genre_storage:
-    class: App\Service\Storage\IgdbGenreStorage
-    arguments:
-      - '@App\Service\DatabaseOperationService'
-      - '@App\Service\IgdbDataProcessorService'
-
-  app.storage.igdb_company_storage:
-    class: App\Service\Storage\IgdbCompanyStorage
-    arguments:
-      - '@App\Service\DatabaseOperationService'
-      - '@App\Service\IgdbDataProcessorService'
-
-  app.storage.igdb_game_storage:
-    class: App\Service\Storage\IgdbGameStorage
-    arguments:
-      - '@App\Service\DatabaseOperationService'
-      - '@App\Service\IgdbDataProcessorService'
-
-  app.storage.igdb_extension_storage:
-    class: App\Service\Storage\IgdbExtensionStorage
-    arguments:
-      - '@App\Service\DatabaseOperationService'
-      - '@App\Service\IgdbDataProcessorService'
-
-  # Data Import Definitions
-  App\Config\Api\DataImportDefinition: ~
-
+  # Data Import Definitions (auto-configured via PSR-4)
   App\Config\Api\IGDB\IgdbGenreDefinition: ~
-
   App\Config\Api\IGDB\IgdbCompanyDefinition: ~
-
   App\Config\Api\IGDB\IgdbGameDefinition: ~
-
   App\Config\Api\IGDB\IgdbExtensionDefinition: ~
 
   # Data Import Registry
   app.config.api.igdb.registry:
     class: App\Config\Api\DataImportRegistry
-    autowire: false
+    autowire: true
     autoconfigure: false
     arguments:
       - "IGDB"

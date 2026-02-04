@@ -27,17 +27,17 @@ class IgdbGameDefinition extends DataImportDefinition
 
     public function getDataFetcherServiceId(): string
     {
-        return 'app.api.igdb.game_fetcher';
+        return 'App\Service\Api\IgdbGameFetcher';
     }
 
     public function getDataProcessorServiceId(): string
     {
-        return 'app.processor.igdb_data_processor';
+        return 'App\Service\Processor\IgdbDataProcessor';
     }
 
     public function getDataStorageServiceId(): string
     {
-        return 'app.storage.igdb_game_storage';
+        return 'App\Service\Storage\IgdbGameStorage';
     }
 
     public function getConsoleOptions(): array
