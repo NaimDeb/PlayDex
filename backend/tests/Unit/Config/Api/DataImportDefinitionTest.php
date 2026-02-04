@@ -17,9 +17,9 @@ class DataImportDefinitionTest extends TestCase
         $this->assertEquals('igdb_genres', $definition->getKey());
         $this->assertEquals('IGDB Genres', $definition->getName());
         $this->assertStringContainsString('genres', $definition->getDescription());
-        $this->assertEquals('app.api.igdb.genre_fetcher', $definition->getDataFetcherServiceId());
-        $this->assertEquals('app.processor.igdb_data_processor', $definition->getDataProcessorServiceId());
-        $this->assertEquals('app.storage.igdb_genre_storage', $definition->getDataStorageServiceId());
+        $this->assertEquals('App\Service\Api\IgdbGenreFetcher', $definition->getDataFetcherServiceId());
+        $this->assertEquals('App\Service\Processor\IgdbDataProcessor', $definition->getDataProcessorServiceId());
+        $this->assertEquals('App\Service\Storage\IgdbGenreStorage', $definition->getDataStorageServiceId());
     }
 
     public function testIgdbCompanyDefinition(): void
@@ -29,9 +29,9 @@ class DataImportDefinitionTest extends TestCase
         $this->assertEquals('igdb_companies', $definition->getKey());
         $this->assertEquals('IGDB Companies', $definition->getName());
         $this->assertStringContainsString('companies', $definition->getDescription());
-        $this->assertEquals('app.api.igdb.company_fetcher', $definition->getDataFetcherServiceId());
-        $this->assertEquals('app.processor.igdb_data_processor', $definition->getDataProcessorServiceId());
-        $this->assertEquals('app.storage.igdb_company_storage', $definition->getDataStorageServiceId());
+        $this->assertEquals('App\Service\Api\IgdbCompanyFetcher', $definition->getDataFetcherServiceId());
+        $this->assertEquals('App\Service\Processor\IgdbDataProcessor', $definition->getDataProcessorServiceId());
+        $this->assertEquals('App\Service\Storage\IgdbCompanyStorage', $definition->getDataStorageServiceId());
     }
 
     public function testIgdbGameDefinition(): void
@@ -41,9 +41,9 @@ class DataImportDefinitionTest extends TestCase
         $this->assertEquals('igdb_games', $definition->getKey());
         $this->assertEquals('IGDB Games', $definition->getName());
         $this->assertStringContainsString('games', $definition->getDescription());
-        $this->assertEquals('app.api.igdb.game_fetcher', $definition->getDataFetcherServiceId());
-        $this->assertEquals('app.processor.igdb_data_processor', $definition->getDataProcessorServiceId());
-        $this->assertEquals('app.storage.igdb_game_storage', $definition->getDataStorageServiceId());
+        $this->assertEquals('App\Service\Api\IgdbGameFetcher', $definition->getDataFetcherServiceId());
+        $this->assertEquals('App\Service\Processor\IgdbDataProcessor', $definition->getDataProcessorServiceId());
+        $this->assertEquals('App\Service\Storage\IgdbGameStorage', $definition->getDataStorageServiceId());
 
         // Games definition has custom options
         $options = $definition->getConsoleOptions();
@@ -58,9 +58,9 @@ class DataImportDefinitionTest extends TestCase
         $this->assertEquals('igdb_extensions', $definition->getKey());
         $this->assertEquals('IGDB Extensions/DLCs', $definition->getName());
         $this->assertStringContainsString('extensions', $definition->getDescription());
-        $this->assertEquals('app.api.igdb.extension_fetcher', $definition->getDataFetcherServiceId());
-        $this->assertEquals('app.processor.igdb_data_processor', $definition->getDataProcessorServiceId());
-        $this->assertEquals('app.storage.igdb_extension_storage', $definition->getDataStorageServiceId());
+        $this->assertEquals('App\Service\Api\IgdbExtensionFetcher', $definition->getDataFetcherServiceId());
+        $this->assertEquals('App\Service\Processor\IgdbDataProcessor', $definition->getDataProcessorServiceId());
+        $this->assertEquals('App\Service\Storage\IgdbExtensionStorage', $definition->getDataStorageServiceId());
 
         // Extensions definition has custom options
         $options = $definition->getConsoleOptions();
