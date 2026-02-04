@@ -2,8 +2,8 @@
 
 namespace App\Command\Base;
 
-use ApiConfig;
 use App\Config\Api\DataImportDefinition;
+use App\Config\ApiConfig;
 use App\Interfaces\Api\DataFetcherInterface;
 use App\Interfaces\Api\DataProcessorInterface;
 use App\Interfaces\Api\DataStorageInterface;
