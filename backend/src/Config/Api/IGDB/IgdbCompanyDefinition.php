@@ -26,16 +26,16 @@ class IgdbCompanyDefinition extends DataImportDefinition
 
     public function getDataFetcherServiceId(): string
     {
-        return 'app.api.igdb.company_fetcher';
+        return 'App\Service\Api\IgdbCompanyFetcher';
     }
 
     public function getDataProcessorServiceId(): string
     {
-        return 'app.processor.igdb_data_processor';
+        return 'App\Service\Processor\IgdbDataProcessor';
     }
 
     public function getDataStorageServiceId(): string
     {
-        return 'app.storage.igdb_company_storage';
+        return 'App\Service\Storage\IgdbCompanyStorage';
     }
 }
