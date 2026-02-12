@@ -109,6 +109,10 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
     #[Assert\Length(max: 300)]
     private ?string $smallDescription = null;
 
+    #[ORM\Column(length: 255, nullable: true, unique: true)]
+    #[Groups(['patchnote:read'])]
+    private ?string $externalId = null;
+
     /**
      * @var Collection<int, Modification>
      */
@@ -237,6 +241,18 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
                 $modification->setPatchnote(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getExternalId(): ?string
+    {
+        return $this->externalId;
+    }
+
+    public function setExternalId(?string $externalId): static
+    {
+        $this->externalId = $externalId;
 
         return $this;
     }

@@ -67,6 +67,11 @@ class PatchnoteRepository extends ServiceEntityRepository implements PatchnoteRe
             ->getResult();
     }
 
+    public function findByExternalId(string $externalId): ?Patchnote
+    {
+        return $this->findOneBy(['externalId' => $externalId]);
+    }
+
     public function countByGame(Game $game): int
     {
         return $this->createQueryBuilder('p')
