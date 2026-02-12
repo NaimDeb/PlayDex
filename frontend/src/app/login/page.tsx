@@ -45,8 +45,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
-        <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
+      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-off-gray border-secondary rounded-xl">
+        <h1 className="mb-4 text-3xl font-extrabold text-center text-off-white">
           Se connecter
         </h1>
         {(formError.email || error) && (
@@ -58,7 +58,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block mb-1 text-sm font-semibold text-offwhite"
+              className="block mb-1 text-sm font-semibold text-off-white"
             >
               Email
             </label>
@@ -68,7 +68,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={`w-full px-4 py-3 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
+              className={`w-full px-4 py-3 border rounded-lg text-off-white bg-off-white border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
                 formError.email
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
@@ -79,7 +79,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="block mb-1 text-sm font-semibold text-offwhite"
+              className="block mb-1 text-sm font-semibold text-off-white"
             >
               Mot de passe
             </label>
@@ -89,7 +89,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+              className="w-full px-4 py-3 border rounded-lg text-off-white bg-off-white border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
               placeholder="Choisissez un mot de passe"
             />
           </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
             />
             <label
               htmlFor="rememberMe"
-              className="block ml-2 text-sm text-offwhite"
+              className="block ml-2 text-sm text-off-white"
             >
               Se souvenir de moi
             </label>
@@ -111,40 +111,24 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-offwhite bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
+              className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-off-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-off-white"
               disabled={loading}
             >
               {loading ? "Chargement..." : "Se connecter"}
             </button>
           </div>
-          <div className="mt-2 text-sm text-center text-offwhite">
+          <div className="mt-2 text-sm text-center text-off-white">
             Pas encore de compte ?{" "}
             <button
               type="button"
               onClick={() => router.push("/register")}
-              className="font-bold underline text-offwhite hover:text-secondary"
+              className="font-bold underline text-off-white hover:text-secondary"
             >
               S&apos;inscrire
             </button>
           </div>
         </form>
       </div>
-      <style jsx>{`
-        .bg-offgray {
-          background-color: #232329;
-        }
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-in;
-        }
-      `}</style>
     </div>
   );
 }
