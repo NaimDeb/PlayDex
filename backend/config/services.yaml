@@ -7,6 +7,8 @@ parameters:
   IGDB_ACCESS_TOKEN: "%env(IGDB_ACCESS_TOKEN)%"
   TWITCH_CLIENT_ID: "%env(TWITCH_CLIENT_ID)%"
   STEAM_API_KEY: "%env(STEAM_API_KEY)%"
+  STEAM_USERNAME: "%env(STEAM_USERNAME)%"
+  STEAM_PASSWORD: "%env(STEAM_PASSWORD)%"
 
 services:
   # default configuration for services in *this* file
@@ -122,6 +124,13 @@ services:
       - [register, ['@App\Config\Api\IGDB\IgdbCompanyDefinition']]
       - [register, ['@App\Config\Api\IGDB\IgdbGameDefinition']]
       - [register, ['@App\Config\Api\IGDB\IgdbExtensionDefinition']]
+
+  # Steam Polling Command
+  App\Command\PollSteamPatchnotesCommand:
+    autowire: true
+    autoconfigure: true
+    tags:
+      - { name: "console.command" }
 
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones
