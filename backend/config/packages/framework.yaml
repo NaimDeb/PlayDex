@@ -11,6 +11,18 @@ framework:
     scheduler:
         enabled: true
 
+    rate_limiter:
+        api_general:
+            policy: sliding_window
+            limit: 60
+            interval: '1 minute'
+            cache_pool: cache.app
+        api_login:
+            policy: sliding_window
+            limit: 5
+            interval: '1 minute'
+            cache_pool: cache.app
+
 when@test:
     framework:
         test: true
