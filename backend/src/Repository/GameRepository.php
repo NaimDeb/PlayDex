@@ -73,6 +73,17 @@ class GameRepository extends ServiceEntityRepository implements GameRepositoryIn
             ->getResult();
     }
 
+    /**
+     * @return Game[]
+     */
+    public function findAllWithSteamId(): array
+    {
+        return $this->createQueryBuilder('g')
+            ->where('g.steamId IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function getAllApiIds(): array
     {
         $result = $this->createQueryBuilder('g')
