@@ -62,6 +62,7 @@ Follow these steps to set up the backend:
 
 4. **Install Dependencies**:
 
+   - Make sure to decomment ```;extension=sodium``` in your php config file
    - Run the following command to install PHP dependencies:
      ```bash
      composer install

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer require symfony/lock)",
+      "Bash(php bin/phpunit tests/Unit/)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

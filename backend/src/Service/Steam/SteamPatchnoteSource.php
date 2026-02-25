@@ -53,6 +53,49 @@ class SteamPatchnoteSource implements PatchnoteSourceInterface
     }
 
     /**
+     * Fetch a single page of historical news for a Steam app via the GetNewsForApp API.
+     *
+     * @return array{items: array<int, array{appid: int, gid: string, title: string, content: string, date: int}>, hasMore: bool}
+     */
+    public function fetchHistoricalNews(int $appId, ?int $endDate = null, int $count = SteamConfig::HISTORY_FETCH_COUNT): array
+    {
+        $query = [
+            'appid' => $appId,
+            'count' => $count,
+            'maxlength' => 0,
+            'feeds' => SteamConfig::HISTORY_NEWS_FEED,
+        ];
+
+        if ($endDate !== null) {
+            $query['enddate'] = $endDate;
+        }
+
+        try {
+            $response = $this->httpClient->request('GET', SteamConfig::NEWS_API_URL, [
+                'query' => $query,
+            ]);
+            $data = $response->toArray();
+        } catch (\Throwable) {
+            return ['items' => [], 'hasMore' => false];
+        }
+
+        $newsItems = $data['appnews']['newsitems'] ?? [];
+        $patchnotes = [];
+
+        foreach ($newsItems as $item) {
+            $patchnotes[] = [
+                'appid' => $appId,
+                'gid' => (string) ($item['gid'] ?? ''),
+                'title' => $item['title'] ?? '',
+                'content' => $item['contents'] ?? '',
+                'date' => (int) ($item['date'] ?? 0),
+            ];
+        }
+
+        return ['items' => $patchnotes, 'hasMore' => count($newsItems) >= $count];
+    }
+
+    /**
      * Fetch community events for a single app via HTTP (no Node.js dependency).
      *
      * @return array<int, array{appid: int, gid: string, title: string, content: string, date: int}>
