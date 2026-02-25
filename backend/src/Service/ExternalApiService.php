@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Config\ApiConfig;
 use Exception;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -62,11 +63,11 @@ class ExternalApiService
     {
         $body = $this->buildQueryBody([
             'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
-            'where' => 'game_type = 0' . ($from ? ' & updated_at >= ' . $from : ''),
+            'where' => 'game_type = 0 & follows >= ' . ApiConfig::IGDB_GAME_MIN_FOLLOWS
+                . ($from ? ' & updated_at >= ' . $from : ''),
             'limit' => $limit,
             'offset' => $offset
         ]);
-
 
         $response = $this->makeIgdbRequest('/games', $body);
         return json_decode($response->getContent(), true);
@@ -147,7 +148,8 @@ class ExternalApiService
 
     public function getNumberOfIgdbGames(?int $from): int
     {
-        return $this->getCount('/games', 'where game_type = 0' . ($from ? ' & updated_at >= ' . $from : ''));
+        return $this->getCount('/games', 'where game_type = 0 & follows >= ' . ApiConfig::IGDB_GAME_MIN_FOLLOWS
+            . ($from ? ' & updated_at >= ' . $from : ''));
     }
 
     public function getNumberOfIgdbExtensions(?int $from): int
@@ -163,5 +165,29 @@ class ExternalApiService
     public function getNumberOfIgdbCompanies(?int $from): int
     {
         return $this->getCount('/companies', $from ? 'where updated_at >= ' . $from : '');
+    }
+
+    public function searchIgdbGames(string $query, int $limit = 20): array
+    {
+        $body = "search \"{$query}\";\n"
+            . "fields id, name, cover.url, first_release_date, summary, genres.name, involved_companies.company.name;\n"
+            . "where game_type = 0;\n"
+            . "limit {$limit};";
+
+        $response = $this->makeIgdbRequest('/games', $body);
+        return json_decode($response->getContent(), true) ?: [];
+    }
+
+    public function getIgdbGameById(int $igdbId): ?array
+    {
+        $body = $this->buildQueryBody([
+            'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
+            'where' => 'id = ' . $igdbId,
+            'limit' => 1,
+        ]);
+
+        $response = $this->makeIgdbRequest('/games', $body);
+        $results = json_decode($response->getContent(), true);
+        return $results[0] ?? null;
     }
 }
