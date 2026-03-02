@@ -19,10 +19,10 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * - Login routes (/api/login*): 5 requests/minute, keyed by IP
  * - All other /api routes: 60 requests/minute, keyed by authenticated user email or IP
  *
- * Runs after the Firewall (priority 8) so TokenStorage is populated,
- * but before API Platform's ReadListener (priority 4) to prevent DB hits on rate-limited requests.
+ * Runs before the Firewall (priority > 8) to prevent auth attempts on rate-limited requests.
+ * Also runs before PreloadRequestListener (priority 27) and before all normal requests processing.
  */
-#[AsEventListener(event: KernelEvents::REQUEST, method: 'onKernelRequest', priority: 6)]
+#[AsEventListener(event: KernelEvents::REQUEST, method: 'onKernelRequest', priority: 10)]
 #[AsEventListener(event: KernelEvents::RESPONSE, method: 'onKernelResponse', priority: 0)]
 final class ApiRateLimiterListener implements RateLimiterListenerInterface
 {
