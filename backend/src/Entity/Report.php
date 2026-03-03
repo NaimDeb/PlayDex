@@ -8,11 +8,13 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ReportPersister;
 use App\DataPersister\ReportDeleteProcessor;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Repository\ReportRepository;
 use App\State\Provider\AdminReportProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -44,8 +46,10 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
 )]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
-class Report
+class Report implements SoftDeletableInterface
 {
+    use SoftDeletableTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -73,9 +77,6 @@ class Report
     #[Groups(['report:write', 'report:read'])]
     private ?string $reportableEntity = null;
 
-    #[ORM\Column]
-    private ?bool $isDeleted = null;
-
     // Virtual property for entity details (populated by provider)
     #[Groups(['report:read'])]
     public ?array $entityDetails = null;
@@ -83,7 +84,6 @@ class Report
 
     public function __construct()
     {
-        $this->isDeleted = false;
     }
 
     public function getId(): ?int
@@ -151,15 +151,4 @@ class Report
         return $this;
     }
 
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
-    }
-
-    public function setIsDeleted(bool $isDeleted): static
-    {
-        $this->isDeleted = $isDeleted;
-
-        return $this;
-    }
 }

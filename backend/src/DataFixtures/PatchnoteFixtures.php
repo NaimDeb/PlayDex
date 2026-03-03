@@ -99,7 +99,7 @@ class PatchnoteFixtures extends Fixture implements DependentFixtureInterface
         $patchnote->setSmallDescription($smallDescription);
         $patchnote->setContent($content);
         $patchnote->setReleasedAt($releasedAt);
-        $patchnote->setCreatedAt(new \DateTimeImmutable());
+        $patchnote->setCreatedAtValue();
         $patchnote->setImportance($importance);
         $patchnote->setCreatedBy($createdBy);
         $patchnote->setGame($game);

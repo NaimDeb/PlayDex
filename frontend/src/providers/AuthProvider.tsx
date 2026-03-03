@@ -101,13 +101,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await authService.register(data);
         router.push("/login?registered=true");
-      } catch (error) {
+      } catch (error: any) {
+        const errorMessage = error?.response?.data?.detail || 
+                            error?.message || 
+                            "Échec de l'inscription";
         setState((prev) => ({
           ...prev,
-          error:
-            error instanceof Error ? error.message : "Échec de l'inscription",
+          error: errorMessage,
           isAuthenticated: false,
         }));
+        throw error;
       }
     },
     [router]

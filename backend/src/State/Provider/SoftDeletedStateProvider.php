@@ -32,6 +32,11 @@ final class SoftDeletedStateProvider implements ProviderInterface
             ? $this->collectionProvider->provide($operation, $uriVariables, $context)
             : $this->itemProvider->provide($operation, $uriVariables, $context);
 
+        // Return early if data is null
+        if ($data === null) {
+            return null;
+        }
+
         // Only for non admins, admins can see deleted items
         if (!$this->security->isGranted('ROLE_ADMIN')) {
             // For a single item
@@ -44,7 +49,7 @@ final class SoftDeletedStateProvider implements ProviderInterface
 
             $filteredData = [];
             foreach ($data as $item) {
-                if (method_exists($item, 'isDeleted') && $item->isDeleted() !== true) {
+                if ($item !== null && method_exists($item, 'isDeleted') && $item->isDeleted() !== true) {
                     $filteredData[] = $item;
                 }
             }

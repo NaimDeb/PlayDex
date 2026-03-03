@@ -11,15 +11,17 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use App\DataPersister\ModificationPersister;
 use App\DataPersister\ModificationDeleteProcessor;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
 use App\State\Provider\AdminModificationProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use App\Repository\ReportRepository;
+use App\Traits\SoftDeletableTrait;
+use App\Traits\TimestampableTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
-
 
 #[ORM\Entity(repositoryClass: ModificationRepository::class)]
 #[ApiResource(
@@ -55,9 +57,11 @@ use Symfony\Component\Serializer\Attribute\Groups;
 )]
 
 #[ApiFilter(SearchFilter::class, properties: ['patchnote.id' => 'exact'])]
-class Modification implements ReportableInterface
+class Modification implements ReportableInterface, SoftDeletableInterface
 {
 
+    use SoftDeletableTrait;
+    use TimestampableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -81,10 +85,6 @@ class Modification implements ReportableInterface
     #[Groups(['modification:write', 'modification:read', 'modification:admin'])]
     private ?Patchnote $patchnote = null;
 
-    #[ORM\Column]
-    #[Groups(['modification:read'])]
-    private ?bool $isDeleted = null;
-
     #[ORM\Column(type: Types::ARRAY, nullable: true)]
     #[Groups(['modification:read'])]
     private ?array $difference = null;
@@ -97,27 +97,12 @@ class Modification implements ReportableInterface
 
     public function __construct()
     {
-        $this->isDeleted = false;
         $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
     }
 
     public function getUser(): ?User
@@ -142,12 +127,6 @@ class Modification implements ReportableInterface
         $this->patchnote = $patchnote;
 
         return $this;
-    }
-
-    #[Groups(['modification:read'])]
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
     }
 
     public function setIsDeleted(bool $isDeleted): static
@@ -179,5 +158,20 @@ class Modification implements ReportableInterface
         $this->reportCount = $reportCount;
 
         return $this;
+    }
+
+    public function getReportableType(): string
+    {
+        return 'Modification';
+    }
+
+    public function getReportableTitle(): string
+    {
+        return 'Modification #' . $this->id;
+    }
+
+    public function getReportableOwner(): ?User
+    {
+        return $this->user;
     }
 }

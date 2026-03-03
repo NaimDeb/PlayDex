@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php vendor/bin/phpunit)",
+      "Bash(php bin/console lint:container)",
+      "Bash(php bin/console debug:router --env=dev)",
+      "Bash(php vendor/bin/phpunit tests/Unit)"
+    ]
+  }
+}

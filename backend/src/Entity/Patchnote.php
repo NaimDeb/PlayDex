@@ -18,12 +18,14 @@ use ApiPlatform\Metadata\Patch;
 use App\DataPersister\DiffMatchPatchProcessor;
 use App\DataPersister\PatchnotePersister;
 use App\DataPersister\PatchnoteDeleteProcessor;
+use App\Interfaces\Entity\OwnableInterface;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\State\Provider\SoftDeletedStateProvider;
+use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-
-
+use App\Traits\TimestampableTrait;
 
 // Todo : check security
 
@@ -42,6 +44,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         new Get(
             normalizationContext: ['groups' => ['patchnote:read']],
             provider: SoftDeletedStateProvider::class,
+            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 300],
         ),
         new Patch(
             security: "is_granted('ROLE_USER')",
@@ -57,8 +60,11 @@ use Symfony\Component\Validator\Constraints as Assert;
     ]
 )]
 
-class Patchnote implements ReportableInterface
+class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
+    use SoftDeletableTrait;
+    use TimestampableTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -104,22 +110,22 @@ class Patchnote implements ReportableInterface
     #[Assert\Length(max: 300)]
     private ?string $smallDescription = null;
 
+    #[ORM\Column(length: 255, nullable: true, unique: true)]
+    #[Groups(['patchnote:read'])]
+    private ?string $externalId = null;
+
     /**
      * @var Collection<int, Modification>
      */
     #[ORM\OneToMany(targetEntity: Modification::class, mappedBy: 'patchnote', orphanRemoval: true)]
     private Collection $modification;
 
-    #[ORM\Column]
-    private ?bool $isDeleted = null;
+
 
     public function __construct()
     {
         $this->modification = new ArrayCollection();
-        $this->isDeleted = false;
     }
-
-
 
     public function getId(): ?int
     {
@@ -158,18 +164,6 @@ class Patchnote implements ReportableInterface
     public function setReleasedAt(?\DateTimeImmutable $releasedAt): static
     {
         $this->releasedAt = $releasedAt;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
 
         return $this;
     }
@@ -252,15 +246,30 @@ class Patchnote implements ReportableInterface
         return $this;
     }
 
-    public function isDeleted(): ?bool
+    public function getExternalId(): ?string
     {
-        return $this->isDeleted;
+        return $this->externalId;
     }
 
-    public function setIsDeleted(bool $isDeleted): static
+    public function setExternalId(?string $externalId): static
     {
-        $this->isDeleted = $isDeleted;
+        $this->externalId = $externalId;
 
         return $this;
+    }
+
+    public function getReportableType(): string
+    {
+        return 'Patchnote';
+    }
+
+    public function getReportableTitle(): string
+    {
+        return $this->title ?? '';
+    }
+
+    public function getReportableOwner(): ?User
+    {
+        return $this->createdBy;
     }
 }

@@ -17,10 +17,14 @@ use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 #[ORM\Entity(repositoryClass: ExtensionRepository::class)]
 #[ApiResource(
     operations: [
-        new Get(),
-        new GetCollection()
-
-])]
+        new Get(
+            cacheHeaders: ['max_age' => 300, 'shared_max_age' => 3600],
+        ),
+        new GetCollection(
+            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 600],
+        ),
+    ]
+)]
 
 // Todo : Implement better search by using title[] for strict, and title for partial, and put the results in title[] at the beginning if not ordered
 

@@ -73,7 +73,7 @@ class ModificationFixtures extends Fixture implements DependentFixtureInterface
         $modification->setUser($user);
         $modification->setPatchnote($patchnote);
         $modification->setDifference($difference);
-        $modification->setCreatedAt(new \DateTimeImmutable());
+        $modification->setCreatedAtValue();
         $modification->setIsDeleted(false);
 
         return $modification;
