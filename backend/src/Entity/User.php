@@ -63,6 +63,7 @@ use App\Traits\TimestampableTrait;
 
             denormalizationContext: ['groups' => ['user:update']],
             normalizationContext: ['groups' => ['user:read']],
+            validationContext: ['groups' => ['user:update']],
             security: "is_granted('ROLE_USER') and object == user",
             processor: UserUpdateDataPersister::class,
             securityMessage: "Vous ne pouvez modifier que votre propre compte",
@@ -129,16 +130,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Groups(['user:write', 'user:update'])]
+    private ?string $password = null;
+
+    #[Groups(['user:write'])]
     #[Assert\Regex(
         pattern: '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,100}$/',
-        message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
+        message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.',
+        groups: ['Default']
     )]
-    private ?string $password = null;
+    private ?string $plainPassword = null;
+
+    #[Groups(['user:update'])]
+    private ?string $newPassword = null;
+
+    #[Groups(['user:update'])]
+    private ?string $currentPassword = null;
 
     #[ORM\Column(length: 255, nullable: false)]
     #[Groups(['user:read', 'user:write', 'user:update', 'modification:read', 'patchnote:read'])]
-    #[Assert\Length(min: 5, max: 100)]
+    #[Assert\Length(min: 4, max: 100)]
     private ?string $username = null;
 
     #[ORM\Column]
@@ -505,6 +515,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
     public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
     {
         $this->lastLoginAt = $lastLoginAt;
+
+        return $this;
+    }
+
+    public function getCurrentPassword(): ?string
+    {
+        return $this->currentPassword;
+    }
+
+    public function setCurrentPassword(?string $currentPassword): static
+    {
+        $this->currentPassword = $currentPassword;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
+    public function getNewPassword(): ?string
+    {
+        return $this->newPassword;
+    }
+
+    public function setNewPassword(?string $newPassword): static
+    {
+        $this->newPassword = $newPassword;
 
         return $this;
     }
