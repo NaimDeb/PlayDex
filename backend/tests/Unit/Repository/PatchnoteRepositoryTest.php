@@ -33,7 +33,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $user->setEmail('testpatch@example.com');
         $user->setUsername('patchuser');
         $user->setPassword('password');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
         $this->entityManager->persist($user);
 
         // Create a non-deleted patchnote
@@ -42,7 +42,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $patchnote1->setContent('This is an active patchnote');
         $patchnote1->setGame($game);
         $patchnote1->setCreatedBy($user);
-        $patchnote1->setCreatedAt(new \DateTimeImmutable());
+        $patchnote1->setCreatedAtValue();
         $patchnote1->setImportance(PatchNoteImportance::Major);
         $patchnote1->setIsDeleted(false);
         $this->entityManager->persist($patchnote1);
@@ -53,7 +53,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $patchnote2->setContent('This is a deleted patchnote');
         $patchnote2->setGame($game);
         $patchnote2->setCreatedBy($user);
-        $patchnote2->setCreatedAt(new \DateTimeImmutable());
+        $patchnote2->setCreatedAtValue();
         $patchnote2->setImportance(PatchNoteImportance::Minor);
         $patchnote2->setIsDeleted(true);
         $this->entityManager->persist($patchnote2);
@@ -89,7 +89,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $user->setEmail('testgame@example.com');
         $user->setUsername('gameuser');
         $user->setPassword('password');
-        $user->setCreatedAt(new \DateTimeImmutable());
+        $user->setCreatedAtValue();
         $this->entityManager->persist($user);
 
         // Create patchnotes for game1
@@ -97,7 +97,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $patchnote1->setTitle('Game 1 Patch');
         $patchnote1->setGame($game1);
         $patchnote1->setCreatedBy($user);
-        $patchnote1->setCreatedAt(new \DateTimeImmutable());
+        $patchnote1->setCreatedAtValue();
         $patchnote1->setIsDeleted(false);
         $this->entityManager->persist($patchnote1);
 
@@ -106,7 +106,7 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $patchnote2->setTitle('Game 2 Patch');
         $patchnote2->setGame($game2);
         $patchnote2->setCreatedBy($user);
-        $patchnote2->setCreatedAt(new \DateTimeImmutable());
+        $patchnote2->setCreatedAtValue();
         $patchnote2->setIsDeleted(false);
         $this->entityManager->persist($patchnote2);
 

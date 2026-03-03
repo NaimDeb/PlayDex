@@ -4,6 +4,8 @@ import { Extension } from "@/types/gameType";
 import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from "@/providers/AuthProvider";
+import { useRouter } from "next/navigation";
 
 interface UpdatesTimelineSectionProps {
   patchnotes?: Patchnote[];
@@ -23,12 +25,22 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
   extensions = [],
   formatDateDifference,
 }) => {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [checkedTypes, setCheckedTypes] = useState<string[]>(
     PATCHNOTE_TYPES.map((t) => t.value)
   );
   const [openYears, setOpenYears] = useState<Record<number, boolean>>({});
+
+  const handleAddPatchnote = () => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    router.push(`${window.location.pathname}/patchnote/new`);
+  };
 
   // Combine and tag items
   const timelineItems = [
@@ -83,14 +95,15 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
 
   return (
     <section>
-      <div className="mb-4 md:flex justify-between items-center">
-        <h2 className="text-3xl font-bold font-montserrat mb-6 text-nowrap">
+      <div className="items-center justify-between mb-4 md:flex">
+        <h2 className="mb-6 text-3xl font-bold font-montserrat text-nowrap">
           Dernières mises à jour
         </h2>
-        <button className="bg-secondary hover:bg-primary text-off-white font-bold py-2 px-4 rounded transition duration-200">
-          <Link href={`${window.location.pathname}/patchnote/new`}>
-            Ajouter une patchnote
-          </Link>
+        <button 
+          onClick={handleAddPatchnote}
+          className="px-4 py-2 font-bold transition duration-200 rounded bg-secondary hover:bg-primary text-off-white"
+        >
+          {isAuthenticated ? "Ajouter une patchnote" : "Connecter vous pour ajouter une patchnote"}
         </button>
       </div>
 
@@ -98,16 +111,16 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex gap-4">
           <div className="relative">
-            <label className="block text-sm mb-1">Du</label>
+            <label className="block mb-1 text-sm">Du</label>
             <input
               type="date"
-              className="bg-off-gray border-1 border-gray-200/50 text-off-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="p-2 rounded bg-off-gray border-1 border-gray-200/50 text-off-white focus:outline-none focus:ring-2 focus:ring-secondary"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
             />
             {dateFrom && (
               <button
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute text-gray-400 transform -translate-y-1/2 right-2 top-1/2 hover:text-white"
                 onClick={() => setDateFrom("")}
               >
                 ✕
@@ -115,16 +128,16 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
             )}
           </div>
           <div className="relative">
-            <label className="block text-sm mb-1">Au</label>
+            <label className="block mb-1 text-sm">Au</label>
             <input
               type="date"
-              className="bg-off-gray border-1 border-gray-200/50 text-off-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-secondary"
+              className="p-2 rounded bg-off-gray border-1 border-gray-200/50 text-off-white focus:outline-none focus:ring-2 focus:ring-secondary"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
             />
             {dateTo && (
               <button
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute text-gray-400 transform -translate-y-1/2 right-2 top-1/2 hover:text-white"
                 onClick={() => setDateTo("")}
               >
                 ✕
@@ -151,7 +164,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
         {years.length === 0 ? (
             <p className="text-gray-500">
             Il n&apos;y a aucune mise à jour répertoriée. Vous en avez trouvé une ?{" "}
-            <Link href={`${window.location.pathname}/patchnote/new`} className="text-secondary underline">
+            <Link href={`${window.location.pathname}/patchnote/new`} className="underline text-secondary">
               Ajoutez la ici !
             </Link>
             </p>
@@ -231,7 +244,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                       {timelineSorted.map((item) => (
                         <div
                           key={item.id + item.type}
-                          className="mb-10 relative"
+                          className="relative mb-10"
                         >
                             <div className="absolute left-[-22px] top-1 w-6 h-6 bg-white rounded-full border-4 border-[#1a1a1a]"></div>
                             <div
@@ -264,10 +277,10 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                                 alt={item.title}
                                 width={64}
                                 height={96}
-                                className="rounded object-cover"
+                                className="object-cover rounded"
                               />
                               <div>
-                                <div className="font-bold text-lg">
+                                <div className="text-lg font-bold">
                                   {item.title}
                                 </div>
                                 <div className="text-xs text-gray-400">

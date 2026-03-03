@@ -14,7 +14,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
     operations: [
         new GetCollection(
             uriTemplate: '/genres',
-            normalizationContext: ['groups' => ['genre:read']]
+            normalizationContext: ['groups' => ['genre:read']],
+            cacheHeaders: ['max_age' => 3600, 'shared_max_age' => 86400],
         ),
     ]
 )]

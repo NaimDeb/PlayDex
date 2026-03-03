@@ -4,10 +4,12 @@ import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{ email?: string }>({});
@@ -50,7 +52,7 @@ export default function LoginPage() {
           Se connecter
         </h1>
         {(formError.email || error) && (
-          <div className="px-4 py-3 mb-4 text-sm text-white border border-red-600 rounded-lg bg-red-500/90 animate-fade-in">
+          <div className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
             {formError.email ? formError.email : error}
           </div>
         )}
@@ -75,6 +77,11 @@ export default function LoginPage() {
               }`}
               placeholder="Votre email"
             />
+            {formError.email && (
+              <p className="mt-1 text-xs text-red-400 animate-fade-in">
+                {formError.email}
+              </p>
+            )}
           </div>
           <div>
             <label
@@ -83,15 +90,24 @@ export default function LoginPage() {
             >
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
-              placeholder="Choisissez un mot de passe"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+                placeholder="Votre mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
           <div className="flex items-center">
             <input
@@ -99,7 +115,7 @@ export default function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+              className="w-4 h-4 text-primary bg-offwhite border-secondary rounded focus:ring-primary focus:ring-2"
             />
             <label
               htmlFor="rememberMe"

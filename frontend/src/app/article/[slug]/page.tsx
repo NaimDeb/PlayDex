@@ -140,7 +140,7 @@ export default function ArticlePage({
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 text-center text-red-500">
+      <div className="container px-4 py-8 mx-auto text-center text-red-500">
         {error}
       </div>
     );
@@ -151,8 +151,8 @@ export default function ArticlePage({
   }
 
   return (
-    <div className="bg-off-black text-white min-h-screen font-sans">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen font-sans text-white bg-off-black">
+      <div className="container px-4 py-8 mx-auto">
         <Breadcrumbs>
           <BreadcrumbItem href="/">Accueil</BreadcrumbItem>
           <BreadcrumbItem>Jeu</BreadcrumbItem>

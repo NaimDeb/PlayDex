@@ -3,13 +3,14 @@
 namespace App\Repository;
 
 use App\Entity\Game;
+use App\Interfaces\Repository\GameRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @extends ServiceEntityRepository<Game>
  */
-class GameRepository extends ServiceEntityRepository
+class GameRepository extends ServiceEntityRepository implements GameRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -18,37 +19,68 @@ class GameRepository extends ServiceEntityRepository
 
 
     public function findLatest(int $limit = 8): array
-{
-    return $this->createQueryBuilder('g')
-        ->where('g.releasedAt IS NOT NULL')
-        ->orderBy('g.releasedAt', 'DESC')
-        ->setMaxResults($limit)
-        ->getQuery()
-        ->getResult();
-}
+    {
+        return $this->createQueryBuilder('g')
+            ->where('g.releasedAt IS NOT NULL')
+            ->orderBy('g.releasedAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    /**
-    //     * @return Game[] Returns an array of Game objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('g')
-    //            ->andWhere('g.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('g.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findByApiId(int $apiId): ?Game
+    {
+        return $this->findOneBy(['apiId' => $apiId]);
+    }
 
-    //    public function findOneBySomeField($value): ?Game
-    //    {
-    //        return $this->createQueryBuilder('g')
-    //            ->andWhere('g.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    public function findBySteamId(int $steamId): ?Game
+    {
+        return $this->findOneBy(['steamId' => $steamId]);
+    }
+
+    public function findByTitle(string $title, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('g')
+            ->where('g.title LIKE :title')
+            ->setParameter('title', '%' . $title . '%')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findPopular(int $limit = 10): array
+    {
+        return $this->createQueryBuilder('g')
+            ->leftJoin('g.followedGames', 'fg')
+            ->groupBy('g.id')
+            ->orderBy('COUNT(fg.id)', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findWithRecentPatchnotes(\DateTimeInterface $since, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('g')
+            ->innerJoin('g.patchnotes', 'p')
+            ->where('p.createdAt > :since')
+            ->andWhere('p.isDeleted = false')
+            ->setParameter('since', $since)
+            ->groupBy('g.id')
+            ->orderBy('MAX(p.createdAt)', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function getAllApiIds(): array
+    {
+        $result = $this->createQueryBuilder('g')
+            ->select('g.apiId')
+            ->where('g.apiId IS NOT NULL')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_column($result, 'apiId');
+    }
 }

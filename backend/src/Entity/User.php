@@ -19,10 +19,14 @@ use App\DataPersister\UserBanProcessor;
 use App\DataPersister\UserDeleteProcessor;
 use App\DataPersister\UserUnbanProcessor;
 use App\DataPersister\UserUpdateDataPersister;
+use App\Interfaces\Entity\BannableInterface;
+use App\Interfaces\Entity\SoftDeletableInterface;
 use App\State\Provider\MeProvider;
+use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use App\Traits\TimestampableTrait;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -59,6 +63,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
             denormalizationContext: ['groups' => ['user:update']],
             normalizationContext: ['groups' => ['user:read']],
+            validationContext: ['groups' => ['user:update']],
             security: "is_granted('ROLE_USER') and object == user",
             processor: UserUpdateDataPersister::class,
             securityMessage: "Vous ne pouvez modifier que votre propre compte",
@@ -94,8 +99,11 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
     fields: ['username'],
     message: 'Le nom d\'utilisateur "{{ value }}" est déjà utilisé.'
 )]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDeletableInterface, BannableInterface
 {
+    use SoftDeletableTrait;
+    use TimestampableTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -122,25 +130,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Groups(['user:write', 'user:update'])]
+    private ?string $password = null;
+
+    #[Groups(['user:write'])]
     #[Assert\Regex(
         pattern: '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_]).{8,100}$/',
-        message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
+        message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.',
+        groups: ['Default']
     )]
-    private ?string $password = null;
+    private ?string $plainPassword = null;
+
+    #[Groups(['user:update'])]
+    private ?string $newPassword = null;
+
+    #[Groups(['user:update'])]
+    private ?string $currentPassword = null;
 
     #[ORM\Column(length: 255, nullable: false)]
     #[Groups(['user:read', 'user:write', 'user:update', 'modification:read', 'patchnote:read'])]
-    #[Assert\Length(min: 5, max: 100)]
+    #[Assert\Length(min: 4, max: 100)]
     private ?string $username = null;
 
     #[ORM\Column]
     #[Groups(['user:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column(type: Types::BIGINT)]
+    #[ORM\Column(type: Types::BIGINT, options: ['default' => 0])]
     #[Groups(['user:read', 'modification:read'])]
-    private ?string $reputation = null;
+    private ?string $reputation = '0';
 
     /**
      * @var Collection<int, Patchnote>
@@ -163,9 +180,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\OneToMany(targetEntity: Report::class, mappedBy: 'reportedBy', orphanRemoval: true)]
     private Collection $reports;
-
-    #[ORM\Column]
-    private ?bool $isDeleted = null;
 
     /**
      * @var Collection<int, FollowedGames>
@@ -202,7 +216,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->patchnotes = new ArrayCollection();
         $this->modifications = new ArrayCollection();
         $this->reports = new ArrayCollection();
-        $this->isDeleted = false;
         $this->followedGames = new ArrayCollection();
         $this->warnings = new ArrayCollection();
     }
@@ -290,18 +303,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setUsername(string $username): static
     {
         $this->username = $username;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTimeImmutable
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
-    {
-        $this->createdAt = $createdAt;
 
         return $this;
     }
@@ -410,18 +411,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function isDeleted(): ?bool
-    {
-        return $this->isDeleted;
-    }
-
-    public function setIsDeleted(bool $isDeleted): static
-    {
-        $this->isDeleted = $isDeleted;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, FollowedGames>
      */
@@ -526,6 +515,42 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastLoginAt(?\DateTimeImmutable $lastLoginAt): static
     {
         $this->lastLoginAt = $lastLoginAt;
+
+        return $this;
+    }
+
+    public function getCurrentPassword(): ?string
+    {
+        return $this->currentPassword;
+    }
+
+    public function setCurrentPassword(?string $currentPassword): static
+    {
+        $this->currentPassword = $currentPassword;
+
+        return $this;
+    }
+
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    public function setPlainPassword(?string $plainPassword): static
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
+    public function getNewPassword(): ?string
+    {
+        return $this->newPassword;
+    }
+
+    public function setNewPassword(?string $newPassword): static
+    {
+        $this->newPassword = $newPassword;
 
         return $this;
     }
