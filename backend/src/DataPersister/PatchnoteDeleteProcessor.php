@@ -2,22 +2,34 @@
 
 namespace App\DataPersister;
 
+
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Patchnote;
 use App\Entity\Report;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use App\Service\WarningService;
+use App\Service\SoftDeleteService;
 
-class PatchnoteDeleteProcessor implements ProcessorInterface
+/**
+ * Handles deletion (soft-delete) of Patchnote entities.
+ *
+ * Responsibilities:
+ * - Validates that the patchnote exists
+ * - Prevents deletion of already-deleted patchnotes
+ * - Cascades soft-deletion to related modifications and reports
+ * - Marks patchnote as deleted (soft-delete)
+ * - Persists changes to the database
+ */
+class PatchnoteDeleteProcessor extends AbstractDataPersister
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private WarningService $warningService,
-        private Security $security 
-    ) {}
+        EntityManagerInterface $entityManager,
+        private SoftDeleteService $softDeleteService,
+        Security $security
+    ) {
+        parent::__construct($entityManager, $security);
+    }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): void
     {
@@ -25,59 +37,16 @@ class PatchnoteDeleteProcessor implements ProcessorInterface
             return;
         }
 
-        // Check if already deleted
         if ($data->isDeleted()) {
             throw new BadRequestHttpException('This patchnote has already been deleted.');
         }
 
-        // Soft delete the patchnote
-        $data->setIsDeleted(true);
-
-        // Cascade soft delete to all related modifications
         foreach ($data->getModification() as $modification) {
             $modification->setIsDeleted(true);
             $this->entityManager->persist($modification);
-
-            // Find related reports for this modification
-            $reports = $this->entityManager->getRepository(Report::class)->findBy([
-                'reportableEntity' => 'Modification',
-                'reportableId' => $modification->getId(),
-                'isDeleted' => false
-            ]);
-
-            // Soft delete related reports
-            foreach ($reports as $report) {
-                $report->setIsDeleted(true);
-                $this->entityManager->persist($report);
-            }
+            $this->softDeleteService->softDeleteRelatedReports('Modification', $modification->getId());
         }
 
-        // Find related reports for this patchnote
-        $reports = $this->entityManager->getRepository(Report::class)->findBy([
-            'reportableEntity' => 'Patchnote',
-            'reportableId' => $data->getId(),
-            'isDeleted' => false
-        ]);
-
-        // Soft delete related reports
-        foreach ($reports as $report) {
-            $report->setIsDeleted(true);
-            $this->entityManager->persist($report);
-        }
-
-        // Save all changes
-        $this->entityManager->persist($data);
-        $this->entityManager->flush();
-
-        $author = $data->getCreatedBy(); 
-        $admin = $this->security->getUser();
-
-        if ($author && $author !== $admin) {
-            $this->warningService->warnUserForDeletion(
-                target: $author,
-                admin: $admin,
-            );
-        }
-
+        $this->softDeleteService->softDeleteWithReports($data, 'Patchnote', 'createdBy');
     }
 }

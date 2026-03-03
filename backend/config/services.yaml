@@ -7,13 +7,70 @@ parameters:
   IGDB_ACCESS_TOKEN: "%env(IGDB_ACCESS_TOKEN)%"
   TWITCH_CLIENT_ID: "%env(TWITCH_CLIENT_ID)%"
   STEAM_API_KEY: "%env(STEAM_API_KEY)%"
+  STEAM_USERNAME: "%env(STEAM_USERNAME)%"
+  STEAM_PASSWORD: "%env(STEAM_PASSWORD)%"
 
 services:
   # default configuration for services in *this* file
   _defaults:
-    autowire: true # Automatically injects dependencies in your services.
+    autowire: true
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+  # Alias for ContainerInterface
+  Symfony\Component\DependencyInjection\ContainerInterface: "@service_container"
+
+  # Command Factory
+  App\Command\Factory\DataImportCommandFactory:
+    arguments:
+      - '@App\Repository\UpdateHistoryRepository'
+      - "@app.config.api.igdb.registry"
+      - '@App\Service\ProgressBarHandlerService'
+      - '@App\Service\DatabaseOperationService'
+      - "@service_container"
+
+  # IGDB Commands - Created via Factory
   App\Command\GetIgdbDataCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetIgdbDataCommand",
+      ]
+    tags:
+      - { name: "console.command", lazy: false }
+
+  App\Command\GetGenresFromIgdbCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetGenresFromIgdbCommand",
+      ]
+    tags:
+      - { name: "console.command" }
+
+  App\Command\GetCompaniesFromIgdbCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetCompaniesFromIgdbCommand",
+      ]
+    tags:
+      - { name: "console.command" }
+
+  App\Command\GetGamesFromIgdbCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetGamesFromIgdbCommand",
+      ]
+    tags:
+      - { name: "console.command" }
+
+  App\Command\GetExtensionsFromIgdbCommand:
+    factory:
+      [
+        '@App\Command\Factory\DataImportCommandFactory',
+        "createGetExtensionsFromIgdbCommand",
+      ]
     tags:
       - { name: "console.command" }
 
@@ -21,10 +78,59 @@ services:
   # this creates a service per class whose id is the fully-qualified class name
   App\:
     resource: "../src/"
+    autowire: true
+    autoconfigure: true
     exclude:
       - "../src/DependencyInjection/"
       - "../src/Entity/"
+      - "../src/Config/"
       - "../src/Kernel.php"
+      - "../src/Command/"
+
+  # Make API/Storage/Processor services public so they can be fetched from container
+  App\Service\Api\:
+    resource: "../src/Service/Api/"
+    autowire: true
+    autoconfigure: true
+    public: true
+
+  App\Service\Storage\:
+    resource: "../src/Service/Storage/"
+    autowire: true
+    autoconfigure: true
+    public: true
+
+  App\Service\Processor\:
+    resource: "../src/Service/Processor/"
+    autowire: true
+    autoconfigure: true
+    public: true
+
+  # Data Import Definitions (auto-configured via PSR-4)
+  App\Config\Api\IGDB\IgdbGenreDefinition: ~
+  App\Config\Api\IGDB\IgdbCompanyDefinition: ~
+  App\Config\Api\IGDB\IgdbGameDefinition: ~
+  App\Config\Api\IGDB\IgdbExtensionDefinition: ~
+
+  # Data Import Registry
+  app.config.api.igdb.registry:
+    class: App\Config\Api\DataImportRegistry
+    autowire: true
+    autoconfigure: false
+    arguments:
+      - "IGDB"
+    calls:
+      - [register, ['@App\Config\Api\IGDB\IgdbGenreDefinition']]
+      - [register, ['@App\Config\Api\IGDB\IgdbCompanyDefinition']]
+      - [register, ['@App\Config\Api\IGDB\IgdbGameDefinition']]
+      - [register, ['@App\Config\Api\IGDB\IgdbExtensionDefinition']]
+
+  # Steam Polling Command
+  App\Command\PollSteamPatchnotesCommand:
+    autowire: true
+    autoconfigure: true
+    tags:
+      - { name: "console.command" }
 
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones

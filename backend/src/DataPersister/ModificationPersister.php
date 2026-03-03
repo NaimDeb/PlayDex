@@ -2,48 +2,39 @@
 
 namespace App\DataPersister;
 
+
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Modification;
-use App\Entity\Patchnote;
-use App\Entity\User;
-use App\Entity\UserDetails;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class ModificationPersister implements ProcessorInterface
+/**
+ * Handles the creation of Modification entities (changes to patchnotes).
+ *
+ * Responsibilities:
+ * - Validates incoming Modification data
+ * - Associates the modification with the authenticated user
+ * - Sets creation timestamp
+ * - Persists the modification to the database
+ * - TODO: Implement complex validation and diff calculation logic
+ */
+class ModificationPersister extends AbstractDataPersister
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
-        private readonly Security $security,
-    ) {}
+        EntityManagerInterface $entityManager,
+        Security $security,
+    ) {
+        parent::__construct($entityManager, $security);
+    }
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): Modification
     {
         if ($data instanceof Modification) {
-
-
-            $user = $this->security->getUser();
-
-            if (!$user) {
-                throw new \Symfony\Component\Security\Core\Exception\AccessDeniedException('Not authenticated');
-            }
-
-
-            // Roles
+            $user = $this->getAuthenticatedUser();
             $data->setUser($user);
+            $data->setCreatedAtValue();
 
-            // initialise createdAt
-            $data->setCreatedAt(new \DateTimeImmutable());
-
-
-
-            // Todo : all the complicated things to do :(
-
-
-            $this->entityManager->persist($data);
-            $this->entityManager->flush();
+            $this->persist($data);
         }
 
         return $data;
