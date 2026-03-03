@@ -68,6 +68,7 @@ export enum IgdbImageFormat {
 }
 
 export function changeIgdbImageFormat(imageUrl: string, format: IgdbImageFormat) {
+  if (!imageUrl) return imageUrl;
   return imageUrl.replace(IgdbImageFormat.Thumbnail, format);
 }
 
