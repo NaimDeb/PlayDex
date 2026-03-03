@@ -151,6 +151,7 @@ export enum IgdbImageFormat {
  * // Returns: 'https://images.igdb.com/igdb/image/upload/t_cover_big/abc.jpg'
  */
 export function changeIgdbImageFormat(imageUrl: string, format: IgdbImageFormat) {
+  if (!imageUrl) return imageUrl;
   return imageUrl.replace(IgdbImageFormat.Thumbnail, format);
 }
 
