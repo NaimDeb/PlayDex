@@ -2,7 +2,6 @@
 
 namespace App\DataPersister;
 
-use AbstractDataPersister;
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Report;
 use App\Interfaces\ReportableInterface;
