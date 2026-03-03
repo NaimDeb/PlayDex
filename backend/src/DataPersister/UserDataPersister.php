@@ -31,8 +31,8 @@ class UserDataPersister extends AbstractDataPersister
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): User
     {
         if ($data instanceof User) {
-            if ($data->getPassword()) {
-                $hashedPassword = $this->passwordHasher->hashPassword($data, $data->getPassword());
+            if ($data->getPlainPassword()) {
+                $hashedPassword = $this->passwordHasher->hashPassword($data, $data->getPlainPassword());
                 $data->setPassword($hashedPassword);
             }
 

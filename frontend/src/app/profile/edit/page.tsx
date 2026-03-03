@@ -5,16 +5,19 @@ import { useAuth } from "@/providers/AuthProvider";
 import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 interface ProfileUpdateData {
   username: string;
   email: string;
-  password?: string;
+  currentPassword?: string;
+  newPassword?: string;
 }
 
 interface FormErrors {
   username?: string;
   email?: string;
+  currentPassword?: string;
   password?: string;
   confirmPassword?: string;
   general?: string;
@@ -27,10 +30,14 @@ export default function ProfileEditPage() {
   const [formData, setFormData] = useState<ProfileUpdateData>({
     username: user?.username || "",
     email: user?.email || "",
+    currentPassword: "",
     password: "",
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -62,9 +69,19 @@ export default function ProfileEditPage() {
 
     // Password validation (only if password is provided)
     if (formData.password) {
-      if (formData.password.length < 6) {
-        newErrors.password =
-          "Le mot de passe doit contenir au moins 6 caractères";
+      if (!formData.currentPassword) {
+        newErrors.currentPassword = "L'ancien mot de passe est requis pour changer le mot de passe";
+      }
+      if (formData.password.length < 8) {
+        newErrors.password = "Le mot de passe doit contenir au moins 8 caractères";
+      } else if (!/[A-Z]/.test(formData.password)) {
+        newErrors.password = "Le mot de passe doit contenir au moins une majuscule";
+      } else if (!/[a-z]/.test(formData.password)) {
+        newErrors.password = "Le mot de passe doit contenir au moins une minuscule";
+      } else if (!/[0-9]/.test(formData.password)) {
+        newErrors.password = "Le mot de passe doit contenir au moins un chiffre";
+      } else if (!/[^A-Za-z0-9]/.test(formData.password)) {
+        newErrors.password = "Le mot de passe doit contenir au moins un caractère spécial";
       }
 
       if (formData.password !== confirmPassword) {
@@ -95,7 +112,8 @@ export default function ProfileEditPage() {
 
       // Only include password if it's provided
       if (formData.password) {
-        updateData.password = formData.password;
+        updateData.currentPassword = formData.currentPassword;
+        updateData.newPassword = formData.password;
       }
 
       await userService.patchUserProfile({
@@ -106,7 +124,7 @@ export default function ProfileEditPage() {
       setSuccess(true);
 
       // Clear password fields
-      setFormData((prev) => ({ ...prev, password: "" }));
+      setFormData((prev) => ({ ...prev, currentPassword: "", password: "" }));
       setConfirmPassword("");
 
       // Show success message and redirect after a short delay
@@ -140,6 +158,8 @@ export default function ProfileEditPage() {
             apiErrors.email = violation.message;
           } else if (violation.propertyPath === "password") {
             apiErrors.password = violation.message;
+          } else if (violation.propertyPath === "currentPassword") {
+            apiErrors.currentPassword = violation.message;
           }
         });
         setErrors(apiErrors);
@@ -265,6 +285,39 @@ export default function ProfileEditPage() {
                 Laissez vide si vous ne souhaitez pas changer votre mot de passe
               </p>
 
+              {/* Current Password Field */}
+              <div className="mb-4">
+                <label
+                  htmlFor="currentPassword"
+                  className="block mb-2 text-sm font-medium text-gray-300"
+                >
+                  Mot de passe actuel
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    id="currentPassword"
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                      errors.currentPassword ? "border-red-500" : "border-gray-600"
+                    }`}
+                    placeholder="Votre mot de passe actuel"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
+                  >
+                    {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {errors.currentPassword && (
+                  <p className="mt-1 text-sm text-red-400">{errors.currentPassword}</p>
+                )}
+              </div>
+
               {/* New Password Field */}
               <div className="mb-4">
                 <label
@@ -273,17 +326,26 @@ export default function ProfileEditPage() {
                 >
                   Nouveau mot de passe
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-3 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                    errors.password ? "border-red-500" : "border-gray-600"
-                  }`}
-                  placeholder="Nouveau mot de passe (optionnel)"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                      errors.password ? "border-red-500" : "border-gray-600"
+                    }`}
+                    placeholder="Nouveau mot de passe (optionnel)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-400">{errors.password}</p>
                 )}
@@ -297,27 +359,37 @@ export default function ProfileEditPage() {
                 >
                   Confirmer le nouveau mot de passe
                 </label>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (errors.confirmPassword) {
-                      setErrors((prev) => ({
-                        ...prev,
-                        confirmPassword: undefined,
-                      }));
-                    }
-                  }}
-                  className={`w-full px-4 py-3 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                    errors.confirmPassword
-                      ? "border-red-500"
-                      : "border-gray-600"
-                  }`}
-                  placeholder="Confirmez le nouveau mot de passe"
-                  disabled={!formData.password}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (errors.confirmPassword) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          confirmPassword: undefined,
+                        }));
+                      }
+                    }}
+                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                      errors.confirmPassword
+                        ? "border-red-500"
+                        : "border-gray-600"
+                    }`}
+                    placeholder="Confirmez le nouveau mot de passe"
+                    disabled={!formData.password}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
+                    disabled={!formData.password}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-400">
                     {errors.confirmPassword}

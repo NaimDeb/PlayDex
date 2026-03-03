@@ -4,10 +4,12 @@ import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{ email?: string }>({});
@@ -45,12 +47,12 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-off-gray border-secondary rounded-xl">
-        <h1 className="mb-4 text-3xl font-extrabold text-center text-off-white">
+      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
+        <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
           Se connecter
         </h1>
         {(formError.email || error) && (
-          <div className="px-4 py-3 mb-4 text-sm text-white border border-red-600 rounded-lg bg-red-500/90 animate-fade-in">
+          <div className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
             {formError.email ? formError.email : error}
           </div>
         )}
@@ -58,7 +60,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block mb-1 text-sm font-semibold text-off-white"
+              className="block mb-1 text-sm font-semibold text-offwhite"
             >
               Email
             </label>
@@ -68,30 +70,44 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={`w-full px-4 py-3 border rounded-lg text-off-white bg-off-white border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
+              className={`w-full px-4 py-3 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
                 formError.email
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
               }`}
               placeholder="Votre email"
             />
+            {formError.email && (
+              <p className="mt-1 text-xs text-red-400 animate-fade-in">
+                {formError.email}
+              </p>
+            )}
           </div>
           <div>
             <label
               htmlFor="password"
-              className="block mb-1 text-sm font-semibold text-off-white"
+              className="block mb-1 text-sm font-semibold text-offwhite"
             >
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border rounded-lg text-off-white bg-off-white border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
-              placeholder="Choisissez un mot de passe"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+                placeholder="Votre mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
           <div className="flex items-center">
             <input
@@ -99,11 +115,11 @@ export default function LoginPage() {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+              className="w-4 h-4 text-primary bg-offwhite border-secondary rounded focus:ring-primary focus:ring-2"
             />
             <label
               htmlFor="rememberMe"
-              className="block ml-2 text-sm text-off-white"
+              className="block ml-2 text-sm text-offwhite"
             >
               Se souvenir de moi
             </label>
@@ -111,24 +127,40 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-off-white bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-off-white"
+              className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-offwhite bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
               disabled={loading}
             >
               {loading ? "Chargement..." : "Se connecter"}
             </button>
           </div>
-          <div className="mt-2 text-sm text-center text-off-white">
+          <div className="mt-2 text-sm text-center text-offwhite">
             Pas encore de compte ?{" "}
             <button
               type="button"
               onClick={() => router.push("/register")}
-              className="font-bold underline text-off-white hover:text-secondary"
+              className="font-bold underline text-offwhite hover:text-secondary"
             >
               S&apos;inscrire
             </button>
           </div>
         </form>
       </div>
+      <style jsx>{`
+        .bg-offgray {
+          background-color: #232329;
+        }
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-in;
+        }
+      `}</style>
     </div>
   );
 }
