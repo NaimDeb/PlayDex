@@ -26,7 +26,7 @@ use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
-use App\Traits\TimestampableTrait;
+use App\Traits\TimeStampableTrait;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -102,7 +102,7 @@ use App\Traits\TimestampableTrait;
 class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDeletableInterface, BannableInterface
 {
     use SoftDeletableTrait;
-    use TimestampableTrait;
+    use TimeStampableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -25,7 +25,7 @@ use App\State\Provider\SoftDeletedStateProvider;
 use App\Traits\SoftDeletableTrait;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Traits\TimestampableTrait;
+use App\Traits\TimeStampableTrait;
 
 // Todo : check security
 
@@ -63,7 +63,7 @@ use App\Traits\TimestampableTrait;
 class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
     use SoftDeletableTrait;
-    use TimestampableTrait;
+    use TimeStampableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

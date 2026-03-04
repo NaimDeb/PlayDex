@@ -5,7 +5,7 @@ namespace App\Traits;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * TimestampableTrait
+ * TimeStampableTrait
  *
  * A trait that provides timestamp functionality to models or classes.
  * This trait automatically handles the creation and modification timestamps
@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
  * YOU NEED TO 
  *
  */
-trait TimestampableTrait
+trait TimeStampableTrait
 {
 
     public function getCreatedAt(): ?\DateTimeImmutable
