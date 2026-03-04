@@ -2,7 +2,7 @@
 
 namespace App\DataPersister;
 
-use AbstractDataPersister;
+
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Modification;
 use Doctrine\ORM\EntityManagerInterface;

@@ -44,6 +44,7 @@ use App\Traits\TimestampableTrait;
         new Get(
             normalizationContext: ['groups' => ['patchnote:read']],
             provider: SoftDeletedStateProvider::class,
+            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 300],
         ),
         new Patch(
             security: "is_granted('ROLE_USER')",
