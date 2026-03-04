@@ -125,8 +125,14 @@ services:
       - [register, ['@App\Config\Api\IGDB\IgdbGameDefinition']]
       - [register, ['@App\Config\Api\IGDB\IgdbExtensionDefinition']]
 
-  # Steam Polling Command
+  # Steam Commands
   App\Command\PollSteamPatchnotesCommand:
+    autowire: true
+    autoconfigure: true
+    tags:
+      - { name: "console.command" }
+
+  App\Command\FetchSteamHistoryCommand:
     autowire: true
     autoconfigure: true
     tags:
