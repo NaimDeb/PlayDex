@@ -4,9 +4,10 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
+import { useAuth } from "@/providers/AuthProvider";
 
 import {
   buffCommand,
@@ -19,6 +20,8 @@ export default function ArticleModificationsPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params); // Unwrap the params promise
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [gameName, setGameName] = useState(""); // Placeholder for game name
   const [gameReleaseDate, setGameReleaseDate] = useState(""); // Placeholder for game release date
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState(false); // State to track if the patch note title has changed
@@ -27,6 +30,12 @@ export default function ArticleModificationsPage({
   const { showMessage } = useFlashMessage();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      showMessage("Vous devez être connecté pour créer une patch note.", "error");
+      router.push("/login");
+      return;
+    }
+    
     // get ID from slug
     setIsLoading(true); // Set loading state to true
     const gameId = getIdFromSlug(slug); // Fetch game ID using the slug
@@ -38,7 +47,7 @@ export default function ArticleModificationsPage({
       setIsLoading(false);
     };
     fetchGameName();
-  }, [slug]);
+  }, [slug, isAuthenticated, router, showMessage]);
 
   // --- Form submission handler ---
   /**

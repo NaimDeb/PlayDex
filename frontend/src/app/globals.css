@@ -1,14 +1,23 @@
 @import "tailwindcss";
 
 @theme {
+  /* Background gradient colors */
   --foreground-rgb: oklch(0 0 0); /* Black in OKLCH */
   --background-start-rgb: oklch(0.85 0 0); /* Light gray in OKLCH */
   --background-end-rgb: oklch(1 0 0); /* White in OKLCH */
-  --color-primary: oklch(0.53 0.2666 274.89); /* #4D40FF in OKLCH */
-  --color-secondary: oklch(0.63 0.2032 278.18); /* #7173FF in OKLCH */
-  --color-off-black: oklch(0.22 0 0); /* #1A1A1A in OKLCH */
-  --color-off-gray: oklch(0.18 0 0); /* #2D2D2D in OKLCH */
-  --color-off-white: oklch(0.94 0 0); /* #F0F0F0 in OKLCH */
+
+  /* PlayDex brand colors - use these throughout the app */
+  --color-primary: oklch(0.53 0.2666 274.89); /* #4D40FF - Primary brand purple */
+  --color-secondary: oklch(0.63 0.2032 278.18); /* #7173FF - Secondary brand purple */
+
+  /* Grayscale palette - consistent across all components */
+  --color-off-black: oklch(0.22 0 0); /* #1A1A1A - Main dark background */
+  --color-off-gray: oklch(0.18 0 0); /* #2D2D2D - Secondary dark background */
+  --color-off-white: oklch(0.94 0 0); /* #F0F0F0 - Main text color */
+
+  /* Semantic colors for patchnote markers */
+  --color-buff: #22c55e; /* Green - for buffs/improvements */
+  --color-debuff: #ef4444; /* Red - for nerfs/reductions */
 }
 
 .buff {
@@ -163,4 +172,18 @@
 
 .pagination-btn:disabled {
   cursor: not-allowed;
+}
+
+/* Fade-in animation for alerts and notifications */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in;
 }

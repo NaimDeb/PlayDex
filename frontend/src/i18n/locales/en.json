@@ -1,0 +1,123 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success!",
+    "warning": "Warning!",
+    "info": "Information",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "save": "Save",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "next": "Next",
+    "previous": "Previous",
+    "seeAll": "See all"
+  },
+  "nav": {
+    "home": "Home",
+    "games": "Games",
+    "randomGame": "Random game",
+    "profile": "Profile",
+    "myList": "My list",
+    "login": "Login",
+    "register": "Sign up",
+    "logout": "Logout"
+  },
+  "home": {
+    "heroTitle": "Never miss a patch again!",
+    "heroSubtitle": "Sign up now.",
+    "welcomeTitle": "Welcome to PlayDex!",
+    "welcomeSubtitle": "Find all the latest updates for your followed games.",
+    "viewProfile": "View my profile",
+    "myListTitle": "My list",
+    "seeAllMyList": "See all my list",
+    "latestGamesTitle": "Latest games added",
+    "seeAllLatestGames": "See all latest games",
+    "alreadyHaveAccount": "Already have an account?",
+    "connectNow": "Sign in"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "registerTitle": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "username": "Username",
+    "rememberMe": "Remember me",
+    "noAccount": "Don't have an account yet?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Login successful!",
+    "logoutSuccess": "You have been logged out successfully.",
+    "registerSuccess": "Registration successful!",
+    "invalidEmail": "Please enter a valid email address.",
+    "passwordMismatch": "Passwords do not match.",
+    "weakPassword": "Password must be at least 8 characters long."
+  },
+  "game": {
+    "releaseDate": "Release date",
+    "developer": "Developer",
+    "publisher": "Publisher",
+    "genres": "Genres",
+    "platforms": "Platforms",
+    "extensions": "Extensions",
+    "updates": "Updates",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "dlc": "DLC",
+    "newUpdates": "{count} updates"
+  },
+  "patchnote": {
+    "title": "Patchnotes",
+    "create": "Create patchnote",
+    "edit": "Edit patchnote",
+    "delete": "Delete patchnote",
+    "major": "Major patch",
+    "minor": "Minor patch",
+    "hotfix": "Hotfix",
+    "extension": "New extension",
+    "viewModifications": "View modifications"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "categories": {
+      "games": "Games",
+      "extensions": "Extensions",
+      "genre": "Genre",
+      "company": "Company"
+    },
+    "filters": {
+      "title": "Filters",
+      "genre": "Genre",
+      "company": "Company",
+      "releaseDate": "Release date",
+      "releaseDateFrom": "From",
+      "releaseDateTo": "To"
+    },
+    "results": {
+      "title": "Search results",
+      "count": "{count} result(s)",
+      "noResults": "No results found"
+    }
+  },
+  "time": {
+    "fewSeconds": "A few seconds ago",
+    "minutesAgo": "{count} minute ago",
+    "minutesAgo_plural": "{count} minutes ago",
+    "hoursAgo": "{count} hour ago",
+    "hoursAgo_plural": "{count} hours ago",
+    "daysAgo": "{count} day ago",
+    "daysAgo_plural": "{count} days ago",
+    "yearsAgo": "{count} year ago",
+    "yearsAgo_plural": "{count} years ago"
+  },
+  "meta": {
+    "title": "PlayDex - Never miss a patch again!",
+    "description": "PlayDex lets you track updates for your favorite games. Stay informed about the latest patch notes, DLCs, and extensions.",
+    "ogTitle": "PlayDex - Never miss a patch again!",
+    "ogDescription": "Track updates for your favorite games with PlayDex"
+  }
+}

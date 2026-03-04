@@ -29,24 +29,28 @@ use App\Filter\NotNullReleasedAtFilter;
             name: 'getGame',
             uriTemplate: '/games/{id}',
             normalizationContext: ['groups' => ['game:read']],
+            cacheHeaders: ['max_age' => 300, 'shared_max_age' => 3600],
         ),
         new GetCollection(
             uriTemplate: '/games',
             normalizationContext: ['groups' => ['game:read']],
             paginationEnabled: true,
             paginationItemsPerPage: 10,
+            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 600],
         ),
         new Get(
             name: 'getExtensions',
             uriTemplate: '/games/{id}/extensions',
             normalizationContext: ['groups' => ['game:read', 'extension:read']],
-            provider: GameExtensionsProvider::class
+            provider: GameExtensionsProvider::class,
+            cacheHeaders: ['max_age' => 300, 'shared_max_age' => 3600],
         ),
         new Get(
             name: 'getPatchnotes',
             uriTemplate: '/games/{id}/patchnotes',
             normalizationContext: ['groups' => ['game:read', 'patchnote:read']],
-            provider: GamePatchnotesProvider::class
+            provider: GamePatchnotesProvider::class,
+            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 300],
         )
     ]
 )]

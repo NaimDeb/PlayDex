@@ -44,7 +44,7 @@ class AuthService {
     public async register(givenData: RegisterFormData): Promise<void> {
       await apiClient.post(`/register`, {
         email: givenData.email,
-        password: givenData.password,
+        plainPassword: givenData.password,
         username: givenData.username,
       });
       return;

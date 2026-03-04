@@ -18,7 +18,6 @@ const GameCardPlaceholder = () => (
 
 export default function Home() {
   const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
-  // const [popularGames, setPopularGames] = useState<Game[]>([]);
   const [newGames, setNewGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +33,6 @@ export default function Home() {
         gameService.getLatestReleases(),
       ]);
       setFollowedGames(followed);
-      // setPopularGames(popular);
       setNewGames(nouveautes);
       setLoading(false);
     }
@@ -119,29 +117,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
-      {/* Mises à jours populaires Section */}
-      {/* <section className="mb-12">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Mises à jours populaires</h2>
-          Optional: Add a link if needed 
-        </div>
-        <div className="flex pb-4 -mx-2 overflow-x-auto">
-            {loading
-            ? [...Array(6)].map((_, i) => (
-              <GameCardPlaceholder key={`popular-${i}`} />
-              ))
-            : popularGames.map((game) => (
-              <ClassicCard
-                key={game.id}
-                game={game}
-                isDlc={game.isDlc ?? false}
-                updatesCount={game.updatesCount ?? 0}
-                isAuthenticated={false}
-              />
-              ))}
-        </div>
-      </section> */}
 
       {/* Derniers jeux ajoutés Section */}
       <section className="pl-4 mb-12 sm:px-16 lg:px-30">

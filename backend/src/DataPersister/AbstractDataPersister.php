@@ -1,5 +1,7 @@
 <?php
 
+namespace App\DataPersister;    
+
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\User;
 use App\Interfaces\Entity\SoftDeletableInterface;
