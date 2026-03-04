@@ -2,7 +2,7 @@
 
 namespace App\DataPersister;
 
-use AbstractDataPersister;
+
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\Symfony\EventListener\EventPriorities;
 use App\Entity\Modification;

@@ -1,0 +1,123 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès !",
+    "warning": "Attention !",
+    "info": "Information",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "seeAll": "Voir tout"
+  },
+  "nav": {
+    "home": "Accueil",
+    "games": "Jeux",
+    "randomGame": "Jeu au hasard",
+    "profile": "Profil",
+    "myList": "Ma liste",
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion"
+  },
+  "home": {
+    "heroTitle": "Ne rate plus aucun patch !",
+    "heroSubtitle": "Inscris-toi maintenant.",
+    "welcomeTitle": "Bienvenue sur PlayDex !",
+    "welcomeSubtitle": "Retrouvez toutes les nouveautés de vos jeux suivis.",
+    "viewProfile": "Voir mon profil",
+    "myListTitle": "Ma liste",
+    "seeAllMyList": "Voir toute ma liste",
+    "latestGamesTitle": "Derniers jeux ajoutés",
+    "seeAllLatestGames": "Voir tous les derniers jeux ajoutés",
+    "alreadyHaveAccount": "Déjà un compte ?",
+    "connectNow": "Connectez-vous"
+  },
+  "auth": {
+    "loginTitle": "Se connecter",
+    "registerTitle": "S'inscrire",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "username": "Nom d'utilisateur",
+    "rememberMe": "Se souvenir de moi",
+    "noAccount": "Pas encore de compte ?",
+    "hasAccount": "Déjà un compte ?",
+    "loginSuccess": "Connexion réussie !",
+    "logoutSuccess": "Vous avez été déconnecté avec succès.",
+    "registerSuccess": "Inscription réussie !",
+    "invalidEmail": "Veuillez entrer une adresse email valide.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "weakPassword": "Le mot de passe doit contenir au moins 8 caractères."
+  },
+  "game": {
+    "releaseDate": "Date de sortie",
+    "developer": "Développeur",
+    "publisher": "Éditeur",
+    "genres": "Genres",
+    "platforms": "Plateformes",
+    "extensions": "Extensions",
+    "updates": "Mises à jour",
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
+    "dlc": "DLC",
+    "newUpdates": "{count} mises à jour"
+  },
+  "patchnote": {
+    "title": "Patchnotes",
+    "create": "Créer une patchnote",
+    "edit": "Modifier la patchnote",
+    "delete": "Supprimer la patchnote",
+    "major": "Patchnote majeure",
+    "minor": "Patchnote mineure",
+    "hotfix": "Hotfix",
+    "extension": "Nouvelle extension",
+    "viewModifications": "Voir les modifications"
+  },
+  "search": {
+    "placeholder": "Rechercher...",
+    "categories": {
+      "games": "Jeux",
+      "extensions": "Extensions",
+      "genre": "Genre",
+      "company": "Entreprise"
+    },
+    "filters": {
+      "title": "Filtres",
+      "genre": "Genre",
+      "company": "Compagnie",
+      "releaseDate": "Date de sortie",
+      "releaseDateFrom": "Du",
+      "releaseDateTo": "Au"
+    },
+    "results": {
+      "title": "Résultats de recherche",
+      "count": "{count} résultat(s)",
+      "noResults": "Aucun résultat trouvé"
+    }
+  },
+  "time": {
+    "fewSeconds": "Il y a quelques secondes",
+    "minutesAgo": "Il y a {count} minute",
+    "minutesAgo_plural": "Il y a {count} minutes",
+    "hoursAgo": "Il y a {count} heure",
+    "hoursAgo_plural": "Il y a {count} heures",
+    "daysAgo": "Il y a {count} jour",
+    "daysAgo_plural": "Il y a {count} jours",
+    "yearsAgo": "Il y a {count} an",
+    "yearsAgo_plural": "Il y a {count} ans"
+  },
+  "meta": {
+    "title": "PlayDex - Ne rate plus aucun patch !",
+    "description": "PlayDex vous permet de suivre les mises à jour de vos jeux préférés. Restez informé des derniers patchnotes, DLC et extensions.",
+    "ogTitle": "PlayDex - Ne rate plus aucun patch !",
+    "ogDescription": "Suivez les mises à jour de vos jeux préférés avec PlayDex"
+  }
+}

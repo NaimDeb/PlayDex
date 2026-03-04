@@ -5,21 +5,27 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<{
     email?: string;
     password?: string;
+    confirmPassword?: string;
     username?: string;
     acceptTerms?: string;
   }>({
     email: undefined,
     password: undefined,
+    confirmPassword: undefined,
     username: undefined,
     acceptTerms: undefined,
   });
@@ -34,72 +40,81 @@ export default function RegisterPage() {
     const newFormError: {
       email?: string;
       password?: string;
+      confirmPassword?: string;
       username?: string;
       acceptTerms?: string;
     } = {};
+    
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       newFormError.email = "Veuillez entrer une adresse email valide.";
       hasError = true;
     }
+    
     if (!password || password.length < 8) {
-      newFormError.password =
-        "Le mot de passe doit contenir au moins 8 caractères.";
+      newFormError.password = "Le mot de passe doit contenir au moins 8 caractères.";
+      hasError = true;
+    } else if (password.length > 100) {
+      newFormError.password = "Le mot de passe doit contenir moins de 100 caractères.";
+      hasError = true;
+    } else if (!/[A-Z]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins une majuscule.";
+      hasError = true;
+    } else if (!/[a-z]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins une minuscule.";
+      hasError = true;
+    } else if (!/[0-9]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins un chiffre.";
+      hasError = true;
+    } else if (!/[^A-Za-z0-9]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins un caractère spécial.";
       hasError = true;
     }
-
-    if (password.length > 100) {
-      newFormError.password =
-        "Le mot de passe doit contenir contenir moins de 100 caractères.";
-      hasError = true;
-    }
-
-    if (password.search(/[A-Z]/) < 0) {
-      newFormError.password =
-        "Le mot de passe doit contenir au moins une majuscule.";
+    
+    if (password !== confirmPassword) {
+      newFormError.confirmPassword = "Les mots de passe ne correspondent pas.";
       hasError = true;
     }
 
     if (!username || username.length < 4) {
       newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
       hasError = true;
-    }
-    if (username.length > 100) {
-      newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
+    } else if (username.length > 100) {
+      newFormError.username = "Le pseudo doit contenir moins de 100 caractères.";
       hasError = true;
     }
+    
     if (!acceptTerms) {
-      newFormError.acceptTerms =
-        "Vous devez accepter les conditions d'utilisation.";
+      newFormError.acceptTerms = "Vous devez accepter les conditions d'utilisation.";
       hasError = true;
     }
+    
     setFormError(newFormError);
     if (hasError) {
-      setLoading(false);
       return;
     }
 
     setLoading(true);
-    const result = (await register({ email, password, username })) as
-      | { status?: number; description?: string; error?: string }
-      | undefined;
-    setLoading(false);
-
-    if (result !== undefined && result.status === 422 && result.description) {
-      showMessage(result.description, "error");
-      return;
+    try {
+      await register({ email, password, username });
+      showMessage("Inscription réussie ! Vous pouvez maintenant vous connecter.", "success");
+    } catch (err: any) {
+      const violations = err?.response?.data?.violations;
+      if (violations && Array.isArray(violations)) {
+        violations.forEach((violation: { propertyPath: string; message: string }) => {
+          if (violation.propertyPath === "plainPassword") {
+            setFormError(prev => ({ ...prev, password: violation.message }));
+          } else if (violation.propertyPath === "email") {
+            setFormError(prev => ({ ...prev, email: violation.message }));
+          } else if (violation.propertyPath === "username") {
+            setFormError(prev => ({ ...prev, username: violation.message }));
+          }
+        });
+      } else {
+        showMessage(error || "Une erreur est survenue lors de l'inscription.", "error");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    // Si le status n'est pas 201 (créé), ou s'il y a une erreur, affiche une erreur
-    if (!result || result.status !== 201 || result.error || error) {
-      showMessage(
-        "Erreur d'inscription : Une erreur est survenue lors de l'inscription.",
-        "error"
-      );
-      return;
-    }
-
-    showMessage("Inscription réussie !", "success");
-    router.push("/");
   };
 
   return (
@@ -152,22 +167,66 @@ export default function RegisterPage() {
             >
               Mot de passe
             </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className={`w-full px-4 py-3 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
-                formError.password
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : ""
-              }`}
-              placeholder="Choisissez un mot de passe"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={`w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
+                  formError.password
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+                placeholder="Choisissez un mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {formError.password && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
                 {formError.password}
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="block mb-1 text-sm font-semibold text-offwhite"
+            >
+              Confirmer le mot de passe
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className={`w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
+                  formError.confirmPassword
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+                placeholder="Confirmez votre mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {formError.confirmPassword && (
+              <p className="mt-1 text-xs text-red-400 animate-fade-in">
+                {formError.confirmPassword}
               </p>
             )}
           </div>
