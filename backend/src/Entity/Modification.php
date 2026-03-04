@@ -18,7 +18,7 @@ use App\State\Provider\AdminModificationProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use App\Repository\ReportRepository;
 use App\Traits\SoftDeletableTrait;
-use App\Traits\TimestampableTrait;
+use App\Traits\TimeStampableTrait;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -61,7 +61,7 @@ class Modification implements ReportableInterface, SoftDeletableInterface
 {
 
     use SoftDeletableTrait;
-    use TimestampableTrait;
+    use TimeStampableTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
