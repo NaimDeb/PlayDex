@@ -1,7 +1,6 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Modification;
@@ -10,17 +9,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Service\SoftDeleteService;
 
-/**
- * Handles deletion (soft-delete) of Modification entities.
- *
- * Responsibilities:
- * - Validates that the modification exists
- * - Prevents deletion of already-deleted modifications
- * - Cascades soft-deletion to related reports
- * - Marks modification as deleted (soft-delete)
- * - Persists changes to the database
- */
-class ModificationDeleteProcessor extends AbstractDataPersister
+class ModificationDeleteProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,
