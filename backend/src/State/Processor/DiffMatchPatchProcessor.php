@@ -1,34 +1,17 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
-use ApiPlatform\Symfony\EventListener\EventPriorities;
 use App\Entity\Modification;
 use App\Entity\Patchnote;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use DiffMatchPatch\DiffMatchPatch;
-use Symfony\Component\HttpFoundation\Exception\BadRequestException;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpKernel\KernelEvents;
 
-/**
- * Handles diff calculation between patchnote versions using DiffMatchPatch algorithm.
- *
- * Responsibilities:
- * - Validates incoming modification data for patchnotes
- * - Calculates the diff between original and modified patchnote content
- * - Uses DiffMatchPatch library for accurate line-level diffs
- * - Computes a diff score for the modification
- * - Persists diff data to the database
- * - Returns formatted response with diff results
- */
-class DiffMatchPatchProcessor extends AbstractDataPersister
+class DiffMatchPatchProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -42,9 +25,6 @@ class DiffMatchPatchProcessor extends AbstractDataPersister
     {
         $user = $this->getAuthenticatedUser();
 
-        /**
-         * @var Patchnote $modifiedPatchnote
-         */
         $modifiedPatchnote = $data;
 
         if ($this->entityManager->contains($modifiedPatchnote)) {
@@ -69,7 +49,6 @@ class DiffMatchPatchProcessor extends AbstractDataPersister
 
     private function modifyPatchnote(Patchnote $oldPatchnote, Patchnote $newContent): void
     {
-
         $properties = ['Title', 'Content', 'ReleasedAt', 'Importance', 'SmallDescription'];
 
         foreach ($properties as $property) {

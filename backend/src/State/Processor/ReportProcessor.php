@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DataPersister;
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Report;
@@ -8,18 +8,7 @@ use App\Interfaces\ReportableInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-/**
- * Handles the creation of Report entities for moderation purposes.
- *
- * Responsibilities:
- * - Validates that the authenticated user exists
- * - Validates the reportable entity class (must implement ReportableInterface)
- * - Ensures the target entity exists
- * - Prevents duplicate reports from the same user
- * - Associates the report with the reporting user
- * - Persists the report to the database
- */
-class ReportPersister extends AbstractDataPersister
+class ReportProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,

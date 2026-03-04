@@ -1,23 +1,13 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Report;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-/**
- * Handles deletion (soft-delete) of Report entities.
- *
- * Responsibilities:
- * - Validates that the report exists
- * - Prevents deletion of already-deleted reports
- * - Marks report as deleted (soft-delete)
- * - Persists changes to the database
- */
-class ReportDeleteProcessor extends AbstractDataPersister
+class ReportDeleteProcessor extends AbstractProcessor
 {
     public function __construct(EntityManagerInterface $entityManager)
     {
