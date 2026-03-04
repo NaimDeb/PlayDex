@@ -14,11 +14,11 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
-use App\DataPersister\UserDataPersister;
-use App\DataPersister\UserBanProcessor;
-use App\DataPersister\UserDeleteProcessor;
-use App\DataPersister\UserUnbanProcessor;
-use App\DataPersister\UserUpdateDataPersister;
+use App\State\Processor\UserProcessor;
+use App\State\Processor\UserBanProcessor;
+use App\State\Processor\UserDeleteProcessor;
+use App\State\Processor\UserUnbanProcessor;
+use App\State\Processor\UserUpdateProcessor;
 use App\Interfaces\Entity\BannableInterface;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\State\Provider\MeProvider;
@@ -38,7 +38,7 @@ use App\Traits\TimeStampableTrait;
             denormalizationContext: ['groups' => ['user:write']],
             validationContext: ['groups' => ['Default']],
             security: "is_granted('PUBLIC_ACCESS')",
-            processor: UserDataPersister::class
+            processor: UserProcessor::class
         ),
         new Get(
             uriTemplate: '/me',
@@ -65,7 +65,7 @@ use App\Traits\TimeStampableTrait;
             normalizationContext: ['groups' => ['user:read']],
             validationContext: ['groups' => ['user:update']],
             security: "is_granted('ROLE_USER') and object == user",
-            processor: UserUpdateDataPersister::class,
+            processor: UserUpdateProcessor::class,
             securityMessage: "Vous ne pouvez modifier que votre propre compte",
         ),
         new Post(

@@ -1,23 +1,13 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Patchnote;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-/**
- * Handles the creation and initialization of Patchnote entities.
- *
- * Responsibilities:
- * - Validates incoming Patchnote data
- * - Associates the patchnote with the authenticated user (creator)
- * - Sets creation timestamp
- * - Persists the patchnote to the database
- */
-class PatchnotePersister extends AbstractDataPersister
+class PatchnoteProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,

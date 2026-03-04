@@ -1,7 +1,6 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\User;
@@ -10,18 +9,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-/**
- * Handles updates to User profile data.
- *
- * Responsibilities:
- * - Updates authenticated user's username (if provided)
- * - Updates authenticated user's email (if provided)
- * - Validates current password before allowing password change
- * - Hashes password if provided for update
- * - Persists changes to the database
- * - Operates on the currently authenticated user only
- */
-final class UserUpdateDataPersister extends AbstractDataPersister
+final class UserUpdateProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -36,7 +24,6 @@ final class UserUpdateDataPersister extends AbstractDataPersister
         if ($data instanceof User) {
             $currentUser = $this->getAuthenticatedUser();
             
-            // Refresh user from database to get latest password hash
             $this->entityManager->refresh($currentUser);
 
             if ($data->getUsername()) {
@@ -55,12 +42,10 @@ final class UserUpdateDataPersister extends AbstractDataPersister
                     throw new BadRequestHttpException('Le mot de passe actuel est requis pour changer le mot de passe.');
                 }
                 
-                // Verify current password against the database hash
                 if (!$this->passwordHasher->isPasswordValid($currentUser, $currentPassword)) {
                     throw new BadRequestHttpException('Le mot de passe actuel est incorrect.');
                 }
 
-                // Hash the new password and update
                 $hashedPassword = $this->passwordHasher->hashPassword($currentUser, $newPassword);
                 $currentUser->setPassword($hashedPassword);
             }

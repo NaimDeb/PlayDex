@@ -1,24 +1,13 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-/**
- * Handles unbanning of User accounts.
- *
- * Responsibilities:
- * - Validates that the user ID is provided
- * - Retrieves the user to unban from the database
- * - Updates user's ban status (clears ban)
- * - Verifies user permissions for unban operation
- * - Persists changes to the database
- */
-final class UserUnbanProcessor extends AbstractDataPersister
+final class UserUnbanProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,

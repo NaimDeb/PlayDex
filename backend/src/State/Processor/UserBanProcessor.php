@@ -1,23 +1,13 @@
 <?php
 
-namespace App\DataPersister;
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 
-/**
- * Handles banning of User accounts.
- *
- * Responsibilities:
- * - Validates that the user ID is provided
- * - Retrieves the user to ban from the database
- * - Updates user's ban status and sets ban timestamp
- * - Verifies user permissions for ban operation
- * - Persists changes to the database
- */
-final class UserBanProcessor extends AbstractDataPersister
+final class UserBanProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,

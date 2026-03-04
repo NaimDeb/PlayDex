@@ -15,9 +15,9 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
-use App\DataPersister\DiffMatchPatchProcessor;
-use App\DataPersister\PatchnotePersister;
-use App\DataPersister\PatchnoteDeleteProcessor;
+use App\State\Processor\DiffMatchPatchProcessor;
+use App\State\Processor\PatchnoteProcessor;
+use App\State\Processor\PatchnoteDeleteProcessor;
 use App\Interfaces\Entity\OwnableInterface;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
@@ -35,7 +35,7 @@ use App\Traits\TimeStampableTrait;
         new Post(
             security: "is_granted('ROLE_USER')",
             denormalizationContext: ['groups' => ['patchnote:write']],
-            processor: PatchnotePersister::class
+            processor: PatchnoteProcessor::class
         ),
         new Delete(
             security: "is_granted('ROLE_ADMIN')",

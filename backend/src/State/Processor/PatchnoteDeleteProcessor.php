@@ -1,27 +1,15 @@
 <?php
 
-namespace App\DataPersister;
-
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Patchnote;
-use App\Entity\Report;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use App\Service\SoftDeleteService;
 
-/**
- * Handles deletion (soft-delete) of Patchnote entities.
- *
- * Responsibilities:
- * - Validates that the patchnote exists
- * - Prevents deletion of already-deleted patchnotes
- * - Cascades soft-deletion to related modifications and reports
- * - Marks patchnote as deleted (soft-delete)
- * - Persists changes to the database
- */
-class PatchnoteDeleteProcessor extends AbstractDataPersister
+class PatchnoteDeleteProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,

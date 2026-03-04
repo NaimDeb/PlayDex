@@ -6,8 +6,8 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
-use App\DataPersister\ReportPersister;
-use App\DataPersister\ReportDeleteProcessor;
+use App\State\Processor\ReportProcessor;
+use App\State\Processor\ReportDeleteProcessor;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Repository\ReportRepository;
 use App\State\Provider\AdminReportProvider;
@@ -34,7 +34,7 @@ use Symfony\Component\Validator\Constraints as Assert;
             denormalizationContext: ['groups' => ['report:write', 'report:read']],
             security: "is_granted('ROLE_USER')",
             securityMessage: 'Only authenticated users can create reports.',
-            processor: ReportPersister::class,
+            processor: ReportProcessor::class,
         ),
         new Delete(
             uriTemplate: '/reports/{id}',

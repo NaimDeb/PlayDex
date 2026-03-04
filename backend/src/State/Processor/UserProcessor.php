@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DataPersister;
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use App\Entity\User;
@@ -8,17 +8,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-/**
- * Handles the creation and initialization of User entities.
- *
- * Responsibilities:
- * - Hashes the user password using bcrypt
- * - Assigns default ROLE_USER role
- * - Initializes reputation points (0)
- * - Sets creation timestamp
- * - Persists the user to the database
- */
-class UserDataPersister extends AbstractDataPersister
+class UserProcessor extends AbstractProcessor
 {
     public function __construct(
         EntityManagerInterface $entityManager,

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DataPersister;    
+namespace App\State\Processor;
 
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\User;
@@ -9,13 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-/**
- * Provides common functionality for handling entity persistence, deletion, and soft deletion operations.
- * Manages authentication and authorization through Symfony Security.
- *
- * @abstract
- */
-abstract class AbstractDataPersister implements ProcessorInterface
+abstract class AbstractProcessor implements ProcessorInterface
 {
     public function __construct(
         protected EntityManagerInterface $entityManager,

@@ -7,9 +7,9 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Link;
-use App\DataPersister\FollowedGamesCheckProcessor;
-use App\DataPersister\FollowedGamesDeleteProcessor;
-use App\DataPersister\FollowedGamesPersister;
+use App\State\Processor\FollowedGamesCheckProcessor;
+use App\State\Processor\FollowedGamesDeleteProcessor;
+use App\State\Processor\FollowedGamesProcessor;
 use App\Repository\FollowedGamesRepository;
 use App\State\Provider\FollowedGamesAbsenceProvider;
 use App\State\Provider\FollowedGamesProvider;
@@ -31,7 +31,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         new Post(
             uriTemplate: '/followed-games/{id}',
             security: "is_granted('ROLE_USER')",
-            processor: FollowedGamesPersister::class,
+            processor: FollowedGamesProcessor::class,
             input: false,
         ),
         new Delete(
