@@ -97,8 +97,9 @@ export default function RegisterPage() {
     try {
       await register({ email, password, username });
       showMessage("Inscription réussie ! Vous pouvez maintenant vous connecter.", "success");
-    } catch (err: any) {
-      const violations = err?.response?.data?.violations;
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { violations?: Array<{ propertyPath: string; message: string }> } } };
+      const violations = error?.response?.data?.violations;
       if (violations && Array.isArray(violations)) {
         violations.forEach((violation: { propertyPath: string; message: string }) => {
           if (violation.propertyPath === "plainPassword") {
