@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { generatePagination } from '@/lib/utils';
-import { PAGINATION_MAX_VISIBLE } from '@/constants';
 
 interface PaginationProps {
   /** Current page number (1-indexed) */
