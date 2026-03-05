@@ -3,7 +3,7 @@ import { Patchnote } from "@/types/patchNoteType";
 import { Extension } from "@/types/gameType";
 import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
 import Image from "next/image";
-import Link from "next/link";
+// import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 
