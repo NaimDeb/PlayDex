@@ -21,9 +21,6 @@ final class Version20260305121117 extends AbstractMigration
     {
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql('CREATE UNIQUE INDEX user_game_unique ON followed_games (user_id, game_id)');
-        $this->addSql('DROP INDEX game_id ON genre_game');
-        $this->addSql('ALTER TABLE patchnote RENAME INDEX uniq_patchnote_external_id TO UNIQ_DB17E7169F75D7B0');
-        $this->addSql('ALTER TABLE user DROP previous_login_at, CHANGE reputation reputation BIGINT DEFAULT 0 NOT NULL');
     }
 
     public function down(Schema $schema): void
