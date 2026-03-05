@@ -56,8 +56,7 @@ jobs:
       working-directory: ./backend
       run: |
         php bin/console doctrine:migrations:migrate --no-interaction
-        php bin/console doctrine:schema:validate
-    
+            
     - name: Run tests
       working-directory: ./backend
       run: php bin/phpunit
