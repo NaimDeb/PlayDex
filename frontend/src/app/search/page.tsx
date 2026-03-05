@@ -3,11 +3,11 @@ import SearchBar from "@/components/Search/SearchBar";
 import FiltersSidebar from "@/components/Search/FiltersSidebar";
 import SearchResults from "@/components/Search/SearchResults";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 export const dynamic = 'force-dynamic';
 
-export default function SearchPage() {
+function SearchPageContent() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -106,5 +106,13 @@ export default function SearchPage() {
         <SearchResults filters={filters} />
       </section>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 text-white">Chargement...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }

@@ -13,14 +13,17 @@ type FiltersSidebarProps = {
   onChange: (filters: Partial<Filters>) => void;
 };
 
-const GENRES = await gameService
-  .getGenres()
-  .then((res) => res.map((g) => g.name));
-
 export default function FiltersSidebar({
   filters,
   onChange,
 }: FiltersSidebarProps) {
+  const [genres, setGenres] = useState<string[]>([]);
+  
+  useEffect(() => {
+    gameService.getGenres()
+      .then((res) => setGenres(res.map((g) => g.name)))
+      .catch(() => setGenres([]));
+  }, []);
   // Handler pour les genres (checkbox)
   const handleGenreChange = (genre: string, checked: boolean) => {
     let newGenres = filters.genres ? [...filters.genres] : [];
@@ -75,7 +78,7 @@ export default function FiltersSidebar({
             className="flex flex-col gap-2"
             style={{ maxHeight: 180, overflowY: "auto" }}
           >
-            {GENRES.map((genre, idx) => (
+            {genres.map((genre, idx) => (
               <label
                 key={`${genre}-${idx}`}
                 className="flex items-center gap-2"
