@@ -1,33 +1,12 @@
 "use client";
-import {
-  useEffect,
-  useState,
-  createContext,
-  useContext,
-  use as usePromise,
-} from "react";
+import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
 import gameService from "@/lib/api/gameService";
 import { Patchnote } from "@/types/patchNoteType";
 import { Game } from "@/types/gameType";
 import { usePathname } from "next/navigation";
-
-type PatchnoteLayoutContextType = {
-  patchnote: Patchnote | null;
-  game: Game | null;
-  loading: boolean;
-};
-
-const PatchnoteLayoutContext = createContext<PatchnoteLayoutContextType>({
-  patchnote: null,
-  game: null,
-  loading: true,
-});
-
-export function usePatchnoteLayout() {
-  return useContext(PatchnoteLayoutContext);
-}
+import { PatchnoteLayoutContext } from "@/contexts/PatchnoteLayoutContext";
 
 export default function PatchnoteLayout({
   children,
