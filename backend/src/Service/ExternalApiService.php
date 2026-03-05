@@ -63,7 +63,7 @@ class ExternalApiService
     {
         $body = $this->buildQueryBody([
             'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
-            'where' => 'game_type = 0 & follows >= ' . ApiConfig::IGDB_GAME_MIN_FOLLOWS
+            'where' => 'game_type = 0 & themes != (' . ApiConfig::FORBIDDEN_THEMES . ')'
                 . ($from ? ' & updated_at >= ' . $from : ''),
             'limit' => $limit,
             'offset' => $offset
@@ -148,7 +148,7 @@ class ExternalApiService
 
     public function getNumberOfIgdbGames(?int $from): int
     {
-        return $this->getCount('/games', 'where game_type = 0 & follows >= ' . ApiConfig::IGDB_GAME_MIN_FOLLOWS
+        return $this->getCount('/games', 'where game_type = 0 & themes != (' . ApiConfig::FORBIDDEN_THEMES . ')'
             . ($from ? ' & updated_at >= ' . $from : ''));
     }
 
