@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
-import { usePatchnoteLayout } from "../layout";
+import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
 import { Modification } from "@/types/patchNoteType";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";

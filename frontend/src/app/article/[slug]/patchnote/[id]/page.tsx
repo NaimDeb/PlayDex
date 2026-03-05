@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import Image from "next/image";
-import { usePatchnoteLayout } from "./layout";
+import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
 import ReactMarkdown from "react-markdown";
 import { colorizeContent } from "@/lib/utils";
 import rehypeRaw from "rehype-raw";
