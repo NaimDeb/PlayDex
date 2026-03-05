@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 interface ProfileUpdateData {
   username: string;
   email: string;
