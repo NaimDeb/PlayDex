@@ -70,11 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         router.push("/");
         return { code: 200, user: res.user }; // retourne succès
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
         const message =
-          error?.response?.data?.message ||
-          error?.message ||
+          err?.response?.data?.message ||
+          err?.message ||
           "Échec de la connexion";
         setState((prev) => ({
           ...prev,
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAuthenticated: false,
         }));
         return {
-          code: error?.response?.status || 401,
+          code: err?.response?.status || 401,
           message,
         }; // retourne l'erreur
       }
@@ -101,9 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         await authService.register(data);
         router.push("/login?registered=true");
-      } catch (error: any) {
-        const errorMessage = error?.response?.data?.detail || 
-                            error?.message || 
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { detail?: string }; status?: number }; message?: string };
+        const errorMessage = err?.response?.data?.detail || 
+                            err?.message || 
                             "Échec de l'inscription";
         setState((prev) => ({
           ...prev,
