@@ -39,7 +39,8 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
       router.push("/login");
       return;
     }
-    router.push(`${window.location.pathname}/patchnote/new`);
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    router.push(`${currentPath}/patchnote/new`);
   };
 
   // Combine and tag items
@@ -166,9 +167,9 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
         {years.length === 0 ? (
             <p className="text-gray-500">
             Il n&apos;y a aucune mise à jour répertoriée. Vous en avez trouvé une ?{" "}
-            <Link href={`${window.location.pathname}/patchnote/new`} className="underline text-secondary">
+            <button onClick={handleAddPatchnote} className="underline text-secondary">
               Ajoutez la ici !
-            </Link>
+            </button>
             </p>
         ) : (
           years.map((year) => {

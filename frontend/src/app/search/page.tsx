@@ -5,6 +5,8 @@ import SearchResults from "@/components/Search/SearchResults";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+export const dynamic = 'force-dynamic';
+
 export default function SearchPage() {
 
   const searchParams = useSearchParams();
