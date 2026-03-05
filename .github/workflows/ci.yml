@@ -15,7 +15,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: playdex
+          MYSQL_DATABASE: playdex_test
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -33,7 +33,7 @@ jobs:
       working-directory: ./backend
       run: |
         cat > .env << EOF
-        APP_ENV=test
+        APP_ENV=dev
         APP_SECRET=test_secret_key_for_ci
         DATABASE_URL=mysql://root:root@127.0.0.1:3306/playdex_test?serverVersion=8.0&charset=utf8mb4
         STEAM_API_KEY=${{ secrets.STEAM_API_KEY }}
