@@ -111,7 +111,7 @@ export default function RegisterPage() {
           }
         });
       } else {
-        showMessage(error || "Une erreur est survenue lors de l'inscription.", "error");
+        showMessage(typeof error === 'string' ? error : "Une erreur est survenue lors de l'inscription.", "error");
       }
     } finally {
       setLoading(false);
