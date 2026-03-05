@@ -69,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAuthenticated: true,
         });
         router.push("/");
-        return { code: 200, user: res.user }; // retourne succès
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
         const message =
@@ -81,10 +80,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: message,
           isAuthenticated: false,
         }));
-        return {
-          code: err?.response?.status || 401,
-          message,
-        }; // retourne l'erreur
       }
     },
     [router]

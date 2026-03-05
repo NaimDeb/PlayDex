@@ -27,7 +27,7 @@ export default function ProfileEditPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const [formData, setFormData] = useState<ProfileUpdateData>({
+  const [formData, setFormData] = useState<ProfileUpdateData & { password?: string }>({
     username: user?.username || "",
     email: user?.email || "",
     currentPassword: "",

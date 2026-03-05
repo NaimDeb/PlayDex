@@ -43,17 +43,19 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
   };
 
   // Combine and tag items
-  const timelineItems = [
+  type Update = (Patchnote & { type: string; isExtension: false; releasedAt: Date }) | (Extension & { type: string; isExtension: true; releasedAt: string });
+  
+  const timelineItems: Update[] = [
     ...patchnotes.map((p) => ({
       ...p,
-      type: p.type || "minor", // fallback if type missing
-      isExtension: false,
+      type: p.importance,
+      isExtension: false as const,
       releasedAt: p.releasedAt,
     })),
     ...extensions.map((e) => ({
       ...e,
       type: "extension",
-      isExtension: true,
+      isExtension: true as const,
       releasedAt: e.releasedAt,
     })),
   ];
