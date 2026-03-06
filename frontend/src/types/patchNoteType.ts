@@ -16,6 +16,7 @@ export interface Patchnote {
   importance: "minor" | "major" | "hotfix";
   game: string | { title: string; id: number };
   smallDescription: string;
+  version: number;
   createdBy?: {
     id: number;
     username: string;

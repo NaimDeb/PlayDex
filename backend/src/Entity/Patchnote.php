@@ -114,12 +114,11 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
     #[Groups(['patchnote:read'])]
     private ?string $externalId = null;
 
-
+    // Todo : C'est pas mieux en tinyint ? 0-255 ça me parait largement suffisant
     #[ORM\Column(type: TYPES::SMALLINT, nullable: false, unique: false)]
-    #[Groups(['patchnote:read'])]
+    #[Groups(['patchnote:read', 'patchnote:write'])]
     private int $version = 1;
 
-    
 
     /**
      * @var Collection<int, Modification>

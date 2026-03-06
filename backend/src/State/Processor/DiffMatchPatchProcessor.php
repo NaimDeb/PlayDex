@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use DiffMatchPatch\DiffMatchPatch;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class DiffMatchPatchProcessor extends AbstractProcessor
 {
@@ -32,6 +33,15 @@ class DiffMatchPatchProcessor extends AbstractProcessor
         }
 
         $oldPatchnote = $this->entityManager->getRepository(Patchnote::class)->findOneBy(['id' => $modifiedPatchnote->getId()]);
+
+        error_log('[DEBUG] Version modifiée: ' . ($modifiedPatchnote->getVersion() ?? 'NULL'));
+        error_log('[DEBUG] Version en base: ' . $oldPatchnote->getVersion());
+
+        // Optimistic locking check - only if version is provided and not 0
+        if ($modifiedPatchnote->getVersion() !== null && $modifiedPatchnote->getVersion() !== 0 && $oldPatchnote->getVersion() !== $modifiedPatchnote->getVersion()) {
+            error_log('[DEBUG] CONFLIT DÉTECTÉ!');
+            throw new ConflictHttpException('La patchnote a été modifiée par quelqu\'un d\'autre.');
+        }
 
         $oldContent = $oldPatchnote ? $oldPatchnote->getContent() : '';
         $newContent = $modifiedPatchnote->getContent();
@@ -60,6 +70,7 @@ class DiffMatchPatchProcessor extends AbstractProcessor
             }
         }
 
+        $oldPatchnote->addVersion();
         $this->entityManager->persist($oldPatchnote);
     }
 

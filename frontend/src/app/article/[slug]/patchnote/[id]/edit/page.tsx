@@ -12,6 +12,7 @@ import {
   buffCommand,
   debuffCommand,
 } from "@/components/MDEditor/customCommands";
+import MergeConflictResolver from "@/components/MergeConflictResolver";
 
 export default function EditPatchnotePage() {
   const params = useParams();
@@ -29,9 +30,11 @@ export default function EditPatchnotePage() {
   const [importance, setImportance] = useState<"minor" | "major" | "hotfix">(
     "minor"
   );
-  const [content, setContent] = useState("");
+  const [version, setVersion] = useState(0);
+  const [userContent, setUserContent] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [conflict, setConflict] = useState<{ serverContent: string } | null>(null);
   const { showMessage } = useFlashMessage();
 
   // Fetch patchnote and game data
@@ -42,12 +45,13 @@ export default function EditPatchnotePage() {
       setGameName(gameData.title);
       setGameReleaseDate(gameData.releasedAt);
 
-      // Ensure getPatchnoteById exists in gameService
       if (typeof gameService.getPatchNoteById !== "function") {
         console.error("gameService.getPatchnoteById is not a function");
         return;
       }
       const patchnoteData = await gameService.getPatchNoteById(id);
+      console.log("[DEBUG] Patchnote récupérée:", patchnoteData);
+      console.log("[DEBUG] Version récupérée:", patchnoteData.version);
       setTitle(patchnoteData.title || "");
       setReleasedAt(
         patchnoteData.releasedAt
@@ -56,40 +60,60 @@ export default function EditPatchnotePage() {
       );
       setSmallDescription(patchnoteData.smallDescription || "");
       setImportance(patchnoteData.importance || "minor");
-      setContent(patchnoteData.content || "");
+      setVersion(patchnoteData.version ?? 0);
+      setUserContent(patchnoteData.content || "");
     };
     if (slug && id) fetchData();
   }, [slug, id]);
 
-  // --- Form submission handler ---
   async function handleEditPatchnote(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setIsLoading(true);
 
+    console.log("[DEBUG] Version avant envoi:", version);
     const updatedPatchnote: Partial<Patchnote> = {
       title,
       smallDescription,
       importance,
-      content,
+      content: userContent,
     };
+    if (version !== null && version !== undefined) {
+      updatedPatchnote.version = version;
+    }
     if (releasedAt) {
       updatedPatchnote.releasedAt = new Date(releasedAt);
     }
+    console.log("[DEBUG] Patchnote envoyée:", updatedPatchnote);
 
     try {
       await gameService.patchPatchnote(id, updatedPatchnote);
-    } catch {
-      showMessage("Erreur lors de la modification de la patchnote.", "error");
-    } finally {
       showMessage("Patchnote modifiée avec succès !", "success");
+      setIsLoading(false);
       redirect(`/article/${slug}/patchnote/${id}`);
+    } catch (error: unknown) {
+      console.log("[DEBUG] Erreur:", error);
+      const err = error as { response?: { status?: number }; message?: string };
+      
+      // redirect() throws an error in Next.js, check if it's a redirect
+      if (err.message?.includes('NEXT_REDIRECT')) {
+        throw error;
+      }
+      
+      if (err.response?.status === 409) {
+        const serverData = await gameService.getPatchNoteById(id);
+        console.log("[DEBUG] Version serveur après conflit:", serverData.version);
+        setConflict({ serverContent: serverData.content || "" });
+        setVersion(serverData.version ?? 0);
+        showMessage("Il y a eu une modification pendant que tu modifiais la patchnote.", "error");
+      } else {
+        showMessage("Erreur lors de la modification de la patchnote.", "error");
+      }
+      setIsLoading(false);
     }
   }
 
   function changePatchnoteTitle(event: React.ChangeEvent<HTMLInputElement>) {
     const selectedDate = event.target.value;
-    // Use a fixed format for the title to avoid hydration issues
     const formattedDate = selectedDate.split("-").reverse().join("/");
     const newTitle = `Patch Note - ${formattedDate}`;
     if (
@@ -129,6 +153,19 @@ export default function EditPatchnotePage() {
             </p>
           </div>
         </div>
+
+        {conflict && (
+          <MergeConflictResolver
+            userContent={userContent}
+            serverContent={conflict.serverContent}
+            onResolve={(resolvedContent) => {
+              setUserContent(resolvedContent);
+              setConflict(null);
+            }}
+            onCancel={() => setConflict(null)}
+          />
+        )}
+
         <div
           className={`transition-all duration-200 ${
             isLoading ? "pointer-events-none opacity-50 select-none" : ""
@@ -224,8 +261,8 @@ export default function EditPatchnotePage() {
                   Contenu :
                 </label>
                 <MDEditor
-                  value={content}
-                  onChange={(newContent) => setContent(newContent || "")}
+                  value={userContent}
+                  onChange={(newContent) => setUserContent(newContent || "")}
                   textareaProps={{
                     autoCapitalize: "none",
                     disabled: isLoading,
