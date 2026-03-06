@@ -26,6 +26,9 @@ export default function ArticleModificationsPage({
   const [gameReleaseDate, setGameReleaseDate] = useState(""); // Placeholder for game release date
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState(false); // State to track if the patch note title has changed
   const [content, setContent] = useState("");
+  const [title, setTitle] = useState("Patch Note");
+  const [releasedAt, setReleasedAt] = useState("");
+  const [smallDescription, setSmallDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { showMessage } = useFlashMessage();
 
@@ -100,20 +103,21 @@ export default function ArticleModificationsPage({
   function changePatchnoteTitle(
     event: React.ChangeEvent<HTMLInputElement>
   ): void {
-    const selectedDate = event.target.value; // Get the selected date from the input
-    const formattedDate = new Date(selectedDate).toLocaleDateString("fr-FR"); // Format the date to French format
-    const newTitle = `Patch Note - ${formattedDate}`; // Create a new title using the formatted date
+    const selectedDate = event.target.value;
+    setReleasedAt(selectedDate);
+    const formattedDate = new Date(selectedDate).toLocaleDateString("fr-FR");
+    const newTitle = `Patch Note - ${formattedDate}`;
 
-    const titleInput = document.getElementById("title") as HTMLInputElement; // Get the title input element
     if (
-      titleInput &&
-      (!isPatchNoteTitleChanged ||
-        titleInput.value.startsWith("Patch Note") ||
-        titleInput.value === "")
+      !isPatchNoteTitleChanged ||
+      title.startsWith("Patch Note") ||
+      title === ""
     ) {
-      titleInput.value = newTitle; // Update the title input value
+      setTitle(newTitle);
     }
   }
+
+  const isFormValid = title.trim() !== "" && releasedAt !== "" && content.trim() !== "" && smallDescription.trim() !== "";
 
   return (
     <>
@@ -160,8 +164,12 @@ export default function ArticleModificationsPage({
                   type="text"
                   id="title"
                   name="title"
-                  defaultValue="Patch Note"
-                  onChange={() => setPatchNoteTitleChanged(true)}
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setPatchNoteTitleChanged(true);
+                  }}
+                  required
                   className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -177,8 +185,10 @@ export default function ArticleModificationsPage({
                   type="date"
                   id="releasedAt"
                   name="releasedAt"
+                  value={releasedAt}
                   min={gameReleaseDate}
                   onChange={changePatchnoteTitle}
+                  required
                   className="w-fit py-3 px-4 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -194,7 +204,10 @@ export default function ArticleModificationsPage({
                   id="smallDescription"
                   name="smallDescription"
                   rows={2}
+                  value={smallDescription}
+                  onChange={(e) => setSmallDescription(e.target.value)}
                   placeholder="Small resume of the change"
+                  required
                   className="w-1/2  p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -252,10 +265,14 @@ export default function ArticleModificationsPage({
               <div className="flex justify-end pt-6">
                 <button
                   type="submit"
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 px-6 rounded transition duration-150 ease-in-out"
-                  disabled={isLoading}
+                  className={`font-bold py-2 px-6 rounded transition duration-150 ease-in-out ${
+                    isFormValid && !isLoading
+                      ? "bg-gray-300 hover:bg-gray-400 text-gray-900 cursor-pointer"
+                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  }`}
+                  disabled={!isFormValid || isLoading}
                 >
-                  Publier
+                  {isLoading ? "Publication..." : "Publier"}
                 </button>
               </div>
             </fieldset>
