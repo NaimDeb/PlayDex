@@ -114,6 +114,13 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
     #[Groups(['patchnote:read'])]
     private ?string $externalId = null;
 
+
+    #[ORM\Column(type: TYPES::SMALLINT, nullable: false, unique: false)]
+    #[Groups(['patchnote:read'])]
+    private int $version = 1;
+
+    
+
     /**
      * @var Collection<int, Modification>
      */
@@ -271,5 +278,23 @@ class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableI
     public function getReportableOwner(): ?User
     {
         return $this->createdBy;
+    }
+
+    public function getVersion(): int
+    {
+        return $this->version;
+    }
+
+    public function setVersion(int $version): static
+    {
+        $this->version = $version;
+
+        return $this;
+    }
+
+    // todo : Pourquoi le mettre en static ? Quel serait le meilleur return ? 
+    public function addVersion(): static {
+        $this->version += 1;
+        return $this;
     }
 }
