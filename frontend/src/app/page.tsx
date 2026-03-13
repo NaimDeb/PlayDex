@@ -1,26 +1,25 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import React from "react";
 import { useEffect, useState } from "react";
 import { ClassicCard } from "@/components/ArticleCard/ClassicCard";
+import { PageSection } from "@/components/PageSection";
 import { useAuth } from "@/providers/AuthProvider";
 import gameService from "@/lib/api/gameService";
 import { FollowedGameWithCount, Game } from "@/types/gameType";
 import Link from "next/link";
 
-// Placeholder Card Component
 const GameCardPlaceholder = () => (
-  <div className="flex-shrink-0 w-48 h-64 m-2 bg-gray-700 rounded-lg animate-pulse">
-    {/* You can add more details here later */}
-  </div>
+  <div
+    className="flex-shrink-0 bg-[#2a2a2a] rounded animate-pulse"
+    style={{ width: "200px", height: "300px" }}
+  />
 );
 
 export default function Home() {
   const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
   const [newGames, setNewGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
-
   const { isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -40,106 +39,95 @@ export default function Home() {
   }, [isAuthenticated]);
 
   return (
-    <>
-      <div className="mb-12 h-[40vh] md:h-[30vh] flex items-center max-md:justify-center px-16 justify-between bg-gradient-to-r rounded-lg bg-hero">
-        {/* Left side: Logo */}
-        <div className="max-md:hidden">
-          <Logo width={192} height={192} />
+    <main>
+      {/* ── Hero ───────────────────────────────────────────────
+          - bg-hero s'étend sur toute la largeur
+          - le contenu intérieur reste dans le container 1440px
+          - pas de boîte sur le texte : tout flotte sur l'image
+      ───────────────────────────────────────────────────────── */}
+      <header className="w-full bg-hero bg-cover bg-center mb-12" style={{ height: "40vh", minHeight: "280px" }}>
+        <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 h-full
+          flex items-center justify-between max-md:justify-center gap-8">
+
+          {/* Logo — gauche, visible desktop seulement */}
+          <figure className="max-md:hidden flex-shrink-0">
+            <Logo width={240} height={240} />
+          </figure>
+
+          {/* CTA — droite, texte flottant directement sur le bg */}
+          <aside className="flex flex-col items-center gap-4 text-center">
+            {isAuthenticated ? (
+              <>
+                <h1 className="text-2xl font-bold lg:text-4xl drop-shadow-lg">
+                  Bienvenue sur PlayDex !<br />
+                  Retrouvez toutes les nouveautés de vos jeux suivis.
+                </h1>
+                <Link
+                  href="/profile"
+                  className="px-5 py-2 font-bold text-white rounded bg-secondary hover:bg-gray-600"
+                >
+                  Voir mon profil
+                </Link>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold lg:text-4xl drop-shadow-lg">
+                  Ne rate plus aucun patch !<br />
+                  Inscris-toi maintenant.
+                </h1>
+                <button className="px-5 py-2 font-bold text-white rounded bg-secondary hover:bg-gray-600">
+                  S&apos;inscrire
+                </button>
+                <p className="text-sm drop-shadow">
+                  Déjà un compte ?{" "}
+                  <a href="#" className="underline">Connectez-vous</a>
+                </p>
+              </>
+            )}
+          </aside>
+
         </div>
-        {/* Right side: Text content */}
-        <div className="flex flex-col items-center justify-center p-4 px-12 text-center bg-black/20">
-          {isAuthenticated ? (
-        <>
-          <h1 className="w-full mb-4 text-2xl font-bold lg:text-4xl">
-            Bienvenue sur PlayDex !
-            <br />
-            Retrouvez toutes les nouveautés de vos jeux suivis.
-          </h1>
-          <div className="flex justify-center w-full">
-            <Link
-          href="/profile"
-          className="px-4 py-2 font-bold text-white rounded bg-secondary hover:bg-gray-600"
-            >
-          Voir mon profil
-            </Link>
-          </div>
-        </>
-          ) : (
-        <>
-          <h1 className="w-full mb-4 text-2xl font-bold lg:text-4xl">
-            Ne rate plus aucun patch !
-            <br />
-            Inscris-toi maintenant.
-          </h1>
-          <div className="flex justify-center w-full">
-            <button className="px-4 py-2 font-bold text-white rounded bg-secondary hover:bg-gray-600">
-          S&apos;inscrire
-            </button>
-          </div>
-          <p className="w-full mt-4 text-sm">
-            Déjà un compte ?{" "}
-            <a href="#" className="underline">
-          Connectez-vous
-            </a>
-          </p>
-        </>
-          )}
-        </div>
-      </div>
+      </header>
 
-
-
-
-      {/*
-        Pendant mon absence Section - Show only if logged in
-      */}
+      {/* ── Ma liste ───────────────────────────────────────── */}
       {isAuthenticated && (
-        <section className="pl-4 mb-12 sm:px-16 lg:px-30">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold">Ma liste</h2>
-            <Link href="/profile" className="text-sm text-gray-400 hover:underline">
-              Voir toute ma liste
-            </Link>
-          </div>
-          <div className="flex gap-3 pb-4 -mx-2 overflow-x-auto">
+        <PageSection
+          title="Ma liste"
+          seeMoreLabel="Voir toute ma liste"
+          seeMoreHref="/profile"
+        >
+          <ul className="flex gap-4 pb-4 overflow-x-auto list-none">
             {loading
-              ? [...Array(6)].map((_, i) => (
-                  <GameCardPlaceholder key={`followed-${i}`} />
-                ))
+              ? [...Array(6)].map((_, i) => <li key={`followed-${i}`}><GameCardPlaceholder /></li>)
               : followedGames.map((data) => (
-                  <ClassicCard
-                    key={data.game.id}
-                    game={data.game}
-                    updatesCount={data.newPatchnoteCount}
-                    isAuthenticated={isAuthenticated}
-                  />
+                  <li key={data.game.id}>
+                    <ClassicCard
+                      game={data.game}
+                      updatesCount={data.newPatchnoteCount}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  </li>
                 ))}
-          </div>
-        </section>
+          </ul>
+        </PageSection>
       )}
 
-      {/* Derniers jeux ajoutés Section */}
-      <section className="pl-4 mb-12 sm:px-16 lg:px-30">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Derniers jeux ajoutés</h2>
-          <a href="/search?category=jeux" className="text-sm text-gray-400 hover:underline">
-            Voir tous les derniers jeux ajoutés
-          </a>
-        </div>
-        <div className="flex gap-3 pb-4 -mx-2 overflow-x-auto">
+      {/* ── Derniers jeux ajoutés ──────────────────────────── */}
+      <PageSection
+        title="Derniers jeux ajoutés"
+        seeMoreLabel="Voir tous les derniers jeux ajoutés"
+        seeMoreHref="/search?category=jeux"
+      >
+        <ul className="flex gap-4 pb-4 overflow-x-auto list-none">
           {loading
-            ? [...Array(6)].map((_, i) => (
-                <GameCardPlaceholder key={`new-${i}`} />
-              ))
+            ? [...Array(6)].map((_, i) => <li key={`new-${i}`}><GameCardPlaceholder /></li>)
             : newGames.map((game) => (
-                <ClassicCard
-                  key={game.id}
-                  game={game}
-                  isAuthenticated={isAuthenticated}
-                />
+                <li key={game.id}>
+                  <ClassicCard game={game} isAuthenticated={isAuthenticated} />
+                </li>
               ))}
-        </div>
-      </section>
-    </>
+        </ul>
+      </PageSection>
+    </main>
   );
 }
