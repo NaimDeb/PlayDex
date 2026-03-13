@@ -14,10 +14,10 @@ class PatchnoteFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
-        // Create a set of test games
-        $game1 = $manager->getRepository(Game::class)->findOneBy(['title' => 'Overwatch 2']);
-        $game2 = $manager->getRepository(Game::class)->findOneBy(['title' => 'The Witcher 3: Wild Hunt']);
-        $game3 = $manager->getRepository(Game::class)->findOneBy(['title' => 'Baldur\'s Gate 3']);
+        // Get games from GameFixtures references
+        $game1 = $this->getReference('game-overwatch2', Game::class);
+        $game2 = $this->getReference('game-witcher3', Game::class);
+        $game3 = $this->getReference('game-bg3', Game::class);
 
         // Create patchnotes for Game 1 (Overwatch 2)
         $patchnote1 = $this->createPatchnote(
@@ -112,6 +112,7 @@ class PatchnoteFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             UserFixtures::class,
+            GameFixtures::class,
         ];
     }
 }
