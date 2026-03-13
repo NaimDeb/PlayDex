@@ -91,11 +91,11 @@ Follow these steps to set up the backend:
 
     - Create a private key:
         ```bash
-        openssl genrsa -out config/jwt/private.pem -aes256 4096
+        openssl genrsa -out backend/config/jwt/private.pem -aes256 4096
         ```
     - Create a public key:
         ```bash
-        openssl rsa -pubout -in config/jwt/private.pem -out config/jwt/public.pem
+        openssl rsa -pubout -in backend/config/jwt/private.pem -out backend/config/jwt/public.pem
         ```
 
 8. **Launch the scheduler**:
