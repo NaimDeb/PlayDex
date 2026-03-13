@@ -1,6 +1,5 @@
 import userService from "@/lib/api/userService";
 import { useState } from "react";
-import { FaMinusCircle, FaPlusCircle } from "react-icons/fa";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 
@@ -13,22 +12,16 @@ export function FollowButton({ gameId }: FollowButtonProps) {
   const { refreshFollowedGames, followedGameIds } = useFollowedGames();
   const { showMessage } = useFlashMessage();
 
-  // console.log("FollowButton - followedGameIds:", followedGameIds);
-
-  let isFollowingState = followedGameIds.includes(String(gameId));
-
-  // console.log("FollowButton - isFollowingState:", isFollowingState);
+  const isFollowing = followedGameIds.includes(String(gameId));
 
   const handleFollow = async () => {
     setLoading(true);
     try {
-      if (!isFollowingState) {
+      if (!isFollowing) {
         await userService.followGame(gameId);
-        isFollowingState = true;
         showMessage("Jeu suivi !", "success");
       } else {
         await userService.unfollowGame(gameId);
-        isFollowingState = false;
         showMessage("Jeu retiré !", "info");
       }
       await refreshFollowedGames();
@@ -40,35 +33,41 @@ export function FollowButton({ gameId }: FollowButtonProps) {
     }
   };
 
+  if (isFollowing) {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleFollow(); }}
+        disabled={loading}
+        className="flex items-center gap-2 pl-3 pr-2 py-1 rounded-full
+          bg-[#2a2a2a] border border-gray-500
+          text-white text-xs font-semibold
+          hover:border-red-400 hover:text-red-300 transition-colors duration-150
+          disabled:opacity-50"
+      >
+        Suivi
+        {/* Cercle ⊖ */}
+        <span className="w-[18px] h-[18px] rounded-full border border-gray-400 flex items-center justify-center flex-shrink-0">
+          <span className="text-gray-300 font-bold leading-none" style={{ fontSize: "11px" }}>−</span>
+        </span>
+      </button>
+    );
+  }
+
   return (
     <button
-      onClick={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        handleFollow();
-      }}
+      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleFollow(); }}
       disabled={loading}
-      tabIndex={0}
-      className={`flex items-center justify-center max-md:text-2xl text-off-white font-bold py-2 px-2 md:px-4 rounded-md transition-colors duration-150 ease-in-out border-2 border-gray-500/50
-        ${
-          loading
-            ? "bg-off-gray cursor-not-allowed"
-            : "bg-off-gray hover:bg-gray-600"
-        }`}
+      className="flex items-center gap-2 pl-3 pr-2 py-1 rounded-full
+        bg-white border border-gray-300
+        text-gray-900 text-xs font-semibold
+        hover:bg-gray-100 transition-colors duration-150
+        disabled:opacity-50"
     >
-      {loading ? (
-        "Loading..."
-      ) : isFollowingState ? (
-        <>
-          <span className="mr-2">Suivi</span>
-          <FaMinusCircle />
-        </>
-      ) : (
-        <>
-          <span className="mr-2">Suivre</span>
-          <FaPlusCircle />
-        </>
-      )}
+      Suivre
+      {/* Cercle ⊕ */}
+      <span className="w-[18px] h-[18px] rounded-full border border-gray-500 flex items-center justify-center flex-shrink-0">
+        <span className="text-gray-700 font-bold leading-none" style={{ fontSize: "11px" }}>+</span>
+      </span>
     </button>
   );
 }
