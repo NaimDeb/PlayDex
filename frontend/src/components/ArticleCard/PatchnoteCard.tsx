@@ -1,115 +1,145 @@
-import { ThumbsUp, ThumbsDown, ChevronDown, ChevronUp } from "lucide-react";
+"use client";
+
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
-interface Update {
+// Champs optionnels pour ne pas casser les usages existants
+interface PatchnoteCardProps {
   id?: number;
-  importance?: string;
   title: string;
   content: string;
+  releasedAt?: Date | string;
+  importance?: string;
   lineCount?: number;
+  // Champs stats (optionnels — affichés si fournis)
+  changesCount?: number;
+  buffsCount?: number;
+  nerfsCount?: number;
 }
 
-export function PatchnoteCard({ patchnote }: { patchnote: Update }) {
-  const [expanded, setExpanded] = useState(false);
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
+const IMPORTANCE_LABELS: Record<string, string> = {
+  major:  "Patch majeur",
+  minor:  "Patch mineur",
+  hotfix: "Hotfix",
+};
+
+const IMPORTANCE_COLORS: Record<string, string> = {
+  major:  "bg-purple-600 text-purple-100",
+  minor:  "bg-blue-700 text-blue-100",
+  hotfix: "bg-orange-700 text-orange-100",
+};
+
+export function PatchnoteCard({ patchnote }: { patchnote: PatchnoteCardProps }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const patchnoteUrl = `${pathname.replace(/\/$/, "")}/patchnote/${patchnote.id}`;
 
-  const isTruncated = patchnote.content.length > 200;
-  const displayedContent =
-    expanded || !isTruncated
-      ? patchnote.content
-      : patchnote.content.substring(0, 200) + "…";
+  const truncated = patchnote.content.length > 200
+    ? patchnote.content.substring(0, 200) + "…"
+    : patchnote.content;
 
-  const handleVote = (dir: "up" | "down", e: React.MouseEvent) => {
-    e.stopPropagation();
-    setVote((v) => (v === dir ? null : dir));
-  };
+  const formattedDate = patchnote.releasedAt
+    ? new Date(patchnote.releasedAt).toLocaleDateString("fr-FR")
+    : null;
+
+  const importanceLabel = patchnote.importance
+    ? (IMPORTANCE_LABELS[patchnote.importance] ?? patchnote.importance)
+    : null;
+
+  const importanceColor = patchnote.importance
+    ? (IMPORTANCE_COLORS[patchnote.importance] ?? "bg-gray-600 text-gray-200")
+    : null;
 
   return (
-    <div
-      className="bg-[#2a2a2a] rounded-lg shadow-md text-gray-300 border-l-2 border-purple-600"
-      onClick={() => isTruncated && setExpanded((v) => !v)}
-      tabIndex={0}
-      role="button"
-      aria-expanded={expanded}
-      onKeyDown={(e) => {
-        if (isTruncated && (e.key === "Enter" || e.key === " ")) {
-          setExpanded((v) => !v);
-        }
-      }}
-    >
-      {/* Header */}
-      <div className="flex justify-between items-start gap-3 px-4 pt-4 pb-3">
-        <Link
-          href={`${pathname.replace(/\/$/, "")}/patchnote/${patchnote.id}`}
-          className="text-white font-bold text-base leading-snug hover:text-purple-400 transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {patchnote.title}
-        </Link>
+    <article className="bg-[#2a2a2a] rounded-lg p-4 text-white relative">
 
-        <div className="flex gap-1 items-center flex-shrink-0">
+      {/* ── Row 1 : title + menu ────────────────────────────── */}
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <h3 className="font-bold text-base leading-snug">{patchnote.title}</h3>
+
+        {/* ··· menu */}
+        <div className="relative flex-shrink-0">
           <button
-            className={`p-1.5 rounded transition-colors ${
-              vote === "up"
-                ? "text-green-400"
-                : "text-gray-500 hover:text-white"
-            }`}
-            onClick={(e) => handleVote("up", e)}
-            tabIndex={-1}
+            className="text-gray-400 hover:text-white px-1 leading-none text-lg"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Options"
           >
-            <ThumbsUp size={15} />
+            •••
           </button>
-          <button
-            className={`p-1.5 rounded transition-colors ${
-              vote === "down"
-                ? "text-red-400"
-                : "text-gray-500 hover:text-white"
-            }`}
-            onClick={(e) => handleVote("down", e)}
-            tabIndex={-1}
-          >
-            <ThumbsDown size={15} />
-          </button>
+          {menuOpen && (
+            <ul className="absolute right-0 top-full mt-1 bg-[#1e1e1e] border border-gray-700
+              rounded shadow-lg z-20 text-sm list-none p-1 min-w-[140px]">
+              <li>
+                <Link
+                  href={patchnoteUrl}
+                  className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-gray-300 hover:text-white"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Voir la patchnote
+                </Link>
+              </li>
+            </ul>
+          )}
         </div>
       </div>
 
-      {/* Separator */}
-      <div className="h-px bg-gradient-to-r from-gray-600 to-transparent mx-4" />
+      {/* ── Row 2 : date + importance badge ─────────────────── */}
+      <div className="flex items-center gap-3 mb-3">
+        {formattedDate && (
+          <span className="text-sm text-gray-400">
+            Date&nbsp;: {formattedDate}
+          </span>
+        )}
+        {importanceLabel && importanceColor && (
+          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${importanceColor}`}>
+            {importanceLabel}
+          </span>
+        )}
+      </div>
 
-      {/* Content */}
-      <p className="text-sm leading-relaxed whitespace-pre-line px-4 py-3">
-        {displayedContent}
+      {/* ── Row 3 : stats (changements / buffs / nerfs) ─────── */}
+      {(patchnote.changesCount !== undefined ||
+        patchnote.buffsCount   !== undefined ||
+        patchnote.nerfsCount   !== undefined) && (
+        <p className="text-sm text-gray-300 mb-3">
+          {patchnote.changesCount !== undefined && (
+            <span>{patchnote.changesCount} changements</span>
+          )}
+          {patchnote.buffsCount !== undefined && (
+            <span className="text-green-400">
+              {" "}•{" "}+{patchnote.buffsCount} buffs
+            </span>
+          )}
+          {patchnote.nerfsCount !== undefined && (
+            <span className="text-red-400">
+              {" "}•{" "}-{patchnote.nerfsCount} nerfs
+            </span>
+          )}
+        </p>
+      )}
+
+      {/* ── Row 4 : content (always truncated) ──────────────── */}
+      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line mb-4">
+        {truncated}
       </p>
 
-      {/* Footer */}
-      {(patchnote.lineCount || isTruncated) && (
-        <div className="flex items-center justify-between px-4 pb-3">
-          {patchnote.lineCount ? (
-            <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-600 inline-block" />
-              {patchnote.lineCount} lignes
-            </span>
-          ) : (
-            <span />
-          )}
+      {/* ── Row 5 : footer ──────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-500">
+          {patchnote.lineCount ? `${patchnote.lineCount} lignes...` : ""}
+        </span>
 
-          {isTruncated && (
-            <button
-              className="flex items-center gap-1 text-xs font-bold text-purple-500 hover:text-purple-400 transition-colors"
-              onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
-            >
-              {expanded ? (
-                <><ChevronUp size={13} /> Voir moins</>
-              ) : (
-                <><ChevronDown size={13} /> Voir plus</>
-              )}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+        <Link
+          href={patchnoteUrl}
+          className="px-4 py-1.5 text-sm font-semibold rounded
+            bg-secondary hover:bg-primary text-white transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
+          Voir la patchnote →
+        </Link>
+      </div>
+
+    </article>
   );
 }
