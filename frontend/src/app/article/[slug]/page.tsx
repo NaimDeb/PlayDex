@@ -9,10 +9,9 @@ import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
 import { GameArticleSkeleton } from "@/components/Skeletons/GameArticleSkeleton";
 import { GameInfoSection } from "@/components/ArticlePage/GameInfoSection";
-import { ExtensionsSection } from "@/components/ArticlePage/ExtensionsSection";
 import { UpdatesTimelineSection } from "@/components/ArticlePage/UpdatesTimelineSection";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
-
+import { PageSection } from "@/components/PageSection";
 
 export default function ArticlePage({
   params,
@@ -20,83 +19,60 @@ export default function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { isAuthenticated } = useAuth();
-  const { followedGameIds } = useFollowedGames(); 
+  const { followedGameIds }  = useFollowedGames();
+  const router               = useRouter();
+  const { slug }             = use(params);
+  const id                   = slug.split("-").pop();
 
-  const router = useRouter();
-  const { slug } = use(params);
-  const parts = slug.split("-");
-  const id = parts.pop();
-  
-
-  const [gameData, setGameData] = useState<Game | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]); // Explicitly define the type as Patchnote[]
+  const [gameData,   setGameData]   = useState<Game | null>(null);
+  const [isLoading,  setIsLoading]  = useState<boolean>(true);
+  const [error,      setError]      = useState<string | null>(null);
+  const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]);
   const [extensions, setExtensions] = useState<Extension[]>([]);
-  const [image, setImage] = useState<string>("/no_cover.png"); // Assuming extensions is an array of objects
+  const [image,      setImage]      = useState<string>("/no_cover.png");
 
-  // --- Filter State ---
-
-  // Todo : date range filter
-  // const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
-
-  // loads the game data and patchnotes when the component mounts or when the id changes
   useEffect(() => {
-    async function loadData() {
+    async function loadData(): Promise<void> {
       setIsLoading(true);
       setError(null);
       try {
-        if (!id) {
-          throw new Error("Invalid game ID.");
-        }
+        if (!id) throw new Error("Invalid game ID.");
+
         const data = await gameService.getGameById(id);
         setGameData(data);
-        document.title = "Playdex - " + data.title;
+        document.title = `Playdex - ${data.title}`;
 
-        // Fetch patchnotes
-        const patchnotesData = await gameService.getGamePatchNotes(id);
+        const [patchnotesData, extensionsData] = await Promise.all([
+          gameService.getGamePatchNotes(id),
+          data.extensions?.length > 0
+            ? gameService.getGameExtensions(id)
+            : Promise.resolve([]),
+        ]);
+
         setPatchnotes(Array.isArray(patchnotesData) ? patchnotesData : []);
-
-        // Fetch extensions if available
-        if (data.extensions && data.extensions.length > 0) {
-          const extensionsData = await gameService.getGameExtensions(id);
-          setExtensions(extensionsData);
-        }
-
-        // Set the image
+        setExtensions(Array.isArray(extensionsData) ? extensionsData : []);
 
         if (data.imageUrl) {
-          const imageUrl = changeIgdbImageFormat(
-            data.imageUrl,
-            IgdbImageFormat.CoverBig2x
-          );
-
-          setImage(imageUrl);
+          setImage(changeIgdbImageFormat(data.imageUrl, IgdbImageFormat.CoverBig2x));
         }
       } catch (err) {
-        setError("Failed to load game data.");
         console.error(err);
+        setError("Failed to load game data.");
       } finally {
         setIsLoading(false);
       }
     }
-    loadData();
-  }, [id]); // Re-fetch if id changes
+    void loadData();
+  }, [id]);
 
-
-
+  // Mark followed games as checked
   useEffect(() => {
-  if (
-    isAuthenticated &&
-    id &&
-    gameData &&
-    followedGameIds.includes(id)
-  ) {
-    gameService.postCheckGame(id);
-  }
-}, [isAuthenticated, id, gameData, followedGameIds]);
+    if (isAuthenticated && id && gameData && followedGameIds.includes(id)) {
+      void gameService.postCheckGame(id);
+    }
+  }, [isAuthenticated, id, gameData, followedGameIds]);
 
-  // --- Slug Logic ---
+  // Canonical slug redirect
   const sluggified =
     gameData && id
       ? `${gameData.title
@@ -105,70 +81,58 @@ export default function ArticlePage({
           .replace(/^-+|-+$/g, "")}-${id}`
       : null;
 
-  // Check if the slug in the URL matches the sluggified version
   useEffect(() => {
-    if (gameData && id && slug !== sluggified) {
+    if (sluggified && slug !== sluggified) {
       router.replace(`/article/${sluggified}`);
     }
-  }, [gameData, id, slug, sluggified, router]);
+  }, [slug, sluggified, router]);
 
-
-
-
-
-  /**
-   * Formats the date difference between now and the given date.
-   * @param date
-   * @returns
-   */
   const formatDateDifference = (date: Date | string): string => {
-    const parsedDate = typeof date === "string" ? new Date(date) : date;
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - parsedDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const parsed   = typeof date === "string" ? new Date(date) : date;
+    const diffDays = Math.ceil(
+      Math.abs(Date.now() - parsed.getTime()) / (1000 * 60 * 60 * 24)
+    );
     const diffYears = Math.floor(diffDays / 365);
-
-    if (diffDays <= 1) return "Il y a 1 jour";
+    if (diffDays <= 1)  return "Il y a 1 jour";
     if (diffDays < 365) return `Il y a ${diffDays} jours`;
     if (diffYears === 1) return "Il y a 1 an";
     return `Il y a ${diffYears} ans`;
   };
 
-  if (isLoading) {
-    return <GameArticleSkeleton />;
-  }
+  // ── Early returns — after all hooks, TypeScript happy ──────────────
+  if (isLoading) return <GameArticleSkeleton />;
 
-  if (error) {
-    return (
-      <div className="container px-4 py-8 mx-auto text-center text-red-500">
-        {error}
-      </div>
-    );
-  }
+  if (error) return (
+    <p className="py-16 text-center text-red-500">{error}</p>
+  );
 
-  if (!gameData) {
-    notFound();
-  }
+  // notFound() ne renvoie jamais (type `never`), ce qui permet à TS de
+  // savoir que gameData est non-null dans tout le JSX qui suit.
+  if (!gameData) return notFound();
 
   return (
-    <div className="min-h-screen font-sans text-white bg-off-black">
-      <div className="container px-4 py-8 mx-auto">
-        <Breadcrumbs>
-          <BreadcrumbItem href="/">Accueil</BreadcrumbItem>
-          <BreadcrumbItem>Jeu</BreadcrumbItem>
-        </Breadcrumbs>
+    <main className="min-h-screen text-white bg-off-black">
+      <PageSection className="py-8">
+        <nav aria-label="Fil d'Ariane">
+          <Breadcrumbs>
+            <BreadcrumbItem href="/">Accueil</BreadcrumbItem>
+            <BreadcrumbItem>Jeu</BreadcrumbItem>
+          </Breadcrumbs>
+        </nav>
+
         <GameInfoSection
           gameData={gameData}
+          extensions={extensions}
           image={image}
           isAuthenticated={isAuthenticated}
         />
-        <ExtensionsSection extensions={extensions} />
+
         <UpdatesTimelineSection
           patchnotes={patchnotes}
           extensions={extensions}
           formatDateDifference={formatDateDifference}
         />
-      </div>
-    </div>
+      </PageSection>
+    </main>
   );
 }
