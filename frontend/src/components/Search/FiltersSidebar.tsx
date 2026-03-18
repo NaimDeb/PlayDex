@@ -2,6 +2,7 @@
 
 import gameService from "@/lib/api/gameService";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -149,6 +150,7 @@ function CheckboxList({
   showAll,
   onToggleShowAll,
 }: CheckboxListProps): React.ReactElement {
+  const { t } = useTranslation();
   const visibleItems = showAll ? items : items.slice(0, VISIBLE_ITEMS_DEFAULT);
 
   return (
@@ -168,7 +170,7 @@ function CheckboxList({
           onClick={onToggleShowAll}
           className="mt-1 text-sm text-off-white hover:text-secondary hover:cursor-pointer transition-colors text-left"
         >
-          {showAll ? "Voir moins" : "Voir plus"}
+          {showAll ? t("common.seeLess") : t("common.seeMore")}
         </button>
       )}
     </div>
@@ -181,6 +183,7 @@ export default function FiltersSidebar({
   filters,
   onChange,
 }: FiltersSidebarProps): React.ReactElement {
+  const { t } = useTranslation();
   const [genres, setGenres] = useState<string[]>([]);
   const [showAllGenres, setShowAllGenres] = useState(false);
   const [showAllPlatforms, setShowAllPlatforms] = useState(false);
@@ -232,7 +235,7 @@ export default function FiltersSidebar({
 
         {/* ── Genre ── */}
         <div>
-          <SectionHeader title="Genre" />
+          <SectionHeader title={t("search.filters.genre")} />
           <CheckboxList
             items={genres}
             selected={filters.genres ?? []}
@@ -244,7 +247,7 @@ export default function FiltersSidebar({
 
         {/* ── Plateforme ── */}
         <div>
-          <SectionHeader title="Plateforme" />
+          <SectionHeader title={t("search.filters.platform")} />
           <CheckboxList
             items={PLATFORM_OPTIONS}
             selected={filters.platforms ?? []}
@@ -256,11 +259,11 @@ export default function FiltersSidebar({
 
         {/* ── Jeu parent ── */}
         <div>
-          <SectionHeader title="Jeu parent" />
+          <SectionHeader title={t("search.filters.parentGame")} />
           <div className="px-4 py-3">
             <form onSubmit={handleParentGameSearch} className="flex flex-col gap-2">
               <SidebarInput
-                label="Nom du jeu"
+                label={t("search.filters.parentGameLabel")}
                 type="text"
                 value={parentGameInput}
                 onChange={(e) => setParentGameInput(e.target.value)}
@@ -273,7 +276,7 @@ export default function FiltersSidebar({
                   transition-colors duration-200 self-center mt-1
                 "
               >
-                Rechercher
+                {t("common.search")}
               </button>
             </form>
           </div>
@@ -281,18 +284,18 @@ export default function FiltersSidebar({
 
         {/* ── Date de sortie ── */}
         <div>
-          <SectionHeader title="Date de sortie" />
+          <SectionHeader title={t("search.filters.releaseDate")} />
           <div className="px-4 py-3">
             <div className="flex items-end gap-3">
               <SidebarInput
-                label="De :"
+                label={t("search.filters.releaseDateFrom")}
                 type="date"
                 name="releasedAt[after]"
                 value={filters.releasedAfter ?? ""}
                 onChange={handleDateChange}
               />
               <SidebarInput
-                label="A :"
+                label={t("search.filters.releaseDateTo")}
                 type="date"
                 name="releasedAt[before]"
                 value={filters.releasedBefore ?? ""}

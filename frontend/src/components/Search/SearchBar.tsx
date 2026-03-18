@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 interface SearchBarProps {
   query: string;
 }
 
 export default function SearchBar({ query }: SearchBarProps): React.ReactElement {
+  const { t } = useTranslation();
+
   function handleSearch(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -27,7 +30,7 @@ export default function SearchBar({ query }: SearchBarProps): React.ReactElement
         type="text"
         name="search"
         defaultValue={query}
-        placeholder="Search for a game"
+        placeholder={t("search.placeholder")}
         className="
           flex-grow bg-[#2a2a38] text-white placeholder-gray-500
           px-4 py-2.5 rounded-l-lg
@@ -46,7 +49,7 @@ export default function SearchBar({ query }: SearchBarProps): React.ReactElement
           whitespace-nowrap text-sm
         "
       >
-        Rechercher
+        {t("common.search")}
         <SearchIcon />
       </button>
     </form>

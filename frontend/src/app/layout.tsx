@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { FollowedGamesProvider } from "@/providers/FollowedGamesProvider";
 import { FlashMessageProvider } from "@/components/FlashMessage/FlashMessageProvider";
+import { TranslationProvider } from "@/i18n/TranslationProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -43,15 +44,17 @@ export default function RootLayout({
         className={`${montserrat.variable} ${radioCanada.variable} antialiased bg-off-black text-off-white min-h-screen flex flex-col`}
       >
         <HeroUIProvider>
-          <AuthProvider>
-            <FollowedGamesProvider>
-              <FlashMessageProvider>
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </FlashMessageProvider>
-            </FollowedGamesProvider>
-          </AuthProvider>
+          <TranslationProvider>
+            <AuthProvider>
+              <FollowedGamesProvider>
+                <FlashMessageProvider>
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </FlashMessageProvider>
+              </FollowedGamesProvider>
+            </AuthProvider>
+          </TranslationProvider>
         </HeroUIProvider>
       </body>
     </html>

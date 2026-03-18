@@ -12,6 +12,7 @@ import { GameInfoSection } from "@/components/ArticlePage/GameInfoSection";
 import { UpdatesTimelineSection } from "@/components/ArticlePage/UpdatesTimelineSection";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
 import { PageSection } from "@/components/PageSection";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 export default function ArticlePage({
   params,
@@ -20,6 +21,7 @@ export default function ArticlePage({
 }) {
   const { isAuthenticated } = useAuth();
   const { followedGameIds }  = useFollowedGames();
+  const { t }               = useTranslation();
   const router               = useRouter();
   const { slug }             = use(params);
   const id                   = slug.split("-").pop();
@@ -93,10 +95,10 @@ export default function ArticlePage({
       Math.abs(Date.now() - parsed.getTime()) / (1000 * 60 * 60 * 24)
     );
     const diffYears = Math.floor(diffDays / 365);
-    if (diffDays <= 1)  return "Il y a 1 jour";
-    if (diffDays < 365) return `Il y a ${diffDays} jours`;
-    if (diffYears === 1) return "Il y a 1 an";
-    return `Il y a ${diffYears} ans`;
+    if (diffDays <= 1)  return t("time.oneDay");
+    if (diffDays < 365) return t("time.daysAgo", { count: diffDays });
+    if (diffYears === 1) return t("time.oneYear");
+    return t("time.yearsAgo", { count: diffYears });
   };
 
   // ── Early returns — after all hooks, TypeScript happy ──────────────
@@ -115,8 +117,8 @@ export default function ArticlePage({
       <PageSection className="py-8">
         <nav aria-label="Fil d'Ariane">
           <Breadcrumbs>
-            <BreadcrumbItem href="/">Accueil</BreadcrumbItem>
-            <BreadcrumbItem>Jeu</BreadcrumbItem>
+            <BreadcrumbItem href="/">{t("game.breadcrumbHome")}</BreadcrumbItem>
+            <BreadcrumbItem>{t("game.breadcrumbGame")}</BreadcrumbItem>
           </Breadcrumbs>
         </nav>
 

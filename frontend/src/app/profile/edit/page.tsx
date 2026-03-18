@@ -6,6 +6,7 @@ import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ interface FormErrors {
 export default function ProfileEditPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState<ProfileUpdateData & { password?: string }>({
     username: user?.username || "",
@@ -55,39 +57,38 @@ export default function ProfileEditPage() {
 
     // Username validation
     if (!formData.username.trim()) {
-      newErrors.username = "Le nom d'utilisateur est requis";
+      newErrors.username = t("profile.usernameRequired");
     } else if (formData.username.length < 3) {
-      newErrors.username =
-        "Le nom d'utilisateur doit contenir au moins 3 caractères";
+      newErrors.username = t("profile.usernameMinLength");
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
-      newErrors.email = "L'email est requis";
+      newErrors.email = t("profile.emailRequired");
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Veuillez entrer un email valide";
+      newErrors.email = t("auth.invalidEmail");
     }
 
     // Password validation (only if password is provided)
     if (formData.password) {
       if (!formData.currentPassword) {
-        newErrors.currentPassword = "L'ancien mot de passe est requis pour changer le mot de passe";
+        newErrors.currentPassword = t("auth.currentPasswordRequired");
       }
       if (formData.password.length < 8) {
-        newErrors.password = "Le mot de passe doit contenir au moins 8 caractères";
+        newErrors.password = t("auth.passwordMinLength");
       } else if (!/[A-Z]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins une majuscule";
+        newErrors.password = t("auth.passwordUppercase");
       } else if (!/[a-z]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins une minuscule";
+        newErrors.password = t("auth.passwordLowercase");
       } else if (!/[0-9]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins un chiffre";
+        newErrors.password = t("auth.passwordDigit");
       } else if (!/[^A-Za-z0-9]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins un caractère spécial";
+        newErrors.password = t("auth.passwordSpecial");
       }
 
       if (formData.password !== confirmPassword) {
-        newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
+        newErrors.confirmPassword = t("auth.passwordMismatch");
       }
     }
 
@@ -167,7 +168,7 @@ export default function ProfileEditPage() {
         setErrors(apiErrors);
       } else {
         setErrors({
-          general: "Une erreur est survenue lors de la mise à jour du profil",
+          general: t("profile.updateError"),
         });
       }
     } finally {
@@ -209,14 +210,14 @@ export default function ProfileEditPage() {
             </svg>
           </Link>
           <h1 className="text-3xl font-bold font-montserrat [color:var(--color-primary)]">
-            Modifier le profil
+            {t("profile.editTitle")}
           </h1>
         </div>
 
         {/* Success Message */}
         {success && (
           <div className="p-4 mb-6 text-green-400 bg-green-900 rounded-md bg-opacity-30">
-            Profil mis à jour avec succès ! Redirection en cours...
+            {t("profile.updateSuccess")}
           </div>
         )}
 
@@ -236,7 +237,7 @@ export default function ProfileEditPage() {
                 htmlFor="username"
                 className="block mb-2 text-sm font-medium text-gray-300"
               >
-                Nom d&apos;utilisateur
+                {t("profile.usernameLabel")}
               </label>
               <input
                 type="text"
@@ -247,7 +248,7 @@ export default function ProfileEditPage() {
                 className={`w-full px-4 py-3 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
                   errors.username ? "border-red-500" : "border-gray-600"
                 }`}
-                placeholder="Votre nom d'utilisateur"
+                placeholder={t("auth.pseudoPlaceholder")}
               />
               {errors.username && (
                 <p className="mt-1 text-sm text-red-400">{errors.username}</p>
@@ -260,7 +261,7 @@ export default function ProfileEditPage() {
                 htmlFor="email"
                 className="block mb-2 text-sm font-medium text-gray-300"
               >
-                Adresse email
+                {t("profile.emailLabel")}
               </label>
               <input
                 type="email"
@@ -281,10 +282,10 @@ export default function ProfileEditPage() {
             {/* Password Section */}
             <div className="pt-6 border-t border-gray-600">
               <h3 className="mb-4 text-lg font-semibold text-gray-300">
-                Changer le mot de passe
+                {t("auth.changePassword")}
               </h3>
               <p className="mb-4 text-sm text-gray-400">
-                Laissez vide si vous ne souhaitez pas changer votre mot de passe
+                {t("auth.changePasswordHint")}
               </p>
 
               {/* Current Password Field */}
@@ -293,7 +294,7 @@ export default function ProfileEditPage() {
                   htmlFor="currentPassword"
                   className="block mb-2 text-sm font-medium text-gray-300"
                 >
-                  Mot de passe actuel
+                  {t("auth.currentPassword")}
                 </label>
                 <div className="relative">
                   <input
@@ -305,7 +306,7 @@ export default function ProfileEditPage() {
                     className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
                       errors.currentPassword ? "border-red-500" : "border-gray-600"
                     }`}
-                    placeholder="Votre mot de passe actuel"
+                    placeholder={t("auth.currentPasswordPlaceholder")}
                   />
                   <button
                     type="button"
@@ -326,7 +327,7 @@ export default function ProfileEditPage() {
                   htmlFor="password"
                   className="block mb-2 text-sm font-medium text-gray-300"
                 >
-                  Nouveau mot de passe
+                  {t("auth.newPassword")}
                 </label>
                 <div className="relative">
                   <input
@@ -338,7 +339,7 @@ export default function ProfileEditPage() {
                     className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
                       errors.password ? "border-red-500" : "border-gray-600"
                     }`}
-                    placeholder="Nouveau mot de passe (optionnel)"
+                    placeholder={t("auth.newPasswordPlaceholder")}
                   />
                   <button
                     type="button"
@@ -359,7 +360,7 @@ export default function ProfileEditPage() {
                   htmlFor="confirmPassword"
                   className="block mb-2 text-sm font-medium text-gray-300"
                 >
-                  Confirmer le nouveau mot de passe
+                  {t("auth.confirmNewPassword")}
                 </label>
                 <div className="relative">
                   <input
@@ -380,7 +381,7 @@ export default function ProfileEditPage() {
                         ? "border-red-500"
                         : "border-gray-600"
                     }`}
-                    placeholder="Confirmez le nouveau mot de passe"
+                    placeholder={t("auth.confirmNewPasswordPlaceholder")}
                     disabled={!formData.password}
                   />
                   <button
@@ -406,7 +407,7 @@ export default function ProfileEditPage() {
                 href="/profile"
                 className="px-6 py-3 text-center text-gray-300 transition duration-150 ease-in-out bg-gray-600 rounded-md hover:bg-gray-500"
               >
-                Annuler
+                {t("common.cancel")}
               </Link>
               <button
                 type="submit"
@@ -418,8 +419,8 @@ export default function ProfileEditPage() {
                 }`}
               >
                 {loading
-                  ? "Enregistrement..."
-                  : "Enregistrer les modifications"}
+                  ? t("common.saving")
+                  : t("profile.saveChanges")}
               </button>
             </div>
           </div>

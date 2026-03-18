@@ -7,6 +7,7 @@ import { ClassicCard } from "@/components/ArticleCard";
 import { useAuth } from "@/providers/AuthProvider";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 
 export default function ProfilePage() {
@@ -14,6 +15,7 @@ export default function ProfilePage() {
   const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   // Ajout des états pour la recherche et le tri
   const [search, setSearch] = useState("");
@@ -36,9 +38,7 @@ export default function ProfilePage() {
         setError(null);
       } catch (err) {
         console.error("Failed to fetch followed games:", err);
-        setError(
-          "Impossible de charger votre liste de jeux suivis. Veuillez réessayer plus tard."
-        );
+        setError(t("profile.loadError"));
       } finally {
         setLoading(false);
       }
@@ -95,12 +95,12 @@ export default function ProfilePage() {
           </div>
           <div className="flex-grow text-center md:text-left">
             <h1 className="text-3xl font-bold lg:text-4xl font-montserrat [color:var(--color-primary)]">
-              {user?.username || "Utilisateur"}
+              {user?.username || t("common.user")}
             </h1>
 
             <p className="text-sm text-gray-300">
               {user
-                ? `Utilisateur depuis le : ${
+                ? `${t("profile.userSince")} ${
                     user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()
                       : ""
@@ -109,25 +109,25 @@ export default function ProfilePage() {
             </p>
             <p className="text-sm text-gray-300">
               {loading
-                ? "Chargement des jeux..."
-                : `${followedGames.length} jeux dans sa liste`}
+                ? t("profile.loadingGames")
+                : t("profile.gamesInList", { count: followedGames.length })}
             </p>
             <p className="mt-2 text-lg font-semibold text-green-400">
-              {user ? `+ ${user.reputation} Rep` : ""}
+              {user ? t("profile.reputation", { count: user.reputation }) : ""}
             </p>
           </div>
           <div className="flex flex-col self-center mt-4 space-y-3 md:mt-0 md:self-start">
-            <Link 
+            <Link
               href="/profile/edit"
               className="w-full px-6 py-2 font-semibold text-white transition duration-150 ease-in-out rounded-md md:w-auto whitespace-nowrap [background-color:var(--color-primary)] text-center hover:opacity-90"
             >
-              Modifier le profil
+              {t("profile.editAction")}
             </Link>
             <button
               className="w-full px-6 py-2 font-semibold text-white transition duration-150 ease-in-out rounded-md md:w-auto [background-color:var(--destructive)]"
               onClick={logout}
             >
-              Déconnexion
+              {t("nav.logout")}
             </button>
           </div>
         </div>
@@ -137,12 +137,12 @@ export default function ProfilePage() {
       <section>
         <div className="flex flex-col items-center justify-between mb-8 sm:flex-row">
           <h2 className="mb-4 text-3xl font-bold font-montserrat sm:mb-0">
-            Ma liste
+            {t("profile.myList")}
           </h2>
           <div className="flex flex-col items-center w-full gap-4 sm:flex-row sm:w-auto">
             <input
               type="text"
-              placeholder="Search for a game..."
+              placeholder={t("profile.searchGame")}
               className="w-full px-4 py-2 placeholder-gray-400 bg-gray-700 border border-gray-600 rounded-md text-off-white focus:ring-2 focus:border-0 sm:w-64 focus:outline-primary"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -152,17 +152,17 @@ export default function ProfilePage() {
               value={sort}
               onChange={(e) => setSort(e.target.value)}
             >
-              <option value="date-desc">Trier par : Date de sortie ↓</option>
-              <option value="date-asc">Trier par : Date de sortie ↑</option>
-              <option value="name-asc">Trier par : Nom A-Z</option>
-              <option value="name-desc">Trier par : Nom Z-A</option>
+              <option value="date-desc">{t("profile.sortByDateDesc")}</option>
+              <option value="date-asc">{t("profile.sortByDateAsc")}</option>
+              <option value="name-asc">{t("profile.sortByNameAsc")}</option>
+              <option value="name-desc">{t("profile.sortByNameDesc")}</option>
             </select>
           </div>
         </div>
 
         {loading && (
           <p className="py-10 text-lg text-center">
-            Chargement de votre liste...
+            {t("common.loading")}
           </p>
         )}
         {error && (
@@ -173,12 +173,12 @@ export default function ProfilePage() {
 
         {!loading && !error && followedGames.length === 0 && (
           <p className="py-10 text-lg text-center text-gray-400">
-            Votre liste de jeux suivis est vide.
+            {t("profile.emptyList")}
           </p>
         )}
         {!loading && !error && filteredAndSortedGames.length === 0 && (
           <p className="py-10 text-lg text-center text-gray-400">
-            Aucun jeu ne correspond à la recherche.
+            {t("profile.noSearchResults")}
           </p>
         )}
 

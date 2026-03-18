@@ -4,6 +4,7 @@ import { FaExclamationTriangle } from "react-icons/fa";
 import reportService from "@/lib/api/reportService";
 import { addToast } from "@heroui/toast";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 type Props = {
     reportableId: number;
@@ -16,11 +17,12 @@ export default function ReportForm({
     reportableId,
     reportableEntity,
     successMessage,
-    placeholder = "Décrivez la raison de votre signalement",
+    placeholder,
 }: Props) {
     const [reason, setReason] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const { t } = useTranslation();
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -32,15 +34,15 @@ export default function ReportForm({
                 reportableEntity,
             });
             addToast({
-                title: "Signalement envoyé",
+                title: t("report.sendSuccess"),
                 description: successMessage,
                 color: "success",
             });
             router.back();
         } catch {
             addToast({
-                title: "Erreur",
-                description: "Impossible d'envoyer le signalement.",
+                title: t("common.error"),
+                description: t("report.sendError"),
                 color: "danger",
             });
         } finally {
@@ -56,9 +58,9 @@ export default function ReportForm({
             >
                 <FaExclamationTriangle className="text-yellow-400 mr-3 mt-1 flex-shrink-0" size={24} />
                 <div>
-                    <p className="font-bold">Attention !</p>
+                    <p className="font-bold">{t("common.warning")}</p>
                     <p className="text-sm">
-                        Merci de ne signaler que les contenus réellement problématiques. Les abus peuvent entraîner des sanctions.
+                        {t("report.warningText")}
                     </p>
                 </div>
             </div>
@@ -69,7 +71,7 @@ export default function ReportForm({
                 <fieldset disabled={isLoading} className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2">
                         <label htmlFor="reason" className="text-xl font-montserrat font-semibold">
-                            Raison du signalement :
+                            {t("report.reasonLabel")}
                         </label>
                         <textarea
                             id="reason"
@@ -88,7 +90,7 @@ export default function ReportForm({
                             className="bg-primary hover:bg-secondary text-white font-bold py-2 px-8 rounded transition duration-150 ease-in-out shadow"
                             disabled={isLoading}
                         >
-                            {isLoading ? "Envoi..." : "Envoyer le signalement"}
+                            {isLoading ? t("common.sending") : t("report.submitAction")}
                         </button>
                     </div>
                 </fieldset>

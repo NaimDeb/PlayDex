@@ -16,6 +16,7 @@ import {
   buffCommand,
   debuffCommand,
 } from "@/components/MDEditor/customCommands";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export default function NewPatchnotePage({
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const { showMessage } = useFlashMessage();
+  const { t } = useTranslation();
 
   const [gameName, setGameName] = useState<string>("");
   const [gameReleaseDate, setGameReleaseDate] = useState<string>("");
@@ -101,7 +103,7 @@ export default function NewPatchnotePage({
 
   useEffect(() => {
     if (!isAuthenticated) {
-      showMessage("Vous devez être connecté pour créer une patch note.", "error");
+      showMessage(t("auth.loginRequired"), "error");
       router.push("/login");
       return;
     }
@@ -126,10 +128,10 @@ export default function NewPatchnotePage({
 
   const validate = (): Record<string, string> => {
     const errors: Record<string, string> = {};
-    if (!form.title.trim()) errors.title = "Le titre est obligatoire.";
-    if (!form.releasedAt) errors.releasedAt = "La date est obligatoire.";
-    if (!form.smallDescription.trim()) errors.smallDescription = "Le résumé est obligatoire.";
-    if (!form.userContent.trim()) errors.userContent = "Le contenu est obligatoire.";
+    if (!form.title.trim()) errors.title = t("patchnote.errorTitleRequired");
+    if (!form.releasedAt) errors.releasedAt = t("patchnote.errorDateRequired");
+    if (!form.smallDescription.trim()) errors.smallDescription = t("patchnote.errorSummaryRequired");
+    if (!form.userContent.trim()) errors.userContent = t("patchnote.errorContentRequired");
     return errors;
   };
 
@@ -173,12 +175,12 @@ export default function NewPatchnotePage({
 
     try {
       await gameService.postPatchnote(payload);
-      showMessage("Patchnote ajoutée avec succès !", "success");
+      showMessage(t("patchnote.createSuccess"), "success");
       redirect(`/article/${slug}`);
     } catch (error: unknown) {
       const err = error as { message?: string };
       if (err.message?.includes("NEXT_REDIRECT")) throw error;
-      showMessage("Erreur lors de l'ajout de la patchnote.", "error");
+      showMessage(t("patchnote.createError"), "error");
     } finally {
       setIsLoading(false);
     }
@@ -190,8 +192,7 @@ export default function NewPatchnotePage({
     <PageSection className="py-8">
       {/* ── Page title ── */}
       <h1 className="text-2xl font-bold text-off-white mb-6">
-        Nouvelle patch note —{" "}
-        <span className="text-primary">{gameName}</span>
+        {t("patchnote.newTitle", { game: gameName })}
       </h1>
 
       {/* ── Warning banner ── */}
@@ -209,11 +210,11 @@ export default function NewPatchnotePage({
         />
         <p>
           <span className="font-bold">Attention — </span>
-          En créant cette entrée, assurez-vous de respecter{" "}
+          {t("patchnote.warningText")}{" "}
           <Link href="/rules" className="underline hover:text-yellow-300 transition-colors">
-            nos règles d&apos;utilisation
+            {t("patchnote.rulesLink")}
           </Link>
-          . Toute modification inappropriée peut entraîner des restrictions sur votre compte.
+          . {t("patchnote.warningConsequence")}
         </p>
       </div>
 
@@ -228,7 +229,7 @@ export default function NewPatchnotePage({
 
           {/* Row : Titre + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <FormField label="Titre" htmlFor="title" required error={errors.title}>
+            <FormField label={t("patchnote.titleLabel")} htmlFor="title" required error={errors.title}>
               <input
                 type="text"
                 id="title"
@@ -242,7 +243,7 @@ export default function NewPatchnotePage({
               />
             </FormField>
 
-            <FormField label="Date de sortie" htmlFor="releasedAt" required error={errors.releasedAt}>
+            <FormField label={t("patchnote.dateLabel")} htmlFor="releasedAt" required error={errors.releasedAt}>
               <input
                 type="date"
                 id="releasedAt"
@@ -257,19 +258,19 @@ export default function NewPatchnotePage({
 
           {/* Row : Résumé + Importance */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <FormField label="Résumé" htmlFor="smallDescription" required error={errors.smallDescription}>
+            <FormField label={t("patchnote.summaryLabel")} htmlFor="smallDescription" required error={errors.smallDescription}>
               <textarea
                 id="smallDescription"
                 name="smallDescription"
                 rows={3}
                 value={form.smallDescription}
                 onChange={(e) => setField("smallDescription", e.target.value)}
-                placeholder="Résumé court des changements…"
+                placeholder={t("patchnote.summaryPlaceholder")}
                 className={`${FIELD_CLASS} resize-none ${errors.smallDescription ? "border-red-500" : ""}`}
               />
             </FormField>
 
-            <FormField label="Importance" htmlFor="importance">
+            <FormField label={t("patchnote.importanceLabel")} htmlFor="importance">
               <select
                 id="importance"
                 name="importance"
@@ -285,7 +286,7 @@ export default function NewPatchnotePage({
           </div>
 
           {/* Contenu MDEditor */}
-          <FormField label="Contenu" htmlFor="content" required error={errors.userContent}>
+          <FormField label={t("patchnote.contentLabel")} htmlFor="content" required error={errors.userContent}>
             <style>{`
               .playdex-editor .w-md-editor {
                 background-color: #1A1A1A !important;
@@ -383,7 +384,7 @@ export default function NewPatchnotePage({
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              {isLoading ? "Publication en cours…" : "Publier"}
+              {isLoading ? t("common.publishing") : t("common.publish")}
             </button>
           </div>
 

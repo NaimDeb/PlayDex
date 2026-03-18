@@ -9,19 +9,21 @@ import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
 import ReactMarkdown from "react-markdown";
 import { colorizeContent } from "@/lib/utils";
 import rehypeRaw from "rehype-raw";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 
 export default function PatchnoteDetailPage() {
   const router = useRouter();
   const { slug, id } = useParams() as { slug: string; id: string };
   const { patchnote, game, loading } = usePatchnoteLayout();
+  const { t } = useTranslation();
 
 
 
   if (loading) {
     return (
       <div className="text-center text-gray-400 py-8">
-        Chargement de la patchnote...
+        {t("patchnote.loading")}
       </div>
     );
   }
@@ -29,7 +31,7 @@ export default function PatchnoteDetailPage() {
   if (!patchnote || !game) {
     return (
       <div className="text-center text-red-500 py-8">
-        Patchnote introuvable.
+        {t("patchnote.notFound")}
       </div>
     );
   }
@@ -38,7 +40,7 @@ export default function PatchnoteDetailPage() {
     <>
         <h1 className="text-3xl font-bold mb-2">{patchnote.title}</h1>
         <div className="flex items-center mb-6">
-          <span className="mr-2 ">Du jeu :</span>
+          <span className="mr-2 ">{t("patchnote.fromGame")}</span>
           <Link
             href={`/article/${slug}`}
             className="flex items-center gap-2 hover:underline bg-off-gray p-2 hover:bg-off-gray/50 rounded-sm border-1 border-gray-200/20"
@@ -61,14 +63,14 @@ export default function PatchnoteDetailPage() {
             color="primary"
             onPress={() => router.push(`/article/${slug}/patchnote/${id}/edit`)}
           >
-            Modifier la patchnote
+            {t("patchnote.edit")}
           </Button>
           <Button
             color="warning"
             variant="bordered"
             onPress={() => router.push(`/report/patchnote/${id}`)}
           >
-            Signaler la patchnote
+            {t("patchnote.report")}
           </Button>
           <Button
             color="secondary"
@@ -77,7 +79,7 @@ export default function PatchnoteDetailPage() {
               router.push(`/article/${slug}/patchnote/${id}/modifications`)
             }
           >
-            Voir les modifications
+            {t("patchnote.viewModifications")}
           </Button>
         </div>
 

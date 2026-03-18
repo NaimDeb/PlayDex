@@ -5,6 +5,7 @@ import { SearchResultCard } from "./SearchResultCard";
 import gameService from "@/lib/api/gameService";
 import { Game } from "@/types/gameType";
 import React from "react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,12 +75,16 @@ interface PaginationProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  previousAriaLabel: string;
+  nextAriaLabel: string;
 }
 
 function Pagination({
   page,
   totalPages,
   onPageChange,
+  previousAriaLabel,
+  nextAriaLabel,
 }: PaginationProps): React.ReactElement | null {
   if (totalPages <= 1) return null;
 
@@ -99,6 +104,7 @@ function Pagination({
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
         active={false}
+        ariaLabel={previousAriaLabel}
       />
 
       {/* Page numbers */}
@@ -131,6 +137,7 @@ function Pagination({
         onClick={() => onPageChange(page + 1)}
         disabled={page === totalPages || totalPages === 0}
         active={false}
+        ariaLabel={nextAriaLabel}
       />
     </div>
   );
@@ -148,11 +155,13 @@ function PaginationButton({
   onClick,
   active,
   disabled,
-}: PaginationButtonProps): React.ReactElement {
+  ariaLabel,
+}: PaginationButtonProps & { ariaLabel?: string }): React.ReactElement {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      aria-label={ariaLabel}
       className={`
         px-3 py-1 rounded transition-colors duration-150
         ${active ? "font-bold text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"}
@@ -169,8 +178,10 @@ function PaginationButton({
 export default function SearchResults({
   filters,
 }: SearchResultsProps): React.ReactElement {
+  const { t } = useTranslation();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
 
@@ -219,7 +230,10 @@ export default function SearchResults({
     };
 
     fetchGames().catch(() => {
-      if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        setError(t("search.results.error"));
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -243,12 +257,20 @@ export default function SearchResults({
     );
   }
 
+  if (error) {
+    return (
+      <section className="w-full">
+        <p className="text-red-400 text-center py-12">{error}</p>
+      </section>
+    );
+  }
+
   return (
     <section className="w-full">
       <div className="flex flex-col gap-4 w-full">
         {games.length === 0 ? (
           <p className="text-gray-400 text-center py-12">
-            Aucun résultat trouvé.
+            {t("search.results.noResults")}
           </p>
         ) : (
           games.map((game) => <SearchResultCard key={game.id} game={game} />)
@@ -259,6 +281,8 @@ export default function SearchResults({
         page={page}
         totalPages={totalPages}
         onPageChange={handlePageChange}
+        previousAriaLabel={t("search.pagination.previous")}
+        nextAriaLabel={t("search.pagination.next")}
       />
     </section>
   );

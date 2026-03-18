@@ -6,6 +6,7 @@ import { GenreTag } from "@/components/GenreTag";
 import { FollowButton } from "@/components/FollowButton";
 import { ExtensionCard } from "@/components/ArticleCard/ExtensionCard";
 import { Game, Extension } from "@/types/gameType";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 interface GameInfoSectionProps {
   gameData: Game;
@@ -20,6 +21,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
   image,
   isAuthenticated,
 }) => {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: "left" | "right") => {
@@ -77,7 +79,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
           {gameData.companies.map((company, i) => (
             <span key={`${company.name}-${i}`}>
               <a
-                href="#"
+                href={`/search?companyName=${encodeURIComponent(company.name)}`}
                 className="text-lg font-semibold text-off-white hover:text-gray-300 hover:underline"
               >
                 {company.name}
@@ -90,7 +92,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
         </address>
 
         <p className="text-sm text-gray-500 mb-4">
-          Sorti en {new Date(gameData.releasedAt).toLocaleDateString("fr-FR")}
+          {t("game.releasedIn", { date: new Date(gameData.releasedAt).toLocaleDateString("fr-FR") })}
         </p>
 
         {/* Genres */}
@@ -112,11 +114,11 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
           <div className="hidden md:block">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-xl font-bold">
-                {extensions.length} Extension{extensions.length > 1 ? "s" : ""}
+                {extensions.length} {extensions.length > 1 ? t("game.extensionCountPlural") : t("game.extensionCount")}
               </h2>
               {extensions.length > 5 && (
                 <button className="text-sm text-gray-400 hover:underline">
-                  Tout voir
+                  {t("game.seeAll")}
                 </button>
               )}
             </div>
@@ -128,7 +130,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
                   w-7 h-7 rounded-full bg-black/70 border border-white/20
                   flex items-center justify-center
                   opacity-0 group-hover/carousel:opacity-100 transition-opacity"
-                aria-label="Précédent"
+                aria-label={t("common.previous")}
               >
                 ‹
               </button>
@@ -141,7 +143,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
                   w-7 h-7 rounded-full bg-black/70 border border-white/20
                   flex items-center justify-center
                   opacity-0 group-hover/carousel:opacity-100 transition-opacity"
-                aria-label="Suivant"
+                aria-label={t("common.next")}
               >
                 ›
               </button>
@@ -154,7 +156,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
       {extensions.length > 0 && (
         <div className="md:hidden">
           <h2 className="text-xl font-bold mb-3">
-            {extensions.length} Extension{extensions.length > 1 ? "s" : ""}
+            {extensions.length} {extensions.length > 1 ? t("game.extensionCountPlural") : t("game.extensionCount")}
           </h2>
           <ExtensionsList />
         </div>
