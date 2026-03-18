@@ -1,20 +1,56 @@
+"use client";
+
 import userService from "@/lib/api/userService";
 import { useState } from "react";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
+import React from "react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type FollowButtonSize = "sm" | "md";
 
 type FollowButtonProps = {
   gameId: number;
+  size?: FollowButtonSize;
 };
 
-export function FollowButton({ gameId }: FollowButtonProps) {
-  const [loading, setLoading] = useState(false);
+// ─── Size tokens ──────────────────────────────────────────────────────────────
+
+const SIZE_STYLES: Record<FollowButtonSize, {
+  button: string;
+  text: string;
+  circle: string;
+  iconSize: string;
+}> = {
+  sm: {
+    button: "pl-3 pr-2 py-1",
+    text: "text-xs",
+    circle: "w-[16px] h-[16px]",
+    iconSize: "10px",
+  },
+  md: {
+    button: "pl-5 pr-3 py-2",
+    text: "text-sm",
+    circle: "w-[20px] h-[20px]",
+    iconSize: "12px",
+  },
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function FollowButton({
+  gameId,
+  size = "sm",
+}: FollowButtonProps): React.ReactElement {
+  const [loading, setLoading] = useState<boolean>(false);
   const { refreshFollowedGames, followedGameIds } = useFollowedGames();
   const { showMessage } = useFlashMessage();
 
-  const isFollowing = followedGameIds.includes(String(gameId));
+  const isFollowing: boolean = followedGameIds.includes(String(gameId));
+  const s = SIZE_STYLES[size];
 
-  const handleFollow = async () => {
+  const handleFollow = async (): Promise<void> => {
     setLoading(true);
     try {
       if (!isFollowing) {
@@ -33,40 +69,41 @@ export function FollowButton({ gameId }: FollowButtonProps) {
     }
   };
 
-  if (isFollowing) {
-    return (
-      <button
-        onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleFollow(); }}
-        disabled={loading}
-        className="flex items-center gap-2 pl-3 pr-2 py-1 rounded-full
-          bg-[#2a2a2a] border border-gray-500
-          text-white text-xs font-semibold
-          hover:border-red-400 hover:text-red-300 transition-colors duration-150
-          disabled:opacity-50"
-      >
-        Suivi
-        {/* Cercle ⊖ */}
-        <span className="w-[18px] h-[18px] rounded-full border border-gray-400 flex items-center justify-center flex-shrink-0">
-          <span className="text-gray-300 font-bold leading-none" style={{ fontSize: "11px" }}>−</span>
-        </span>
-      </button>
-    );
-  }
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    e.stopPropagation();
+    e.preventDefault();
+    void handleFollow();
+  };
+
+  const icon = isFollowing ? "−" : "+";
+  const label = isFollowing ? "Suivi" : "Suivre";
 
   return (
     <button
-      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleFollow(); }}
+      onClick={handleClick}
       disabled={loading}
-      className="flex items-center gap-2 pl-3 pr-2 py-1 rounded-full
-        bg-white border border-gray-300
-        text-gray-900 text-xs font-semibold
-        hover:bg-gray-100 transition-colors duration-150
-        disabled:opacity-50"
+      className={`
+        flex items-center gap-2 ${s.button} rounded-md
+        bg-off-black border border-gray-600
+        text-off-white ${s.text} font-semibold
+        hover:border-red-400 hover:text-red-300
+        transition-colors duration-150 disabled:opacity-50
+      `}
     >
-      Suivre
-      {/* Cercle ⊕ */}
-      <span className="w-[18px] h-[18px] rounded-full border border-gray-500 flex items-center justify-center flex-shrink-0">
-        <span className="text-gray-700 font-bold leading-none" style={{ fontSize: "11px" }}>+</span>
+      {label}
+      <span
+        className={`
+          ${s.circle} rounded-full
+          border border-gray-400
+          flex items-center justify-center flex-shrink-0
+        `}
+      >
+        <span
+          className="text-gray-300 font-bold leading-none"
+          style={{ fontSize: s.iconSize }}
+        >
+          {icon}
+        </span>
       </span>
     </button>
   );
