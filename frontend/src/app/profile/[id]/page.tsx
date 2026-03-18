@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import userService from "@/lib/api/userService";
 import Image from "next/image";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 interface UserProfile {
   id: number;
@@ -20,6 +21,7 @@ export default function AccountPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params?.id;
+  const { t } = useTranslation();
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +37,7 @@ export default function AccountPage() {
         setError(null);
       } catch (err) {
         console.error("Erreur dans fetchUser:", err);
-        setError("Utilisateur introuvable ou erreur lors du chargement.");
+        setError(t("common.error"));
         setUser(null);
       } finally {
         setLoading(false);
@@ -55,7 +57,7 @@ export default function AccountPage() {
             className="px-6 py-2 font-semibold text-white rounded-md [background-color:var(--color-primary)]"
             onClick={() => router.back()}
           >
-            Retour à la page précédente
+            {t("common.back")}
           </button>
         </div>
       </div>
@@ -79,11 +81,11 @@ export default function AccountPage() {
           </div>
           <div className="flex-grow text-center md:text-left">
             <h1 className="text-3xl font-bold lg:text-4xl font-montserrat [color:var(--color-primary)]">
-              {user?.username || "Utilisateur"}
+              {user?.username || t("common.user")}
             </h1>
             <p className="text-sm text-gray-300">
               {user
-                ? `Utilisateur depuis le : ${
+                ? `${t("profile.userSince")} ${
                     user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()
                       : ""
@@ -92,24 +94,24 @@ export default function AccountPage() {
             </p>
             <p className="text-sm text-gray-300">
               {loading
-                ? "Chargement des jeux..."
-                : `${user?.followedGames?.length ?? 0} jeux dans sa liste`}
+                ? t("profile.loadingGames")
+                : t("profile.gamesInList", { count: user?.followedGames?.length ?? 0 })}
             </p>
             <p className="text-sm text-gray-300">
-              {user ? `${user.modifications?.length ?? 0} modifications` : ""}
+              {user ? t("profile.modifications", { count: user.modifications?.length ?? 0 }) : ""}
             </p>
             <p className="mt-2 text-lg font-semibold text-green-400">
-              {user ? `+ ${user.reputation} Rep` : ""}
+              {user ? t("profile.reputation", { count: user.reputation }) : ""}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Ma Liste Section */}
+      {/* Sa Liste Section */}
       <section>
         <div className="flex flex-col items-center justify-between mb-8 sm:flex-row">
           <h2 className="mb-4 text-3xl font-bold font-montserrat sm:mb-0">
-            Sa liste
+            {t("profile.hisList")}
           </h2>
         </div>
       </section>

@@ -13,6 +13,7 @@ import { buffCommand, debuffCommand } from "@/components/MDEditor/customCommands
 import MergeConflictResolver from "@/components/MergeConflictResolver";
 import { PageSection } from "@/components/PageSection";
 import React from "react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ export default function EditPatchnotePage(): React.ReactElement {
   });
 
   const { showMessage } = useFlashMessage();
+  const { t } = useTranslation();
 
   // ── Setters helpers ──
 
@@ -151,7 +153,7 @@ export default function EditPatchnotePage(): React.ReactElement {
 
     try {
       await gameService.patchPatchnote(id, updatedPatchnote);
-      showMessage("Patchnote modifiée avec succès !", "success");
+      showMessage(t("patchnote.editSuccess"), "success");
       redirect(`/article/${slug}/patchnote/${id}`);
     } catch (error: unknown) {
       const err = error as { response?: { status?: number }; message?: string };
@@ -162,9 +164,9 @@ export default function EditPatchnotePage(): React.ReactElement {
         const serverData = await gameService.getPatchNoteById(id);
         setConflict({ serverContent: serverData.content ?? "" });
         setField("version", serverData.version ?? 0);
-        showMessage("Il y a eu une modification pendant que tu modifiais la patchnote.", "error");
+        showMessage(t("patchnote.editConflict"), "error");
       } else {
-        showMessage("Erreur lors de la modification de la patchnote.", "error");
+        showMessage(t("patchnote.editError"), "error");
       }
     } finally {
       setIsLoading(false);
@@ -177,8 +179,7 @@ export default function EditPatchnotePage(): React.ReactElement {
     <PageSection className="py-8">
       {/* ── Page title ── */}
       <h1 className="text-2xl font-bold text-off-white mb-6">
-        Modifier la patch note —{" "}
-        <span className="text-primary">{gameName}</span>
+        {t("patchnote.editTitle", { game: gameName })}
       </h1>
 
       {/* ── Warning banner ── */}
@@ -196,11 +197,11 @@ export default function EditPatchnotePage(): React.ReactElement {
         />
         <p>
           <span className="font-bold">Attention — </span>
-          En modifiant cette entrée, assurez-vous de respecter{" "}
+          {t("patchnote.warningEditText")}{" "}
           <Link href="/rules" className="underline hover:text-yellow-300 transition-colors">
-            nos règles d&apos;utilisation
+            {t("patchnote.rulesLink")}
           </Link>
-          . Toute modification inappropriée peut entraîner des restrictions sur votre compte.
+          . {t("patchnote.warningConsequence")}
         </p>
       </div>
 
@@ -228,7 +229,7 @@ export default function EditPatchnotePage(): React.ReactElement {
 
           {/* Row : Titre + Date */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <FormField label="Titre" htmlFor="title">
+            <FormField label={t("patchnote.titleLabel")} htmlFor="title">
               <input
                 type="text"
                 id="title"
@@ -242,7 +243,7 @@ export default function EditPatchnotePage(): React.ReactElement {
               />
             </FormField>
 
-            <FormField label="Date de sortie" htmlFor="releasedAt">
+            <FormField label={t("patchnote.dateLabel")} htmlFor="releasedAt">
               <input
                 type="date"
                 id="releasedAt"
@@ -257,19 +258,19 @@ export default function EditPatchnotePage(): React.ReactElement {
 
           {/* Row : Résumé + Importance */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <FormField label="Résumé" htmlFor="smallDescription">
+            <FormField label={t("patchnote.summaryLabel")} htmlFor="smallDescription">
               <textarea
                 id="smallDescription"
                 name="smallDescription"
                 rows={3}
                 value={form.smallDescription}
                 onChange={(e) => setField("smallDescription", e.target.value)}
-                placeholder="Résumé court des changements…"
+                placeholder={t("patchnote.summaryPlaceholder")}
                 className={`${FIELD_CLASS} resize-none`}
               />
             </FormField>
 
-            <FormField label="Importance" htmlFor="importance">
+            <FormField label={t("patchnote.importanceLabel")} htmlFor="importance">
               <select
                 id="importance"
                 name="importance"
@@ -285,7 +286,7 @@ export default function EditPatchnotePage(): React.ReactElement {
           </div>
 
           {/* Contenu MDEditor */}
-          <FormField label="Contenu" htmlFor="content">
+          <FormField label={t("patchnote.contentLabel")} htmlFor="content">
             {/*
               On injecte les overrides CSS du MDEditor directement ici via un <style> scoped.
               Le composant n'expose pas de prop `className` utilisable pour le thème complet,
@@ -388,7 +389,7 @@ export default function EditPatchnotePage(): React.ReactElement {
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
             >
-              {isLoading ? "Sauvegarde en cours…" : "Sauvegarder"}
+              {isLoading ? t("common.saving") : t("common.save")}
             </button>
           </div>
 

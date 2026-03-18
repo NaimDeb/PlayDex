@@ -7,6 +7,7 @@ import { PageSection } from "@/components/PageSection";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import React from "react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 export const dynamic = "force-dynamic";
 
@@ -26,11 +27,14 @@ interface SearchFilters extends SidebarFilters {
 
 // ─── Sort label map ────────────────────────────────────────────────────────────
 
-const ORDER_LABELS: Record<string, string> = {
-  releasedAt: "Date de sortie",
-  lastUpdatedAt: "Dernière mise à jour",
-  title: "Titre (A-Z)",
-};
+function useOrderLabels(): Record<string, string> {
+  const { t } = useTranslation();
+  return {
+    releasedAt: t("search.sortReleasedAt"),
+    lastUpdatedAt: t("search.sortLastUpdatedAt"),
+    title: t("search.sortTitle"),
+  };
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -51,6 +55,7 @@ function filtersFromParams(searchParams: ReturnType<typeof useSearchParams>): Se
 // ─── Page content ─────────────────────────────────────────────────────────────
 
 function SearchPageContent(): React.ReactElement {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -113,7 +118,7 @@ function SearchPageContent(): React.ReactElement {
 
         {/* Sort bar */}
         <div className="flex justify-end items-center gap-1 text-sm text-white">
-          <span className="text-gray-400">Trier par :</span>
+          <span className="text-gray-400">{t("search.sortBy")}</span>
 
           {/* Styled native select that looks like inline text */}
           <div className="relative inline-flex items-center">
@@ -127,7 +132,7 @@ function SearchPageContent(): React.ReactElement {
                 hover:text-primary transition-colors
               "
             >
-              {Object.entries(ORDER_LABELS).map(([value, label]) => (
+              {Object.entries(useOrderLabels()).map(([value, label]) => (
                 <option key={value} value={value} className="bg-gray-800 font-normal">
                   {label}
                 </option>
@@ -139,9 +144,9 @@ function SearchPageContent(): React.ReactElement {
           <button
             type="button"
             onClick={handleSortToggle}
-            title={filters.sort === "asc" ? "Ordre croissant" : "Ordre décroissant"}
+            title={filters.sort === "asc" ? t("search.sortAsc") : t("search.sortDesc")}
             className="ml-1 text-white hover:text-primary transition-colors font-bold"
-            aria-label="Inverser l'ordre de tri"
+            aria-label={t("search.toggleSortAriaLabel")}
           >
             {filters.sort === "asc" ? "↑" : "↓"}
           </button>
