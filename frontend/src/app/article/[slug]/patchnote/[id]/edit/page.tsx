@@ -1,4 +1,5 @@
 "use client";
+
 import gameService from "@/lib/api/gameService";
 import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
@@ -8,298 +9,391 @@ import { redirect, useParams } from "next/navigation";
 import { Patchnote } from "@/types/patchNoteType";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
-import {
-  buffCommand,
-  debuffCommand,
-} from "@/components/MDEditor/customCommands";
+import { buffCommand, debuffCommand } from "@/components/MDEditor/customCommands";
 import MergeConflictResolver from "@/components/MergeConflictResolver";
+import { PageSection } from "@/components/PageSection";
+import React from "react";
 
-export default function EditPatchnotePage() {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type ImportanceLevel = "minor" | "major" | "hotfix";
+
+interface PatchnoteFormState {
+  title: string;
+  releasedAt: string;
+  smallDescription: string;
+  importance: ImportanceLevel;
+  version: number;
+  userContent: string;
+}
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+//
+// Partagés entre tous les champs du formulaire — même DA que FiltersSidebar.
+
+const FIELD_CLASS =
+  "w-full bg-off-black border border-gray-600 rounded px-3 py-2.5 text-sm text-off-white " +
+  "placeholder:text-gray-600 focus:outline-none focus:border-primary transition-colors [color-scheme:dark]";
+
+const LABEL_CLASS = "block text-sm font-semibold text-gray-300 mb-1.5";
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface FormFieldProps {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}
+
+function FormField({ label, htmlFor, children }: FormFieldProps): React.ReactElement {
+  return (
+    <div className="flex flex-col">
+      <label htmlFor={htmlFor} className={LABEL_CLASS}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function EditPatchnotePage(): React.ReactElement {
   const params = useParams();
   const slug = params.slug as string;
   const id = params.id as string;
 
-  const [gameName, setGameName] = useState("");
-  const [gameReleaseDate, setGameReleaseDate] = useState("");
-  const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState(false);
-
-  // Patchnote fields
-  const [title, setTitle] = useState("");
-  const [releasedAt, setReleasedAt] = useState("");
-  const [smallDescription, setSmallDescription] = useState("");
-  const [importance, setImportance] = useState<"minor" | "major" | "hotfix">(
-    "minor"
-  );
-  const [version, setVersion] = useState(0);
-  const [userContent, setUserContent] = useState("");
-
-  const [isLoading, setIsLoading] = useState(false);
+  const [gameName, setGameName] = useState<string>("");
+  const [gameReleaseDate, setGameReleaseDate] = useState<string>("");
+  const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [conflict, setConflict] = useState<{ serverContent: string } | null>(null);
+
+  const [form, setForm] = useState<PatchnoteFormState>({
+    title: "",
+    releasedAt: "",
+    smallDescription: "",
+    importance: "minor",
+    version: 0,
+    userContent: "",
+  });
+
   const { showMessage } = useFlashMessage();
 
-  // Fetch patchnote and game data
+  // ── Setters helpers ──
+
+  const setField = <K extends keyof PatchnoteFormState>(
+    key: K,
+    value: PatchnoteFormState[K]
+  ): void => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // ── Fetch ──
+
   useEffect(() => {
-    const fetchData = async () => {
+    if (!slug || !id) return;
+
+    const fetchData = async (): Promise<void> => {
       const gameId = getIdFromSlug(slug);
-      const gameData = await gameService.getGameById(gameId);
+      const [gameData, patchnoteData] = await Promise.all([
+        gameService.getGameById(gameId),
+        gameService.getPatchNoteById(id),
+      ]);
+
       setGameName(gameData.title);
       setGameReleaseDate(gameData.releasedAt);
 
-      if (typeof gameService.getPatchNoteById !== "function") {
-        console.error("gameService.getPatchnoteById is not a function");
-        return;
-      }
-      const patchnoteData = await gameService.getPatchNoteById(id);
-      console.log("[DEBUG] Patchnote récupérée:", patchnoteData);
-      console.log("[DEBUG] Version récupérée:", patchnoteData.version);
-      setTitle(patchnoteData.title || "");
-      setReleasedAt(
-        patchnoteData.releasedAt
+      setForm({
+        title: patchnoteData.title ?? "",
+        releasedAt: patchnoteData.releasedAt
           ? new Date(patchnoteData.releasedAt).toISOString().slice(0, 10)
-          : ""
-      );
-      setSmallDescription(patchnoteData.smallDescription || "");
-      setImportance(patchnoteData.importance || "minor");
-      setVersion(patchnoteData.version ?? 0);
-      setUserContent(patchnoteData.content || "");
+          : "",
+        smallDescription: patchnoteData.smallDescription ?? "",
+        importance: patchnoteData.importance ?? "minor",
+        version: patchnoteData.version ?? 0,
+        userContent: patchnoteData.content ?? "",
+      });
     };
-    if (slug && id) fetchData();
+
+    fetchData().catch((err) => console.error("[EditPatchnote] fetchData:", err));
   }, [slug, id]);
 
-  async function handleEditPatchnote(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // ── Handlers ──
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const selectedDate = e.target.value;
+    const formattedDate = selectedDate.split("-").reverse().join("/");
+    const newTitle = `Patch Note - ${formattedDate}`;
+
+    setForm((prev) => ({
+      ...prev,
+      releasedAt: selectedDate,
+      title:
+        !isPatchNoteTitleChanged || prev.title.startsWith("Patch Note") || prev.title === ""
+          ? newTitle
+          : prev.title,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
     setIsLoading(true);
 
-    console.log("[DEBUG] Version avant envoi:", version);
     const updatedPatchnote: Partial<Patchnote> = {
-      title,
-      smallDescription,
-      importance,
-      content: userContent,
+      title: form.title,
+      smallDescription: form.smallDescription,
+      importance: form.importance,
+      content: form.userContent,
+      version: form.version,
+      ...(form.releasedAt ? { releasedAt: new Date(form.releasedAt) } : {}),
     };
-    if (version !== null && version !== undefined) {
-      updatedPatchnote.version = version;
-    }
-    if (releasedAt) {
-      updatedPatchnote.releasedAt = new Date(releasedAt);
-    }
-    console.log("[DEBUG] Patchnote envoyée:", updatedPatchnote);
 
     try {
       await gameService.patchPatchnote(id, updatedPatchnote);
       showMessage("Patchnote modifiée avec succès !", "success");
-      setIsLoading(false);
       redirect(`/article/${slug}/patchnote/${id}`);
     } catch (error: unknown) {
-      console.log("[DEBUG] Erreur:", error);
       const err = error as { response?: { status?: number }; message?: string };
-      
-      // redirect() throws an error in Next.js, check if it's a redirect
-      if (err.message?.includes('NEXT_REDIRECT')) {
-        throw error;
-      }
-      
+
+      if (err.message?.includes("NEXT_REDIRECT")) throw error;
+
       if (err.response?.status === 409) {
         const serverData = await gameService.getPatchNoteById(id);
-        console.log("[DEBUG] Version serveur après conflit:", serverData.version);
-        setConflict({ serverContent: serverData.content || "" });
-        setVersion(serverData.version ?? 0);
+        setConflict({ serverContent: serverData.content ?? "" });
+        setField("version", serverData.version ?? 0);
         showMessage("Il y a eu une modification pendant que tu modifiais la patchnote.", "error");
       } else {
         showMessage("Erreur lors de la modification de la patchnote.", "error");
       }
+    } finally {
       setIsLoading(false);
     }
-  }
+  };
 
-  function changePatchnoteTitle(event: React.ChangeEvent<HTMLInputElement>) {
-    const selectedDate = event.target.value;
-    const formattedDate = selectedDate.split("-").reverse().join("/");
-    const newTitle = `Patch Note - ${formattedDate}`;
-    if (
-      !isPatchNoteTitleChanged ||
-      title.startsWith("Patch Note") ||
-      title === ""
-    ) {
-      setTitle(newTitle);
-    }
-    setReleasedAt(selectedDate);
-  }
+  // ── Render ──
 
   return (
-    <>
-      <div className="container mx-auto px-4 py-8 text-white bg-off-gray min-h-screen">
-        <h1 className="text-3xl font-montserrat font-bold mb-2">
-          Modifier la patch note pour : {gameName}
-        </h1>
-        <div
-          className="bg-yellow-900 border-l-4 border-yellow-500 text-yellow-100 p-4 my-6 rounded-md flex items-start"
-          role="alert"
-        >
-          <FaExclamationTriangle
-            className="text-yellow-400 mr-3 mt-1 flex-shrink-0"
-            size={20}
-          />
-          <div>
-            <p className="font-bold">Attention !</p>
-            <p className="text-sm">
-              En mettant à jour cette entrée, assurez-vous de respecter{" "}
-              <Link href="/rules" className="underline hover:text-yellow-300">
-                nos règles d&apos;utilisation
-              </Link>
-              . Toute modification inappropriée ou non conforme peut entraîner
-              des restrictions sur votre compte. Merci de contribuer à une
-              communauté claire et organisée !
-            </p>
-          </div>
-        </div>
+    <PageSection className="py-8">
+      {/* ── Page title ── */}
+      <h1 className="text-2xl font-bold text-off-white mb-6">
+        Modifier la patch note —{" "}
+        <span className="text-primary">{gameName}</span>
+      </h1>
 
-        {conflict && (
-          <MergeConflictResolver
-            userContent={userContent}
-            serverContent={conflict.serverContent}
-            onResolve={(resolvedContent) => {
-              setUserContent(resolvedContent);
-              setConflict(null);
-            }}
-            onCancel={() => setConflict(null)}
-          />
-        )}
-
-        <div
-          className={`transition-all duration-200 ${
-            isLoading ? "pointer-events-none opacity-50 select-none" : ""
-          }`}
-        >
-          <form className="space-y-6" onSubmit={handleEditPatchnote}>
-            <fieldset disabled={isLoading}>
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Titre :
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    setPatchNoteTitleChanged(true);
-                  }}
-                  className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="releasedAt"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Date :
-                </label>
-                <input
-                  type="date"
-                  id="releasedAt"
-                  name="releasedAt"
-                  min={gameReleaseDate}
-                  value={releasedAt}
-                  onChange={changePatchnoteTitle}
-                  className="w-fit py-3 px-4 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="smallDescription"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Résumé :
-                </label>
-                <textarea
-                  id="smallDescription"
-                  name="smallDescription"
-                  rows={2}
-                  value={smallDescription}
-                  onChange={(e) => setSmallDescription(e.target.value)}
-                  placeholder="Small resume of the change"
-                  className="w-1/2  p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="importance"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Importance :
-                </label>
-                <select
-                  id="importance"
-                  name="importance"
-                  value={importance}
-                  onChange={(e) =>
-                    setImportance(
-                      e.target.value as "minor" | "major" | "hotfix"
-                    )
-                  }
-                  className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="minor">Minor</option>
-                  <option value="major">Major</option>
-                  <option value="hotfix">Hotfix</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="content"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Contenu :
-                </label>
-                <MDEditor
-                  value={userContent}
-                  onChange={(newContent) => setUserContent(newContent || "")}
-                  textareaProps={{
-                    autoCapitalize: "none",
-                    disabled: isLoading,
-                  }}
-                  commands={[
-                    defaultCommands.bold,
-                    defaultCommands.italic,
-                    defaultCommands.divider,
-                    buffCommand,
-                    debuffCommand,
-                    defaultCommands.divider,
-                    defaultCommands.link,
-                    defaultCommands.quote,
-                    defaultCommands.unorderedListCommand,
-                    defaultCommands.orderedListCommand,
-                    defaultCommands.checkedListCommand,
-                    defaultCommands.divider,
-                  ]}
-                  previewOptions={{}}
-                  visibleDragbar={false}
-                  tabIndex={isLoading ? -1 : 0}
-                />
-              </div>
-
-              <div className="flex justify-end pt-6">
-                <button
-                  type="submit"
-                  className="bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 px-6 rounded transition duration-150 ease-in-out"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Sauvegarde..." : "Sauvegarder"}
-                </button>
-              </div>
-            </fieldset>
-          </form>
-        </div>
+      {/* ── Warning banner ── */}
+      <div
+        role="alert"
+        className="
+          flex items-start gap-3
+          bg-yellow-950 border-l-4 border-yellow-500
+          text-yellow-100 text-sm p-4 rounded-md mb-8
+        "
+      >
+        <FaExclamationTriangle
+          className="text-yellow-400 mt-0.5 flex-shrink-0"
+          size={16}
+        />
+        <p>
+          <span className="font-bold">Attention — </span>
+          En modifiant cette entrée, assurez-vous de respecter{" "}
+          <Link href="/rules" className="underline hover:text-yellow-300 transition-colors">
+            nos règles d&apos;utilisation
+          </Link>
+          . Toute modification inappropriée peut entraîner des restrictions sur votre compte.
+        </p>
       </div>
-    </>
+
+      {/* ── Merge conflict resolver ── */}
+      {conflict && (
+        <MergeConflictResolver
+          userContent={form.userContent}
+          serverContent={conflict.serverContent}
+          onResolve={(resolvedContent: string) => {
+            setField("userContent", resolvedContent);
+            setConflict(null);
+          }}
+          onCancel={() => setConflict(null)}
+        />
+      )}
+
+      {/* ── Form ── */}
+      <form
+        onSubmit={handleSubmit}
+        className={`space-y-6 transition-opacity duration-200 ${
+          isLoading ? "opacity-50 pointer-events-none select-none" : ""
+        }`}
+      >
+        <fieldset disabled={isLoading} className="space-y-6">
+
+          {/* Row : Titre + Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <FormField label="Titre" htmlFor="title">
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={form.title}
+                onChange={(e) => {
+                  setField("title", e.target.value);
+                  setPatchNoteTitleChanged(true);
+                }}
+                className={FIELD_CLASS}
+              />
+            </FormField>
+
+            <FormField label="Date de sortie" htmlFor="releasedAt">
+              <input
+                type="date"
+                id="releasedAt"
+                name="releasedAt"
+                min={gameReleaseDate}
+                value={form.releasedAt}
+                onChange={handleDateChange}
+                className={FIELD_CLASS}
+              />
+            </FormField>
+          </div>
+
+          {/* Row : Résumé + Importance */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <FormField label="Résumé" htmlFor="smallDescription">
+              <textarea
+                id="smallDescription"
+                name="smallDescription"
+                rows={3}
+                value={form.smallDescription}
+                onChange={(e) => setField("smallDescription", e.target.value)}
+                placeholder="Résumé court des changements…"
+                className={`${FIELD_CLASS} resize-none`}
+              />
+            </FormField>
+
+            <FormField label="Importance" htmlFor="importance">
+              <select
+                id="importance"
+                name="importance"
+                value={form.importance}
+                onChange={(e) => setField("importance", e.target.value as ImportanceLevel)}
+                className={FIELD_CLASS}
+              >
+                <option value="minor">Minor</option>
+                <option value="major">Major</option>
+                <option value="hotfix">Hotfix</option>
+              </select>
+            </FormField>
+          </div>
+
+          {/* Contenu MDEditor */}
+          <FormField label="Contenu" htmlFor="content">
+            {/*
+              On injecte les overrides CSS du MDEditor directement ici via un <style> scoped.
+              Le composant n'expose pas de prop `className` utilisable pour le thème complet,
+              donc on cible ses classes internes.
+            */}
+            <style>{`
+              .playdex-editor .w-md-editor {
+                background-color: #1A1A1A !important;
+                border: 1px solid #4B5563 !important;
+                border-radius: 6px !important;
+                color: #F0F0F0 !important;
+                box-shadow: none !important;
+              }
+              .playdex-editor .w-md-editor-toolbar {
+                background-color: #2D2D2D !important;
+                border-bottom: 1px solid #4B5563 !important;
+                padding: 4px 8px !important;
+              }
+              .playdex-editor .w-md-editor-toolbar li button {
+                color: #9CA3AF !important;
+              }
+              .playdex-editor .w-md-editor-toolbar li button:hover {
+                color: #F0F0F0 !important;
+                background-color: #374151 !important;
+              }
+              .playdex-editor .w-md-editor-toolbar-divider {
+                background-color: #4B5563 !important;
+              }
+              .playdex-editor .w-md-editor-text-textarea,
+              .playdex-editor .w-md-editor-text-pre > code,
+              .playdex-editor .w-md-editor-text {
+                background-color: #1A1A1A !important;
+                color: #F0F0F0 !important;
+                font-size: 14px !important;
+                caret-color: #F0F0F0 !important;
+              }
+              .playdex-editor .w-md-editor-preview {
+                background-color: #1A1A1A !important;
+                color: #F0F0F0 !important;
+                border-left: 1px solid #4B5563 !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown {
+                background-color: transparent !important;
+                color: #F0F0F0 !important;
+                font-size: 14px !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown a {
+                color: #7173FF !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown code {
+                background-color: #2D2D2D !important;
+                color: #F0F0F0 !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown blockquote {
+                border-left-color: #4D40FF !important;
+                color: #9CA3AF !important;
+              }
+              .playdex-editor .w-md-editor:focus-within {
+                border-color: #4D40FF !important;
+              }
+            `}</style>
+            <div className="playdex-editor" data-color-mode="dark">
+              <MDEditor
+                id="content"
+                value={form.userContent}
+                onChange={(val) => setField("userContent", val ?? "")}
+                textareaProps={{
+                  autoCapitalize: "none",
+                  disabled: isLoading,
+                }}
+                commands={[
+                  defaultCommands.bold,
+                  defaultCommands.italic,
+                  defaultCommands.divider,
+                  buffCommand,
+                  debuffCommand,
+                  defaultCommands.divider,
+                  defaultCommands.link,
+                  defaultCommands.quote,
+                  defaultCommands.unorderedListCommand,
+                  defaultCommands.orderedListCommand,
+                  defaultCommands.checkedListCommand,
+                ]}
+                visibleDragbar={false}
+                tabIndex={isLoading ? -1 : 0}
+              />
+            </div>
+          </FormField>
+
+          {/* Submit */}
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="
+                bg-primary hover:bg-secondary
+                text-white font-semibold
+                py-2 px-8 rounded
+                transition-colors duration-150
+                disabled:opacity-50 disabled:cursor-not-allowed
+              "
+            >
+              {isLoading ? "Sauvegarde en cours…" : "Sauvegarder"}
+            </button>
+          </div>
+
+        </fieldset>
+      </form>
+    </PageSection>
   );
 }
