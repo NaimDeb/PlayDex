@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -29,10 +30,10 @@ export default function RegisterPage() {
     username: undefined,
     acceptTerms: undefined,
   });
-  // Assume register returns: Promise<{ status?: number; description?: string; error?: string } | undefined>
   const { register, error } = useAuth();
   const { showMessage } = useFlashMessage();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,50 +45,50 @@ export default function RegisterPage() {
       username?: string;
       acceptTerms?: string;
     } = {};
-    
+
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      newFormError.email = "Veuillez entrer une adresse email valide.";
+      newFormError.email = t("auth.invalidEmail");
       hasError = true;
     }
-    
+
     if (!password || password.length < 8) {
-      newFormError.password = "Le mot de passe doit contenir au moins 8 caractères.";
+      newFormError.password = t("auth.passwordMinLength");
       hasError = true;
     } else if (password.length > 100) {
-      newFormError.password = "Le mot de passe doit contenir moins de 100 caractères.";
+      newFormError.password = t("auth.passwordMaxLength");
       hasError = true;
     } else if (!/[A-Z]/.test(password)) {
-      newFormError.password = "Le mot de passe doit contenir au moins une majuscule.";
+      newFormError.password = t("auth.passwordUppercase");
       hasError = true;
     } else if (!/[a-z]/.test(password)) {
-      newFormError.password = "Le mot de passe doit contenir au moins une minuscule.";
+      newFormError.password = t("auth.passwordLowercase");
       hasError = true;
     } else if (!/[0-9]/.test(password)) {
-      newFormError.password = "Le mot de passe doit contenir au moins un chiffre.";
+      newFormError.password = t("auth.passwordDigit");
       hasError = true;
     } else if (!/[^A-Za-z0-9]/.test(password)) {
-      newFormError.password = "Le mot de passe doit contenir au moins un caractère spécial.";
+      newFormError.password = t("auth.passwordSpecial");
       hasError = true;
     }
-    
+
     if (password !== confirmPassword) {
-      newFormError.confirmPassword = "Les mots de passe ne correspondent pas.";
+      newFormError.confirmPassword = t("auth.passwordMismatch");
       hasError = true;
     }
 
     if (!username || username.length < 4) {
-      newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
+      newFormError.username = t("auth.usernameMinLength");
       hasError = true;
     } else if (username.length > 100) {
-      newFormError.username = "Le pseudo doit contenir moins de 100 caractères.";
+      newFormError.username = t("auth.usernameMaxLength");
       hasError = true;
     }
-    
+
     if (!acceptTerms) {
-      newFormError.acceptTerms = "Vous devez accepter les conditions d'utilisation.";
+      newFormError.acceptTerms = t("auth.mustAcceptTerms");
       hasError = true;
     }
-    
+
     setFormError(newFormError);
     if (hasError) {
       return;
@@ -96,7 +97,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({ email, password, username });
-      showMessage("Inscription réussie ! Vous pouvez maintenant vous connecter.", "success");
+      showMessage(t("auth.registerSuccess"), "success");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { violations?: Array<{ propertyPath: string; message: string }> } } };
       const violations = error?.response?.data?.violations;
@@ -111,7 +112,7 @@ export default function RegisterPage() {
           }
         });
       } else {
-        showMessage(typeof error === 'string' ? error : "Une erreur est survenue lors de l'inscription.", "error");
+        showMessage(typeof error === 'string' ? error : t("auth.registerError"), "error");
       }
     } finally {
       setLoading(false);
@@ -122,12 +123,10 @@ export default function RegisterPage() {
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
       <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
         <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
-          Inscription
+          {t("auth.registerTitle")}
         </h1>
         <p className="mb-8 text-base font-medium text-center text-offwhite">
-          Rejoignez PlayDex pour suivre vos jeux préférés, recevoir des
-          notifications sur les nouveautés, et partager vos avis avec la
-          communauté !
+          {t("auth.registerSubtitle")}
         </p>
         {error && (
           <div className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
@@ -140,7 +139,7 @@ export default function RegisterPage() {
               htmlFor="email"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              Email
+              {t("auth.email")}
             </label>
             <input
               id="email"
@@ -153,7 +152,7 @@ export default function RegisterPage() {
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
               }`}
-              placeholder="Votre email"
+              placeholder={t("auth.emailPlaceholder")}
             />
             {formError.email && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
@@ -166,7 +165,7 @@ export default function RegisterPage() {
               htmlFor="password"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              Mot de passe
+              {t("auth.password")}
             </label>
             <div className="relative">
               <input
@@ -180,7 +179,7 @@ export default function RegisterPage() {
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                     : ""
                 }`}
-                placeholder="Choisissez un mot de passe"
+                placeholder={t("auth.passwordChoosePlaceholder")}
               />
               <button
                 type="button"
@@ -201,7 +200,7 @@ export default function RegisterPage() {
               htmlFor="confirmPassword"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              Confirmer le mot de passe
+              {t("auth.confirmPassword")}
             </label>
             <div className="relative">
               <input
@@ -215,7 +214,7 @@ export default function RegisterPage() {
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                     : ""
                 }`}
-                placeholder="Confirmez votre mot de passe"
+                placeholder={t("auth.confirmPasswordPlaceholder")}
               />
               <button
                 type="button"
@@ -236,7 +235,7 @@ export default function RegisterPage() {
               htmlFor="pseudo"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              Pseudo
+              {t("auth.pseudo")}
             </label>
             <input
               id="pseudo"
@@ -249,7 +248,7 @@ export default function RegisterPage() {
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
               }`}
-              placeholder="Votre pseudo"
+              placeholder={t("auth.pseudoPlaceholder")}
             />
             {formError.username && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
@@ -271,21 +270,21 @@ export default function RegisterPage() {
                 }`}
               />
               <label htmlFor="acceptTerms" className="text-sm text-offwhite">
-                J&#39;accepte les{" "}
+                {t("auth.acceptTerms")}{" "}
                 <Link
                   href="/terms"
                   className="font-semibold underline text-primary hover:text-secondary"
                   target="_blank"
                 >
-                  conditions d&#39;utilisation
+                  {t("auth.termsLink")}
                 </Link>{" "}
-                et les{" "}
+                {t("auth.and")}{" "}
                 <Link
                   href="/privacy"
                   className="font-semibold underline text-primary hover:text-secondary"
                   target="_blank"
                 >
-                  termes de confidentialité
+                  {t("auth.privacyLink")}
                 </Link>
               </label>
             </div>
@@ -301,17 +300,17 @@ export default function RegisterPage() {
               className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-offwhite bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
               disabled={loading}
             >
-              {loading ? "Chargement..." : "S'inscrire"}
+              {loading ? t("common.loading") : t("auth.registerAction")}
             </button>
           </div>
           <div className="mt-2 text-sm text-center text-offwhite">
-            Déjà un compte ?{" "}
+            {t("auth.hasAccount")}{" "}
             <button
               type="button"
               onClick={() => router.push("/login")}
               className="font-bold underline text-offwhite hover:text-secondary"
             >
-              Se connecter
+              {t("auth.loginAction")}
             </button>
           </div>
         </form>

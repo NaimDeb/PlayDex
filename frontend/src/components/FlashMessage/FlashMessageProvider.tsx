@@ -34,7 +34,7 @@ export const FlashMessageProvider = ({ children }: { children: ReactNode }) => {
   const showMessage = useCallback(
     (message: string, type: FlashMessageType = "info") => {
       setFlash({ message, type });
-      setTimeout(() => setFlash(null), 3500);
+      setTimeout(() => setFlash(null), 5000);
     },
     []
   );
