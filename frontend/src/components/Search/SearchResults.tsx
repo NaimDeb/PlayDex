@@ -1,192 +1,265 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { SearchResultCard } from "./SearchResultCard";
-import gameService from "@/lib/api/gameService"; // Adjust the import path as necessary
+import gameService from "@/lib/api/gameService";
 import { Game } from "@/types/gameType";
+import React from "react";
 
-interface SearchResultsProps {
-    filters: {
-        q: string;
-        category: string;
-        order: string;
-        sort: string;
-        genres: string[];
-        companyName: string;
-        releasedBefore: string;
-        releasedAfter: string;
-    }
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SearchFilters {
+  q: string;
+  category: string;
+  order: string;
+  sort: string;
+  genres: string[];
+  platforms: string[];
+  companyName: string;
+  releasedBefore: string;
+  releasedAfter: string;
 }
 
-export default function SearchResults({ filters }: SearchResultsProps) {
-const [games, setGames] = useState<Game[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [count, setCount] = useState(0); // Initialize count state
-  const [page, setPage] = useState(1); // Initialize page state
+interface SearchResultsProps {
+  filters: SearchFilters;
+}
 
-  const itemsPerPage = 10; // Number of items per page
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const ITEMS_PER_PAGE = 10;
+const MAX_VISIBLE_PAGES = 6;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function buildEndpointFilters(
+  filters: SearchFilters,
+  page: number
+): Record<string, unknown> {
+  return {
+    page,
+    title: filters.q || undefined,
+    "genres.name[]":
+      filters.genres.length > 0 ? filters.genres : undefined,
+    "companies.name": filters.companyName || undefined,
+    "releasedAt[before]": filters.releasedBefore || undefined,
+    "releasedAt[after]": filters.releasedAfter || undefined,
+    [`order[${filters.order}]`]: filters.sort || undefined,
+  };
+}
+
+function updatePageInUrl(page: number): void {
+  const url = new URL(window.location.href);
+  url.searchParams.set("page", String(page));
+  window.history.replaceState({}, "", url.toString());
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function SkeletonCard(): React.ReactElement {
+  return (
+    <div className="flex w-full bg-off-gray rounded-lg overflow-hidden animate-pulse">
+      <div className="w-[110px] bg-gray-700 flex-shrink-0" style={{ minHeight: "155px" }} />
+      <div className="flex-grow p-4 space-y-3">
+        <div className="h-5 bg-gray-700 rounded w-3/5" />
+        <div className="h-3 bg-gray-700 rounded w-1/4" />
+        <div className="h-3 bg-gray-700 rounded w-full mt-4" />
+        <div className="h-3 bg-gray-700 rounded w-full" />
+        <div className="h-3 bg-gray-700 rounded w-4/5" />
+      </div>
+    </div>
+  );
+}
+
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onPageChange,
+}: PaginationProps): React.ReactElement | null {
+  if (totalPages <= 1) return null;
+
+  const visiblePages: number[] = Array.from(
+    { length: Math.min(MAX_VISIBLE_PAGES, totalPages) },
+    (_, i) => i + 1
+  );
+
+  const showEllipsis = totalPages > MAX_VISIBLE_PAGES;
+  const showLastPage = showEllipsis && !visiblePages.includes(totalPages);
+
+  return (
+    <div className="mt-8 flex justify-center items-center gap-1 text-white text-sm select-none">
+      {/* Previous */}
+      <PaginationButton
+        label="<"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        active={false}
+      />
+
+      {/* Page numbers */}
+      {visiblePages.map((pageNum) => (
+        <PaginationButton
+          key={pageNum}
+          label={String(pageNum)}
+          onClick={() => onPageChange(pageNum)}
+          active={page === pageNum}
+          disabled={false}
+        />
+      ))}
+
+      {/* Ellipsis + last page */}
+      {showEllipsis && (
+        <>
+          <span className="px-1 text-gray-400">...</span>
+          <PaginationButton
+            label={String(totalPages)}
+            onClick={() => onPageChange(totalPages)}
+            active={page === totalPages}
+            disabled={false}
+          />
+        </>
+      )}
+
+      {/* Next */}
+      <PaginationButton
+        label=">"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page === totalPages || totalPages === 0}
+        active={false}
+      />
+    </div>
+  );
+}
+
+interface PaginationButtonProps {
+  label: string;
+  onClick: () => void;
+  active: boolean;
+  disabled: boolean;
+}
+
+function PaginationButton({
+  label,
+  onClick,
+  active,
+  disabled,
+}: PaginationButtonProps): React.ReactElement {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`
+        px-3 py-1 rounded transition-colors duration-150
+        ${active ? "font-bold text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"}
+        ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+      `}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function SearchResults({
+  filters,
+}: SearchResultsProps): React.ReactElement {
+  const [games, setGames] = useState<Game[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [page, setPage] = useState<number>(1);
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   useEffect(() => {
-    const fetchGames = async () => {
+    let cancelled = false;
+
+    const fetchGames = async (): Promise<void> => {
       setLoading(true);
 
-      const endpointFilters = {
-        page,
-        title: filters.q || undefined,
-        description: undefined,
-        "genres.name[]": filters.genres && filters.genres.length > 0 ? filters.genres : undefined,
-        "companies.name": filters.companyName || undefined,
-        "releasedAt[before]": filters.releasedBefore || undefined,
-        "releasedAt[after]": filters.releasedAfter || undefined,
-        [`order[${filters.order}]`]: filters.sort || undefined,
+      const endpointFilters = buildEndpointFilters(filters, page);
+
+      let fetchFunction: (
+        f: Record<string, unknown>
+      ) => Promise<{ member: Game[]; totalItems: number }>;
+
+      switch (filters.category) {
+        case "extensions":
+          fetchFunction = gameService.getExtensions;
+          break;
+        case "all":
+          fetchFunction = async (f) => {
+            const [gamesRes, extensionsRes] = await Promise.all([
+              gameService.getGames(f),
+              gameService.getExtensions(f),
+            ]);
+            return {
+              member: [...gamesRes.member, ...extensionsRes.member],
+              totalItems: gamesRes.totalItems + extensionsRes.totalItems,
+            };
+          };
+          break;
+        default:
+          fetchFunction = gameService.getGames;
+          break;
       }
 
-    let fetchFunction;
+      const result = await fetchFunction(endpointFilters);
 
-    switch (filters.category) {
-      case "genre":
-        if (filters.genres && filters.genres.length > 0) {
-          endpointFilters["genres.name[]"] = filters.genres;
-        }
-        fetchFunction = gameService.getGames;
-        break;
-      case "entreprise":
-        if (filters.companyName) {
-          endpointFilters["companies.name"] = filters.companyName;
-        }
-        fetchFunction = gameService.getGames;
-        break;
-      case "jeux":
-        fetchFunction = gameService.getGames;
-        break;
-      case "extensions":
-        fetchFunction = gameService.getExtensions;
-        break;
-      case "all":
-        // Fetch both games and extensions, then merge results
-        fetchFunction = async (filters: Record<string, unknown>) => {
-          const [gamesRes, extensionsRes] = await Promise.all([
-            gameService.getGames(filters),
-            gameService.getExtensions(filters),
-          ]);
-          return {
-            member: [...gamesRes.member, ...extensionsRes.member],
-            totalItems: gamesRes.totalItems + extensionsRes.totalItems,
-          };
-        };
-        break;
-      default:
-        fetchFunction = gameService.getGames;
-        break;
-    }
-
-    const result = await (fetchFunction || gameService.getGames)(endpointFilters);
-
-    setGames(result.member);
-    setLoading(false);
-    setCount(result.totalItems);
+      if (!cancelled) {
+        setGames(result.member);
+        setTotalCount(result.totalItems);
+        setLoading(false);
+      }
     };
 
-    fetchGames();
+    fetchGames().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [filters, page]);
 
+  const handlePageChange = (newPage: number): void => {
+    const clamped = Math.max(1, Math.min(totalPages, newPage));
+    setPage(clamped);
+    updatePageInUrl(clamped);
+  };
+
   if (loading) {
-    // Skeleton loader: 6 placeholder cards
     return (
-      <section>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div
-              key={idx}
-              className="animate-pulse bg-gray-700 rounded-lg h-48 w-full"
-            >
-              <div className="h-32 bg-gray-600 rounded-t-lg" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-600 rounded w-3/4" />
-                <div className="h-3 bg-gray-600 rounded w-1/2" />
-              </div>
-            </div>
-          ))}
-        </div>
+      <section className="flex flex-col gap-4 w-full">
+        {Array.from({ length: 5 }).map((_, idx) => (
+          <SkeletonCard key={idx} />
+        ))}
       </section>
     );
   }
-  return (
-    <section>
-    <div className="flex flex-col gap-6 w-full">
-      {games.map((game) => (
-        <SearchResultCard key={game.id} game={game} />
-      ))}
 
-    {/* Pagination */}
-    </div>
-    <div className="mt-8 flex justify-center items-center space-x-2 text-white">
-      <button
-        className="px-3 py-1 rounded hover:bg-gray-700 disabled:opacity-50"
-        onClick={() => {
-        setPage((p) => Math.max(1, p - 1));
-        const url = new URL(window.location.href);
-        url.searchParams.set("page", String(Math.max(1, page - 1)));
-        window.history.replaceState({}, "", url.toString());
-        }}
-        disabled={page === 1}
-      >
-        &lt;
-      </button>
-      {Array.from({ length: Math.ceil(count / itemsPerPage) })
-        .slice(0, 5)
-        .map((_, idx) => {
-        const pageNum = idx + 1;
-        return (
-          <button
-            key={pageNum}
-            className={`px-3 py-1 rounded ${
-            page === pageNum ? "bg-primary" : "hover:bg-gray-700"
-            }`}
-            onClick={() => {
-            setPage(pageNum);
-            const url = new URL(window.location.href);
-            url.searchParams.set("page", String(pageNum));
-            window.history.replaceState({}, "", url.toString());
-            }}
-          >
-            {pageNum}
-          </button>
-        );
-        })}
-      {Math.ceil(count / itemsPerPage) > 5 && (
-        <>
-        <span>...</span>
-        <button
-          className={`px-3 py-1 rounded ${
-            page === Math.ceil(count / itemsPerPage)
-            ? "bg-primary"
-            : "hover:bg-gray-700"
-          }`}
-          onClick={() => {
-            const lastPage = Math.ceil(count / itemsPerPage);
-            setPage(lastPage);
-            const url = new URL(window.location.href);
-            url.searchParams.set("page", String(lastPage));
-            window.history.replaceState({}, "", url.toString());
-          }}
-        >
-          {Math.ceil(count / itemsPerPage)}
-        </button>
-        </>
-      )}
-      <button
-        className="px-3 py-1 rounded hover:bg-gray-700 disabled:opacity-50"
-        onClick={() => {
-        const nextPage = Math.min(Math.ceil(count / itemsPerPage), page + 1);
-        setPage(nextPage);
-        const url = new URL(window.location.href);
-        url.searchParams.set("page", String(nextPage));
-        window.history.replaceState({}, "", url.toString());
-        }}
-        disabled={page === Math.ceil(count / itemsPerPage) || count === 0}
-      >
-        &gt;
-      </button>
-    </div>
+  return (
+    <section className="w-full">
+      <div className="flex flex-col gap-4 w-full">
+        {games.length === 0 ? (
+          <p className="text-gray-400 text-center py-12">
+            Aucun résultat trouvé.
+          </p>
+        ) : (
+          games.map((game) => <SearchResultCard key={game.id} game={game} />)
+        )}
+      </div>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </section>
   );
 }
