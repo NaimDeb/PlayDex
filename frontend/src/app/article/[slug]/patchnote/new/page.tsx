@@ -1,4 +1,5 @@
 "use client";
+
 import gameService from "@/lib/api/gameService";
 import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
@@ -8,29 +9,95 @@ import { redirect, useRouter } from "next/navigation";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import { useAuth } from "@/providers/AuthProvider";
+import { PageSection } from "@/components/PageSection";
+import React from "react";
 
 import {
   buffCommand,
   debuffCommand,
 } from "@/components/MDEditor/customCommands";
 
-export default function ArticleModificationsPage({
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type ImportanceLevel = "minor" | "major" | "hotfix";
+
+interface PatchnoteFormState {
+  title: string;
+  releasedAt: string;
+  smallDescription: string;
+  importance: ImportanceLevel;
+  userContent: string;
+}
+
+// ─── Design tokens ────────────────────────────────────────────────────────────
+
+const FIELD_CLASS =
+  "w-full bg-off-black border border-gray-600 rounded px-3 py-2.5 text-sm text-off-white " +
+  "placeholder:text-gray-600 focus:outline-none focus:border-primary transition-colors [color-scheme:dark]";
+
+const LABEL_CLASS = "block text-sm font-semibold text-gray-300 mb-1.5";
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+interface FormFieldProps {
+  label: string;
+  htmlFor: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+}
+
+function FormField({ label, htmlFor, required, error, children }: FormFieldProps): React.ReactElement {
+  return (
+    <div className="flex flex-col">
+      <label htmlFor={htmlFor} className={LABEL_CLASS}>
+        {label}
+        {required && <span className="text-red-400 ml-0.5">*</span>}
+      </label>
+      {children}
+      {error && (
+        <p className="mt-1 text-xs text-red-400">{error}</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function NewPatchnotePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = use(params); // Unwrap the params promise
+  const { slug } = use(params);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const [gameName, setGameName] = useState(""); // Placeholder for game name
-  const [gameReleaseDate, setGameReleaseDate] = useState(""); // Placeholder for game release date
-  const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState(false); // State to track if the patch note title has changed
-  const [content, setContent] = useState("");
-  const [title, setTitle] = useState("Patch Note");
-  const [releasedAt, setReleasedAt] = useState("");
-  const [smallDescription, setSmallDescription] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const { showMessage } = useFlashMessage();
+
+  const [gameName, setGameName] = useState<string>("");
+  const [gameReleaseDate, setGameReleaseDate] = useState<string>("");
+  const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [submitted, setSubmitted] = useState<boolean>(false);
+
+  const [form, setForm] = useState<PatchnoteFormState>({
+    title: "Patch Note",
+    releasedAt: "",
+    smallDescription: "",
+    importance: "minor",
+    userContent: "",
+  });
+
+  // ── Setters helpers ──
+
+  const setField = <K extends keyof PatchnoteFormState>(
+    key: K,
+    value: PatchnoteFormState[K]
+  ): void => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // ── Auth guard + fetch game ──
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -38,247 +105,290 @@ export default function ArticleModificationsPage({
       router.push("/login");
       return;
     }
-    
-    // get ID from slug
-    setIsLoading(true); // Set loading state to true
-    const gameId = getIdFromSlug(slug); // Fetch game ID using the slug
 
-    const fetchGameName = async () => {
-      const gameData = await gameService.getGameById(gameId); // Fetch game name using the game ID
-      setGameName(gameData.title); // Set the game name state
-      setGameReleaseDate(gameData.releasedAt); // Set the game release date state
+    const gameId = getIdFromSlug(slug);
+
+    const fetchGameData = async (): Promise<void> => {
+      setIsLoading(true);
+      const gameData = await gameService.getGameById(gameId);
+      setGameName(gameData.title);
+      setGameReleaseDate(gameData.releasedAt);
       setIsLoading(false);
     };
-    fetchGameName();
+
+    fetchGameData().catch((err) => {
+      console.error("[NewPatchnote] fetchGameData:", err);
+      setIsLoading(false);
+    });
   }, [slug, isAuthenticated, router, showMessage]);
 
-  // --- Form submission handler ---
-  /**
-   *
-   * @param event
-   */
-  async function handleAddPatchnote(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); // Prevent the default form submission
-    setIsLoading(true); // Set loading state to true
-    const formData = new FormData(event.currentTarget); // Get the form data
-    formData.set("content", content); // Add editor content to formData
+  // ── Validation ──
 
-    const gameId = `/api/games/${getIdFromSlug(slug)}`; // Get the game ID from the slug
-    formData.set("game", gameId); // Add the game ID to formData
+  const validate = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!form.title.trim()) errors.title = "Le titre est obligatoire.";
+    if (!form.releasedAt) errors.releasedAt = "La date est obligatoire.";
+    if (!form.smallDescription.trim()) errors.smallDescription = "Le résumé est obligatoire.";
+    if (!form.userContent.trim()) errors.userContent = "Le contenu est obligatoire.";
+    return errors;
+  };
 
-    // Convert FormData to JSON object
-    const jsonObject: Record<string, string | File> = {}; // Initialize an object with specific types
-    formData.forEach((value, key) => {
-      if (key === "releasedAt") {
-        if (
-          key === "releasedAt" &&
-          typeof value === "string" &&
-          !isNaN(Date.parse(value))
-        ) {
-          jsonObject[key] = new Date(value).toISOString(); // Convert valid date string to ISO string
-        } else {
-          jsonObject[key] = value; // Keep other values as is
-        }
-      } else {
-        jsonObject[key] = value; // Add other form data as is
-      }
-    });
+  const errors = submitted ? validate() : {};
+  const isFormValid = Object.keys(validate()).length === 0;
 
-    try {
-      await gameService.postPatchnote(jsonObject); // Send the form data to the server
-    } catch {
-      showMessage("Erreur lors de l'ajout de la patchnote.", "error");
-      return; // Exit the function on error
-    } finally {
-      setIsLoading(false);
-      showMessage("Patchnote ajoutée avec succès !", "success");
-      redirect(`/article/${slug}`); // Redirect to referrer or fallback URL
-    }
-  }
+  // ── Handlers ──
 
-  /**
-   * Change the title of the patchnote based on the selected date
-   * @param event
-   */
-  function changePatchnoteTitle(
-    event: React.ChangeEvent<HTMLInputElement>
-  ): void {
-    const selectedDate = event.target.value;
-    setReleasedAt(selectedDate);
-    const formattedDate = new Date(selectedDate).toLocaleDateString("fr-FR");
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const selectedDate = e.target.value;
+    const formattedDate = selectedDate.split("-").reverse().join("/");
     const newTitle = `Patch Note - ${formattedDate}`;
 
-    if (
-      !isPatchNoteTitleChanged ||
-      title.startsWith("Patch Note") ||
-      title === ""
-    ) {
-      setTitle(newTitle);
-    }
-  }
+    setForm((prev) => ({
+      ...prev,
+      releasedAt: selectedDate,
+      title:
+        !isPatchNoteTitleChanged || prev.title.startsWith("Patch Note") || prev.title === ""
+          ? newTitle
+          : prev.title,
+    }));
+  };
 
-  const isFormValid = title.trim() !== "" && releasedAt !== "" && content.trim() !== "" && smallDescription.trim() !== "";
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    setSubmitted(true);
+
+    if (!isFormValid) return;
+
+    setIsLoading(true);
+
+    const gameId = `/api/games/${getIdFromSlug(slug)}`;
+    const payload: Record<string, string> = {
+      title: form.title,
+      smallDescription: form.smallDescription,
+      importance: form.importance,
+      content: form.userContent,
+      game: gameId,
+      ...(form.releasedAt ? { releasedAt: new Date(form.releasedAt).toISOString() } : {}),
+    };
+
+    try {
+      await gameService.postPatchnote(payload);
+      showMessage("Patchnote ajoutée avec succès !", "success");
+      redirect(`/article/${slug}`);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      if (err.message?.includes("NEXT_REDIRECT")) throw error;
+      showMessage("Erreur lors de l'ajout de la patchnote.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ── Render ──
 
   return (
-    <>
-      <div className="container mx-auto px-4 py-8 text-white bg-off-gray min-h-screen">
-        <h1 className="text-3xl font-montserrat font-bold mb-2">
-          Nouvelle patch note pour : {gameName}
-        </h1>
-        <div
-          className="bg-yellow-900 border-l-4 border-yellow-500 text-yellow-100 p-4 my-6 rounded-md flex items-start"
-          role="alert"
-        >
-          <FaExclamationTriangle
-            className="text-yellow-400 mr-3 mt-1 flex-shrink-0"
-            size={20}
-          />
-          <div>
-            <p className="font-bold">Attention !</p>
-            <p className="text-sm">
-              En mettant à jour cette entrée, assurez-vous de respecter{" "}
-              <Link href="/rules" className="underline hover:text-yellow-300">
-                nos règles d&apos;utilisation
-              </Link>
-              . Toute modification inappropriée ou non conforme peut entraîner
-              des restrictions sur votre compte. Merci de contribuer à une
-              communauté claire et organisée !
-            </p>
-          </div>
-        </div>
-        <div
-          className={`transition-all duration-200 ${
-            isLoading ? "pointer-events-none opacity-50 select-none" : ""
-          }`}
-        >
-          <form className="space-y-6" onSubmit={handleAddPatchnote}>
-            <fieldset disabled={isLoading}>
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Titre :
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    setPatchNoteTitleChanged(true);
-                  }}
-                  required
-                  className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
+    <PageSection className="py-8">
+      {/* ── Page title ── */}
+      <h1 className="text-2xl font-bold text-off-white mb-6">
+        Nouvelle patch note —{" "}
+        <span className="text-primary">{gameName}</span>
+      </h1>
 
-              <div>
-                <label
-                  htmlFor="releasedAt"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Date :
-                </label>
-                <input
-                  type="date"
-                  id="releasedAt"
-                  name="releasedAt"
-                  value={releasedAt}
-                  min={gameReleaseDate}
-                  onChange={changePatchnoteTitle}
-                  required
-                  className="w-fit py-3 px-4 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="smallDescription"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Résumé :
-                </label>
-                <textarea
-                  id="smallDescription"
-                  name="smallDescription"
-                  rows={2}
-                  value={smallDescription}
-                  onChange={(e) => setSmallDescription(e.target.value)}
-                  placeholder="Small resume of the change"
-                  required
-                  className="w-1/2  p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="importance"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Importance :
-                </label>
-                <select
-                  id="importance"
-                  name="importance"
-                  className="w-1/3 p-3 border border-gray-600 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  <option value="minor">Minor</option>
-                  <option value="major">Major</option>
-                  <option value="hotfix">Hotfix</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="content"
-                  className="block text-xl font-montserrat font-semibold mb-2"
-                >
-                  Contenu :
-                </label>
-                <MDEditor
-                  value={content}
-                  onChange={(newContent) => setContent(newContent || "")}
-                  textareaProps={{
-                    autoCapitalize: "none",
-                    disabled: isLoading,
-                  }}
-                  commands={[
-                    defaultCommands.bold,
-                    defaultCommands.italic,
-                    defaultCommands.divider,
-                    buffCommand,
-                    debuffCommand,
-                    defaultCommands.divider,
-                    defaultCommands.link,
-                    defaultCommands.quote,
-                    defaultCommands.unorderedListCommand,
-                    defaultCommands.orderedListCommand,
-                    defaultCommands.checkedListCommand,
-                    defaultCommands.divider,
-                  ]}
-                  visibleDragbar={false}
-                />
-              </div>
-
-              <div className="flex justify-end pt-6">
-                <button
-                  type="submit"
-                  className={`font-bold py-2 px-6 rounded transition duration-150 ease-in-out ${
-                    isFormValid && !isLoading
-                      ? "bg-gray-300 hover:bg-gray-400 text-gray-900 cursor-pointer"
-                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  }`}
-                  disabled={!isFormValid || isLoading}
-                >
-                  {isLoading ? "Publication..." : "Publier"}
-                </button>
-              </div>
-            </fieldset>
-          </form>
-        </div>
+      {/* ── Warning banner ── */}
+      <div
+        role="alert"
+        className="
+          flex items-start gap-3
+          bg-yellow-950 border-l-4 border-yellow-500
+          text-yellow-100 text-sm p-4 rounded-md mb-8
+        "
+      >
+        <FaExclamationTriangle
+          className="text-yellow-400 mt-0.5 flex-shrink-0"
+          size={16}
+        />
+        <p>
+          <span className="font-bold">Attention — </span>
+          En créant cette entrée, assurez-vous de respecter{" "}
+          <Link href="/rules" className="underline hover:text-yellow-300 transition-colors">
+            nos règles d&apos;utilisation
+          </Link>
+          . Toute modification inappropriée peut entraîner des restrictions sur votre compte.
+        </p>
       </div>
-    </>
+
+      {/* ── Form ── */}
+      <form
+        onSubmit={handleSubmit}
+        className={`space-y-6 transition-opacity duration-200 ${
+          isLoading ? "opacity-50 pointer-events-none select-none" : ""
+        }`}
+      >
+        <fieldset disabled={isLoading} className="space-y-6">
+
+          {/* Row : Titre + Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <FormField label="Titre" htmlFor="title" required error={errors.title}>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={form.title}
+                onChange={(e) => {
+                  setField("title", e.target.value);
+                  setPatchNoteTitleChanged(true);
+                }}
+                className={`${FIELD_CLASS} ${errors.title ? "border-red-500" : ""}`}
+              />
+            </FormField>
+
+            <FormField label="Date de sortie" htmlFor="releasedAt" required error={errors.releasedAt}>
+              <input
+                type="date"
+                id="releasedAt"
+                name="releasedAt"
+                min={gameReleaseDate}
+                value={form.releasedAt}
+                onChange={handleDateChange}
+                className={`${FIELD_CLASS} ${errors.releasedAt ? "border-red-500" : ""}`}
+              />
+            </FormField>
+          </div>
+
+          {/* Row : Résumé + Importance */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <FormField label="Résumé" htmlFor="smallDescription" required error={errors.smallDescription}>
+              <textarea
+                id="smallDescription"
+                name="smallDescription"
+                rows={3}
+                value={form.smallDescription}
+                onChange={(e) => setField("smallDescription", e.target.value)}
+                placeholder="Résumé court des changements…"
+                className={`${FIELD_CLASS} resize-none ${errors.smallDescription ? "border-red-500" : ""}`}
+              />
+            </FormField>
+
+            <FormField label="Importance" htmlFor="importance">
+              <select
+                id="importance"
+                name="importance"
+                value={form.importance}
+                onChange={(e) => setField("importance", e.target.value as ImportanceLevel)}
+                className={FIELD_CLASS}
+              >
+                <option value="minor">Minor</option>
+                <option value="major">Major</option>
+                <option value="hotfix">Hotfix</option>
+              </select>
+            </FormField>
+          </div>
+
+          {/* Contenu MDEditor */}
+          <FormField label="Contenu" htmlFor="content" required error={errors.userContent}>
+            <style>{`
+              .playdex-editor .w-md-editor {
+                background-color: #1A1A1A !important;
+                border: 1px solid #4B5563 !important;
+                border-radius: 6px !important;
+                color: #F0F0F0 !important;
+                box-shadow: none !important;
+              }
+              .playdex-editor .w-md-editor-toolbar {
+                background-color: #2D2D2D !important;
+                border-bottom: 1px solid #4B5563 !important;
+                padding: 4px 8px !important;
+              }
+              .playdex-editor .w-md-editor-toolbar li button {
+                color: #9CA3AF !important;
+              }
+              .playdex-editor .w-md-editor-toolbar li button:hover {
+                color: #F0F0F0 !important;
+                background-color: #374151 !important;
+              }
+              .playdex-editor .w-md-editor-toolbar-divider {
+                background-color: #4B5563 !important;
+              }
+              .playdex-editor .w-md-editor-text-textarea,
+              .playdex-editor .w-md-editor-text-pre > code,
+              .playdex-editor .w-md-editor-text {
+                background-color: #1A1A1A !important;
+                color: #F0F0F0 !important;
+                font-size: 14px !important;
+                caret-color: #F0F0F0 !important;
+              }
+              .playdex-editor .w-md-editor-preview {
+                background-color: #1A1A1A !important;
+                color: #F0F0F0 !important;
+                border-left: 1px solid #4B5563 !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown {
+                background-color: transparent !important;
+                color: #F0F0F0 !important;
+                font-size: 14px !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown a {
+                color: #7173FF !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown code {
+                background-color: #2D2D2D !important;
+                color: #F0F0F0 !important;
+              }
+              .playdex-editor .w-md-editor-preview .wmde-markdown blockquote {
+                border-left-color: #4D40FF !important;
+                color: #9CA3AF !important;
+              }
+              .playdex-editor .w-md-editor:focus-within {
+                border-color: #4D40FF !important;
+              }
+            `}</style>
+            <div className="playdex-editor" data-color-mode="dark">
+              <MDEditor
+                id="content"
+                value={form.userContent}
+                onChange={(val) => setField("userContent", val ?? "")}
+                textareaProps={{
+                  autoCapitalize: "none",
+                  disabled: isLoading,
+                }}
+                commands={[
+                  defaultCommands.bold,
+                  defaultCommands.italic,
+                  defaultCommands.divider,
+                  buffCommand,
+                  debuffCommand,
+                  defaultCommands.divider,
+                  defaultCommands.link,
+                  defaultCommands.quote,
+                  defaultCommands.unorderedListCommand,
+                  defaultCommands.orderedListCommand,
+                  defaultCommands.checkedListCommand,
+                ]}
+                visibleDragbar={false}
+                tabIndex={isLoading ? -1 : 0}
+              />
+            </div>
+          </FormField>
+
+          {/* Submit */}
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="
+                bg-primary hover:bg-secondary
+                text-white font-semibold
+                py-2 px-8 rounded
+                transition-colors duration-150
+                disabled:opacity-50 disabled:cursor-not-allowed
+              "
+            >
+              {isLoading ? "Publication en cours…" : "Publier"}
+            </button>
+          </div>
+
+        </fieldset>
+      </form>
+    </PageSection>
   );
 }
