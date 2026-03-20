@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // Champs optionnels pour ne pas casser les usages existants
 interface PatchnoteCardProps {
@@ -16,6 +17,13 @@ interface PatchnoteCardProps {
   changesCount?: number;
   buffsCount?: number;
   nerfsCount?: number;
+  // Nom du jeu (optionnel — affiché si fourni, ex: sur la page d'accueil)
+  gameName?: string;
+}
+
+interface PatchnoteCardComponentProps {
+  patchnote: PatchnoteCardProps;
+  baseUrl?: string;
 }
 
 const IMPORTANCE_LABELS: Record<string, string> = {
@@ -30,10 +38,26 @@ const IMPORTANCE_COLORS: Record<string, string> = {
   hotfix: "bg-orange-700 text-orange-100",
 };
 
-export function PatchnoteCard({ patchnote }: { patchnote: PatchnoteCardProps }) {
+export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const patchnoteUrl = `${pathname.replace(/\/$/, "")}/patchnote/${patchnote.id}`;
+  const { t } = useTranslation();
+  const patchnoteUrl = baseUrl
+    ? `${baseUrl.replace(/\/$/, "")}/patchnote/${patchnote.id}`
+    : `${pathname.replace(/\/$/, "")}/patchnote/${patchnote.id}`;
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [menuOpen]);
 
   const truncated = patchnote.content.length > 200
     ? patchnote.content.substring(0, 200) + "…"
@@ -52,14 +76,21 @@ export function PatchnoteCard({ patchnote }: { patchnote: PatchnoteCardProps }) 
     : null;
 
   return (
-    <article className="bg-[#2a2a2a] rounded-lg p-4 text-white relative">
+    <article className="bg-[#2a2a2a] rounded-lg p-4 text-white relative h-full flex flex-col">
+
+      {/* ── Row 0 : game name (if provided) ───────────────── */}
+      {patchnote.gameName && (
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block">
+          {patchnote.gameName}
+        </span>
+      )}
 
       {/* ── Row 1 : title + menu ────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 mb-1">
         <h3 className="font-bold text-base leading-snug">{patchnote.title}</h3>
 
         {/* ··· menu */}
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             className="text-gray-400 hover:text-white px-1 leading-none text-lg"
             onClick={() => setMenuOpen((v) => !v)}
@@ -69,14 +100,32 @@ export function PatchnoteCard({ patchnote }: { patchnote: PatchnoteCardProps }) 
           </button>
           {menuOpen && (
             <ul className="absolute right-0 top-full mt-1 bg-[#1e1e1e] border border-gray-700
-              rounded shadow-lg z-20 text-sm list-none p-1 min-w-[140px]">
+              rounded shadow-lg z-20 text-sm list-none p-1 min-w-[200px]">
               <li>
                 <Link
-                  href={patchnoteUrl}
+                  href={`${patchnoteUrl}/edit`}
                   className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-gray-300 hover:text-white"
                   onClick={() => setMenuOpen(false)}
                 >
-                  Voir la patchnote
+                  {t("patchnote.edit")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`${patchnoteUrl}/modifications`}
+                  className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-gray-300 hover:text-white"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t("patchnote.viewModifications")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`/report/patchnote/${patchnote.id}`}
+                  className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-red-400 hover:text-red-300"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {t("patchnote.report")}
                 </Link>
               </li>
             </ul>
@@ -125,7 +174,7 @@ export function PatchnoteCard({ patchnote }: { patchnote: PatchnoteCardProps }) 
       </p>
 
       {/* ── Row 5 : footer ──────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-auto">
         <span className="text-xs text-gray-500">
           {patchnote.lineCount ? `${patchnote.lineCount} lignes...` : ""}
         </span>

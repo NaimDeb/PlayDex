@@ -54,7 +54,8 @@
     "latestGamesTitle": "Derniers jeux ajoutés",
     "seeAllLatestGames": "Voir tous les derniers jeux ajoutés",
     "alreadyHaveAccount": "Déjà un compte ?",
-    "connectNow": "Connectez-vous"
+    "connectNow": "Connectez-vous",
+    "latestPatchnotesTitle": "Dernières patchnotes"
   },
   "auth": {
     "loginTitle": "Se connecter",
@@ -123,6 +124,9 @@
     "myList": "Ma liste",
     "hisList": "Sa liste",
     "searchGame": "Rechercher un jeu...",
+    "sortBy": "Trier par",
+    "sortDate": "Date de sortie",
+    "sortName": "Nom",
     "sortByDateDesc": "Trier par : Date de sortie ↓",
     "sortByDateAsc": "Trier par : Date de sortie ↑",
     "sortByNameAsc": "Trier par : Nom A-Z",
@@ -208,7 +212,9 @@
     "modificationDate": "Modification du {date}",
     "noModifications": "Aucune modification trouvée pour cette patchnote.",
     "loadingModifications": "Chargement des modifications...",
-    "backToPatchnote": "Retour à la patchnote"
+    "backToPatchnote": "Retour à la patchnote",
+    "loginToEdit": "Connectez-vous pour modifier la patchnote",
+    "loginToCreate": "Connectez-vous pour créer une patchnote"
   },
   "search": {
     "placeholder": "Rechercher un jeu",

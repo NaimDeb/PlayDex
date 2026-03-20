@@ -7,6 +7,8 @@ import { PageSection } from "@/components/PageSection";
 import { useAuth } from "@/providers/AuthProvider";
 import gameService from "@/lib/api/gameService";
 import { FollowedGameWithCount, Game } from "@/types/gameType";
+import { Patchnote } from "@/types/patchNoteType";
+import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
 import Link from "next/link";
 import { useTranslation } from "@/i18n/TranslationProvider";
 
@@ -17,9 +19,29 @@ const GameCardPlaceholder = () => (
   />
 );
 
+const PatchnoteCardPlaceholder = () => (
+  <div className="bg-[#2a2a2a] rounded-lg p-4 animate-pulse">
+    <div className="h-3 w-20 bg-gray-700 rounded mb-2" />
+    <div className="h-4 w-3/4 bg-gray-700 rounded mb-3" />
+    <div className="flex gap-3 mb-3">
+      <div className="h-3 w-24 bg-gray-700 rounded" />
+      <div className="h-5 w-16 bg-gray-700 rounded-full" />
+    </div>
+    <div className="space-y-2 mb-4">
+      <div className="h-3 w-full bg-gray-700 rounded" />
+      <div className="h-3 w-5/6 bg-gray-700 rounded" />
+      <div className="h-3 w-2/3 bg-gray-700 rounded" />
+    </div>
+    <div className="flex justify-end">
+      <div className="h-8 w-32 bg-gray-700 rounded" />
+    </div>
+  </div>
+);
+
 export default function Home() {
   const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
   const [newGames, setNewGames] = useState<Game[]>([]);
+  const [latestPatchnotes, setLatestPatchnotes] = useState<{ patchnote: Patchnote; game: Game }[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
@@ -27,14 +49,33 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
-      const [followed, nouveautes] = await Promise.all([
+      const [followed, nouveautes, patchnotes] = await Promise.all([
         isAuthenticated
           ? gameService.getFollowedGames?.() ?? []
           : Promise.resolve([]),
         gameService.getLatestReleases(),
+        gameService.getLatestPatchnotes(),
       ]);
+
+      // Fetch full game data for each patchnote
+      const patchnotesWithGames = await Promise.all(
+        patchnotes.map(async (patchnote) => {
+          let gameId: string | null = null;
+          if (typeof patchnote.game === "object") {
+            gameId = String(patchnote.game.id);
+          } else if (typeof patchnote.game === "string") {
+            // IRI format: "/api/games/5" or "/games/5"
+            const match = patchnote.game.match(/\/games\/(\d+)/);
+            if (match) gameId = match[1];
+          }
+          const game = gameId ? await gameService.getGameById(gameId) : null;
+          return game ? { patchnote, game } : null;
+        })
+      );
+
       setFollowedGames(followed);
       setNewGames(nouveautes);
+      setLatestPatchnotes(patchnotesWithGames.filter((p): p is { patchnote: Patchnote; game: Game } => p !== null));
       setLoading(false);
     }
     fetchData();
@@ -123,6 +164,31 @@ export default function Home() {
                 </li>
               ))}
         </ul>
+      </PageSection>
+
+      <PageSection title={t("home.latestPatchnotesTitle")}>
+        <div className="flex flex-col gap-6">
+          {loading
+            ? [...Array(2)].map((_, i) => (
+                <div key={`patchnote-${i}`} className="flex gap-4 items-start">
+                  <GameCardPlaceholder />
+                  <div className="flex-1"><PatchnoteCardPlaceholder /></div>
+                </div>
+              ))
+            : latestPatchnotes.slice(0, 2).map(({ patchnote, game }) => (
+                <div key={patchnote.id} className="flex gap-4 items-stretch" style={{ height: "300px" }}>
+                  <div className="flex-shrink-0">
+                    <ClassicCard game={game} isAuthenticated={isAuthenticated} />
+                  </div>
+                  <div className="flex-1 min-w-0 h-full">
+                    <PatchnoteCard
+                      patchnote={patchnote}
+                      baseUrl={`/article/${game.id}`}
+                    />
+                  </div>
+                </div>
+              ))}
+        </div>
       </PageSection>
     </main>
   );

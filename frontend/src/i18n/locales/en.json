@@ -54,7 +54,8 @@
     "latestGamesTitle": "Latest games added",
     "seeAllLatestGames": "See all latest games",
     "alreadyHaveAccount": "Already have an account?",
-    "connectNow": "Sign in"
+    "connectNow": "Sign in",
+    "latestPatchnotesTitle": "Latest patchnotes"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -123,6 +124,9 @@
     "myList": "My list",
     "hisList": "Their list",
     "searchGame": "Search for a game...",
+    "sortBy": "Sort by",
+    "sortDate": "Release date",
+    "sortName": "Name",
     "sortByDateDesc": "Sort by: Release date ↓",
     "sortByDateAsc": "Sort by: Release date ↑",
     "sortByNameAsc": "Sort by: Name A-Z",
@@ -208,7 +212,9 @@
     "modificationDate": "Modified on {date}",
     "noModifications": "No modifications found for this patchnote.",
     "loadingModifications": "Loading modifications...",
-    "backToPatchnote": "Back to patchnote"
+    "backToPatchnote": "Back to patchnote",
+    "loginToEdit": "Sign in to edit this patchnote",
+    "loginToCreate": "Sign in to create a patchnote"
   },
   "search": {
     "placeholder": "Search for a game",
