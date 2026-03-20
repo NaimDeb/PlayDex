@@ -126,6 +126,11 @@ class GameService {
   }
 
   // Should be /games/latest endpoint but it gives me a 404 error for some reason
+  async getLatestPatchnotes(): Promise<Array<Patchnote>> {
+    const response = await apiClient.get("/patchnotes?order[createdAt]=desc&itemsPerPage=2");
+    return response.data.member;
+  }
+
   async getLatestGames(): Promise<Array<Game>> {
     const response = await apiClient.get("/games?sort=-createdAt");
     return response.data.member;

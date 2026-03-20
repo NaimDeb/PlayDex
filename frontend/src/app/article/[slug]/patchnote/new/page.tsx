@@ -5,7 +5,7 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { redirect, useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import { useAuth } from "@/providers/AuthProvider";
@@ -17,6 +17,7 @@ import {
   debuffCommand,
 } from "@/components/MDEditor/customCommands";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { useFormCache } from "@/hooks/useFormCache";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,6 @@ export default function NewPatchnotePage({
 }) {
   const { slug } = use(params);
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
   const { showMessage } = useFlashMessage();
   const { t } = useTranslation();
 
@@ -90,6 +90,9 @@ export default function NewPatchnotePage({
     userContent: "",
   });
 
+  const cacheKey = `playdex-new-patchnote-${slug}`;
+  const { loadCachedForm, clearCache } = useFormCache(cacheKey, form);
+
   // ── Setters helpers ──
 
   const setField = <K extends keyof PatchnoteFormState>(
@@ -99,15 +102,9 @@ export default function NewPatchnotePage({
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  // ── Auth guard + fetch game ──
+  // ── Fetch game + restore cache ──
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      showMessage(t("auth.loginRequired"), "error");
-      router.push("/login");
-      return;
-    }
-
     const gameId = getIdFromSlug(slug);
 
     const fetchGameData = async (): Promise<void> => {
@@ -115,6 +112,11 @@ export default function NewPatchnotePage({
       const gameData = await gameService.getGameById(gameId);
       setGameName(gameData.title);
       setGameReleaseDate(gameData.releasedAt);
+
+      // Restore cached form if available
+      const cached = loadCachedForm();
+      if (cached) setForm(cached);
+
       setIsLoading(false);
     };
 
@@ -122,7 +124,7 @@ export default function NewPatchnotePage({
       console.error("[NewPatchnote] fetchGameData:", err);
       setIsLoading(false);
     });
-  }, [slug, isAuthenticated, router, showMessage]);
+  }, [slug]);
 
   // ── Validation ──
 
@@ -175,6 +177,7 @@ export default function NewPatchnotePage({
 
     try {
       await gameService.postPatchnote(payload);
+      clearCache();
       showMessage(t("patchnote.createSuccess"), "success");
       redirect(`/article/${slug}`);
     } catch (error: unknown) {
@@ -189,20 +192,16 @@ export default function NewPatchnotePage({
   // ── Render ──
 
   return (
-    <PageSection className="py-8">
+    <PageSection className="py-4">
       {/* ── Page title ── */}
-      <h1 className="text-2xl font-bold text-off-white mb-6">
+      <h1 className="text-2xl font-bold text-off-white mb-4">
         {t("patchnote.newTitle", { game: gameName })}
       </h1>
 
       {/* ── Warning banner ── */}
       <div
         role="alert"
-        className="
-          flex items-start gap-3
-          bg-yellow-950 border-l-4 border-yellow-500
-          text-yellow-100 text-sm p-4 rounded-md mb-8
-        "
+        className="flex items-start gap-3 bg-yellow-950 border-l-4 border-yellow-500 text-yellow-100 text-sm p-3 rounded-md mb-4"
       >
         <FaExclamationTriangle
           className="text-yellow-400 mt-0.5 flex-shrink-0"
@@ -221,14 +220,13 @@ export default function NewPatchnotePage({
       {/* ── Form ── */}
       <form
         onSubmit={handleSubmit}
-        className={`space-y-6 transition-opacity duration-200 ${
+        className={`space-y-4 transition-opacity duration-200 ${
           isLoading ? "opacity-50 pointer-events-none select-none" : ""
         }`}
       >
-        <fieldset disabled={isLoading} className="space-y-6">
+        <fieldset disabled={isLoading} className="space-y-4">
 
-          {/* Row : Titre + Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="max-w-lg">
             <FormField label={t("patchnote.titleLabel")} htmlFor="title" required error={errors.title}>
               <input
                 type="text"
@@ -242,7 +240,9 @@ export default function NewPatchnotePage({
                 className={`${FIELD_CLASS} ${errors.title ? "border-red-500" : ""}`}
               />
             </FormField>
+          </div>
 
+          <div className="grid grid-cols-2 gap-4 max-w-sm">
             <FormField label={t("patchnote.dateLabel")} htmlFor="releasedAt" required error={errors.releasedAt}>
               <input
                 type="date"
@@ -252,21 +252,6 @@ export default function NewPatchnotePage({
                 value={form.releasedAt}
                 onChange={handleDateChange}
                 className={`${FIELD_CLASS} ${errors.releasedAt ? "border-red-500" : ""}`}
-              />
-            </FormField>
-          </div>
-
-          {/* Row : Résumé + Importance */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <FormField label={t("patchnote.summaryLabel")} htmlFor="smallDescription" required error={errors.smallDescription}>
-              <textarea
-                id="smallDescription"
-                name="smallDescription"
-                rows={3}
-                value={form.smallDescription}
-                onChange={(e) => setField("smallDescription", e.target.value)}
-                placeholder={t("patchnote.summaryPlaceholder")}
-                className={`${FIELD_CLASS} resize-none ${errors.smallDescription ? "border-red-500" : ""}`}
               />
             </FormField>
 
@@ -285,7 +270,19 @@ export default function NewPatchnotePage({
             </FormField>
           </div>
 
-          {/* Contenu MDEditor */}
+          <FormField label={t("patchnote.summaryLabel")} htmlFor="smallDescription" required error={errors.smallDescription}>
+            <textarea
+              id="smallDescription"
+              name="smallDescription"
+              rows={2}
+              value={form.smallDescription}
+              onChange={(e) => setField("smallDescription", e.target.value)}
+              placeholder={t("patchnote.summaryPlaceholder")}
+              className={`${FIELD_CLASS} resize-none ${errors.smallDescription ? "border-red-500" : ""}`}
+            />
+          </FormField>
+
+          {/* Row 3 : Contenu MDEditor (grande zone wiki-like) */}
           <FormField label={t("patchnote.contentLabel")} htmlFor="content" required error={errors.userContent}>
             <style>{`
               .playdex-editor .w-md-editor {
@@ -294,6 +291,7 @@ export default function NewPatchnotePage({
                 border-radius: 6px !important;
                 color: #F0F0F0 !important;
                 box-shadow: none !important;
+                min-height: 500px !important;
               }
               .playdex-editor .w-md-editor-toolbar {
                 background-color: #2D2D2D !important;
@@ -348,6 +346,7 @@ export default function NewPatchnotePage({
                 id="content"
                 value={form.userContent}
                 onChange={(val) => setField("userContent", val ?? "")}
+                height={500}
                 textareaProps={{
                   autoCapitalize: "none",
                   disabled: isLoading,
@@ -373,19 +372,34 @@ export default function NewPatchnotePage({
 
           {/* Submit */}
           <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="
-                bg-primary hover:bg-secondary
-                text-white font-semibold
-                py-2 px-8 rounded
-                transition-colors duration-150
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-            >
-              {isLoading ? t("common.publishing") : t("common.publish")}
-            </button>
+            {isAuthenticated ? (
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="
+                  bg-primary hover:bg-secondary
+                  text-white font-semibold
+                  py-2 px-8 rounded
+                  transition-colors duration-150
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                "
+              >
+                {isLoading ? t("common.publishing") : t("common.publish")}
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="
+                  bg-primary hover:bg-secondary
+                  text-white font-semibold
+                  py-2 px-8 rounded
+                  transition-colors duration-150
+                  text-center
+                "
+              >
+                {t("patchnote.loginToCreate")}
+              </Link>
+            )}
           </div>
 
         </fieldset>

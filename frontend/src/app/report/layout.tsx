@@ -1,9 +1,14 @@
 "use client";
+
 import React from "react";
 
-export default function ReportLayout({ children }: { children: React.ReactNode }) {
+type ReportLayoutProps = {
+  children: React.ReactNode;
+};
+
+export default function ReportLayout({ children }: ReportLayoutProps) {
   return (
-    <div className="container mx-auto px-4 py-8 text-white bg-off-gray min-h-screen">
+    <div className="container mx-auto px-6 py-10 text-white">
       {children}
     </div>
   );
