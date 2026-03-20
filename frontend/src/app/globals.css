@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./patchnote.css";
 
 @theme {
   /* Background gradient colors */
@@ -18,15 +19,6 @@
   /* Semantic colors for patchnote markers */
   --color-buff: #22c55e; /* Green - for buffs/improvements */
   --color-debuff: #ef4444; /* Red - for nerfs/reductions */
-}
-
-.buff {
-  color: #22c55e;
-  font-weight: bold;
-}
-.debuff {
-  color: #ef4444;
-  font-weight: bold;
 }
 
 .bg-hero {
