@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";
@@ -28,7 +29,7 @@ interface FormErrors {
 }
 
 export default function ProfileEditPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
 
@@ -44,6 +45,10 @@ export default function ProfileEditPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Redirect if not authenticated
   if (!user) {
@@ -389,6 +394,60 @@ export default function ProfileEditPage() {
             </div>
           </div>
         </form>
+
+        {/* ── Delete account ── */}
+        <div className="mt-10 pt-8 border-t border-red-500/30">
+          <h2 className="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">
+            <Trash2 className="w-5 h-5" />
+            {t("profile.deleteAccount")}
+          </h2>
+          <p className="text-sm text-off-white/60 mb-4">
+            {t("profile.deleteConfirm")}
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+            <div className="w-full sm:w-64">
+              <label htmlFor="deletePassword" className="block text-sm font-semibold text-gray-300 mb-1.5">
+                {t("auth.password")}
+              </label>
+              <PasswordInput
+                id="deletePassword"
+                name="deletePassword"
+                value={deletePassword}
+                onChange={(e) => {
+                  setDeletePassword(e.target.value);
+                  setDeleteError(null);
+                }}
+                placeholder={t("auth.passwordPlaceholder")}
+                className="bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary border-gray-600"
+                buttonClassName="text-gray-400 hover:text-off-white"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!deletePassword || deleteLoading}
+              onClick={async () => {
+                if (!user?.id || !deletePassword) return;
+                setDeleteLoading(true);
+                setDeleteError(null);
+                try {
+                  await userService.deleteAccount(user.id);
+                  logout();
+                } catch {
+                  setDeleteError(t("profile.deleteError"));
+                } finally {
+                  setDeleteLoading(false);
+                }
+              }}
+              className="px-6 py-2.5 text-sm font-semibold bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {deleteLoading ? t("common.loading") : t("profile.deleteAccount")}
+            </button>
+          </div>
+          {deleteError && (
+            <p className="mt-2 text-sm text-red-400">{deleteError}</p>
+          )}
+        </div>
       </div>
     </div>
   );

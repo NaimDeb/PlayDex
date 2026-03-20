@@ -7,6 +7,7 @@ import { Patchnote } from "@/types/patchNoteType";
 import { Game } from "@/types/gameType";
 import { usePathname } from "next/navigation";
 import { PatchnoteLayoutContext } from "@/contexts/PatchnoteLayoutContext";
+import { BackButton } from "@/components/BackButton";
 
 export default function PatchnoteLayout({
   children,
@@ -56,7 +57,8 @@ export default function PatchnoteLayout({
 
   return (
     <PatchnoteLayoutContext.Provider value={{ patchnote, game, loading }}>
-      <div className="container mx-auto px-4 py-8 text-white">
+      <div className="container mx-auto px-4 py-8 text-white flex-1">
+        <BackButton />
         <Breadcrumbs underline="hover" className="mb-6">
           <BreadcrumbItem>
             <Link href="/" className="text-gray-400 hover:underline">

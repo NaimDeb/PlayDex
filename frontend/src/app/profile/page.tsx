@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gameService from "@/lib/api/gameService";
-import userService from "@/lib/api/userService";
 import { FollowedGameWithCount } from "@/types/gameType";
 import { ClassicCard } from "@/components/ArticleCard";
 import { useAuth } from "@/providers/AuthProvider";
@@ -221,11 +220,11 @@ export default function ProfilePage() {
 
         {/* Content */}
         <div className="relative z-10 container mx-auto px-6 py-12">
-          <div className="flex flex-col items-start gap-8 md:flex-row md:items-center">
+          <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:gap-8">
 
             {/* ── Avatar ───────────────────────────────────────────── */}
             <div className="relative shrink-0">
-              <div className="relative w-[200px] h-[200px]">
+              <div className="relative w-[150px] h-[150px] md:w-[200px] md:h-[200px]">
                 <Image
                   src={avatarUrl}
                   alt={`Avatar de ${user?.username ?? "utilisateur"}`}
@@ -246,7 +245,7 @@ export default function ProfilePage() {
             </div>
 
             {/* ── Info block ───────────────────────────────────────── */}
-            <div className="flex-grow space-y-1.5">
+            <div className="flex-grow space-y-1.5 text-center md:text-left">
               <h1 className="text-3xl font-bold font-montserrat text-off-white leading-tight">
                 {user?.username ?? t("common.user")}
               </h1>
@@ -272,7 +271,7 @@ export default function ProfilePage() {
             </div>
 
             {/* ── Action buttons ───────────────────────────────────── */}
-            <div className="flex flex-col gap-3 shrink-0 self-start md:self-center">
+            <div className="flex flex-col gap-3 shrink-0 self-center w-full md:w-auto md:self-center">
               <Link
                 href="/profile/edit"
                 className="px-5 py-1.5 text-sm font-semibold text-center border border-off-white/50 text-off-white hover:border-off-white hover:bg-off-white/5 transition-colors duration-150 whitespace-nowrap cursor-pointer"
@@ -284,23 +283,6 @@ export default function ProfilePage() {
                 className="px-5 py-1.5 text-sm font-semibold border border-off-white/50 text-off-white hover:border-off-white hover:bg-off-white/5 transition-colors duration-150 cursor-pointer"
               >
                 {t("nav.logout")}
-              </button>
-              <button
-                onClick={async () => {
-                  if (!user?.id) return;
-                  const confirmed = window.confirm(t("profile.deleteConfirm"));
-                  if (!confirmed) return;
-                  try {
-                    await userService.deleteAccount(user.id);
-                    logout();
-                  } catch (err) {
-                    console.error("Failed to delete account:", err);
-                    alert(t("profile.deleteError"));
-                  }
-                }}
-                className="px-5 py-1.5 text-sm font-semibold border border-red-500 text-red-400 hover:bg-red-500/10 transition-colors duration-150 cursor-pointer"
-              >
-                {t("profile.deleteAccount")}
               </button>
             </div>
           </div>

@@ -76,7 +76,10 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
     : null;
 
   return (
-    <article className="bg-[#2a2a2a] rounded-lg p-4 text-white relative h-full flex flex-col">
+    <article
+      className="bg-[#2a2a2a] rounded-lg p-4 text-white relative h-full flex flex-col cursor-pointer"
+      onClick={() => window.location.href = patchnoteUrl}
+    >
 
       {/* ── Row 0 : game name (if provided) ───────────────── */}
       {patchnote.gameName && (
@@ -169,7 +172,7 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
       )}
 
       {/* ── Row 4 : content (always truncated) ──────────────── */}
-      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line mb-4">
+      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line mb-4 line-clamp-4 sm:line-clamp-none">
         {truncated}
       </p>
 
@@ -181,7 +184,7 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
 
         <Link
           href={patchnoteUrl}
-          className="px-4 py-1.5 text-sm font-semibold rounded
+          className="hidden sm:inline-block px-4 py-1.5 text-sm font-semibold rounded
             bg-secondary hover:bg-primary text-white transition-colors"
           onClick={(e) => e.stopPropagation()}
         >

@@ -204,7 +204,7 @@ export function Header() {
           </div>
 
           {/* Mobile */}
-          <div className="flex items-center px-8 space-x-4 md:hidden">
+          <div className="flex items-center pr-4 pl-2 space-x-3 md:hidden">
             <button
               className="hover:text-gray-200"
               onClick={toggleSearch}
@@ -236,12 +236,12 @@ export function Header() {
       {/* Mobile dropdowns */}
       <div className="relative z-40 md:hidden">
         {searchOpen && (
-          <div className="absolute top-0 left-0 right-0 p-4 bg-gray-800 border-t border-gray-700 shadow-lg">
+          <div className="absolute top-0 left-0 right-0 p-4 bg-off-black border-t border-gray-700 shadow-lg">
             <SearchFormComponent isMobile={true} />
           </div>
         )}
         {mobileMenuOpen && (
-          <div className="absolute top-0 left-0 right-0 p-4 bg-gray-800 border-t border-gray-700 shadow-lg">
+          <div className="absolute top-0 left-0 right-0 p-4 bg-off-black border-t border-gray-700 shadow-lg">
             <nav className="flex flex-col space-y-4 text-lg font-medium">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
                 {t("nav.home")}
