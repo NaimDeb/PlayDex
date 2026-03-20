@@ -5,8 +5,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { isValidEmail, validatePassword } from "@/lib/validationUtils";
 
 export const dynamic = 'force-dynamic';
 
@@ -39,9 +40,7 @@ export default function ProfileEditPage() {
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -63,10 +62,9 @@ export default function ProfileEditPage() {
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
       newErrors.email = t("profile.emailRequired");
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       newErrors.email = t("auth.invalidEmail");
     }
 
@@ -75,16 +73,9 @@ export default function ProfileEditPage() {
       if (!formData.currentPassword) {
         newErrors.currentPassword = t("auth.currentPasswordRequired");
       }
-      if (formData.password.length < 8) {
-        newErrors.password = t("auth.passwordMinLength");
-      } else if (!/[A-Z]/.test(formData.password)) {
-        newErrors.password = t("auth.passwordUppercase");
-      } else if (!/[a-z]/.test(formData.password)) {
-        newErrors.password = t("auth.passwordLowercase");
-      } else if (!/[0-9]/.test(formData.password)) {
-        newErrors.password = t("auth.passwordDigit");
-      } else if (!/[^A-Za-z0-9]/.test(formData.password)) {
-        newErrors.password = t("auth.passwordSpecial");
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) {
+        newErrors.password = t(passwordError);
       }
 
       if (formData.password !== confirmPassword) {
@@ -209,7 +200,7 @@ export default function ProfileEditPage() {
               />
             </svg>
           </Link>
-          <h1 className="text-3xl font-bold font-montserrat [color:var(--color-primary)]">
+          <h1 className="text-2xl sm:text-3xl font-bold font-montserrat [color:var(--color-primary)]">
             {t("profile.editTitle")}
           </h1>
         </div>
@@ -230,7 +221,7 @@ export default function ProfileEditPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="p-6 bg-gray-800 rounded-lg shadow-xl bg-opacity-70 backdrop-blur-sm">
+          <div className="p-4 sm:p-6 bg-gray-800 rounded-lg shadow-xl bg-opacity-70 backdrop-blur-sm">
             {/* Username Field */}
             <div className="mb-6">
               <label
@@ -296,26 +287,18 @@ export default function ProfileEditPage() {
                 >
                   {t("auth.currentPassword")}
                 </label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? "text" : "password"}
-                    id="currentPassword"
-                    name="currentPassword"
-                    value={formData.currentPassword}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                      errors.currentPassword ? "border-red-500" : "border-gray-600"
-                    }`}
-                    placeholder={t("auth.currentPasswordPlaceholder")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
-                  >
-                    {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleInputChange}
+                  error={errors.currentPassword}
+                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                    !errors.currentPassword ? "border-gray-600" : ""
+                  }`}
+                  buttonClassName="text-gray-400 hover:text-off-white"
+                  placeholder={t("auth.currentPasswordPlaceholder")}
+                />
                 {errors.currentPassword && (
                   <p className="mt-1 text-sm text-red-400">{errors.currentPassword}</p>
                 )}
@@ -329,26 +312,18 @@ export default function ProfileEditPage() {
                 >
                   {t("auth.newPassword")}
                 </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                      errors.password ? "border-red-500" : "border-gray-600"
-                    }`}
-                    placeholder={t("auth.newPasswordPlaceholder")}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  error={errors.password}
+                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                    !errors.password ? "border-gray-600" : ""
+                  }`}
+                  buttonClassName="text-gray-400 hover:text-off-white"
+                  placeholder={t("auth.newPasswordPlaceholder")}
+                />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-400">{errors.password}</p>
                 )}
@@ -362,37 +337,26 @@ export default function ProfileEditPage() {
                 >
                   {t("auth.confirmNewPassword")}
                 </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errors.confirmPassword) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          confirmPassword: undefined,
-                        }));
-                      }
-                    }}
-                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                      errors.confirmPassword
-                        ? "border-red-500"
-                        : "border-gray-600"
-                    }`}
-                    placeholder={t("auth.confirmNewPasswordPlaceholder")}
-                    disabled={!formData.password}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
-                    disabled={!formData.password}
-                  >
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        confirmPassword: undefined,
+                      }));
+                    }
+                  }}
+                  error={errors.confirmPassword}
+                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                    !errors.confirmPassword ? "border-gray-600" : ""
+                  }`}
+                  buttonClassName="text-gray-400 hover:text-off-white"
+                  placeholder={t("auth.confirmNewPasswordPlaceholder")}
+                  disabled={!formData.password}
+                />
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-400">
                     {errors.confirmPassword}
