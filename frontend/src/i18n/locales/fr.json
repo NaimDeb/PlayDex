@@ -145,7 +145,10 @@
     "emailRequired": "L'email est requis",
     "emailInvalid": "Veuillez entrer un email valide",
     "currentPasswordRequired": "L'ancien mot de passe est requis pour changer le mot de passe",
-    "saveChanges": "Enregistrer les modifications"
+    "saveChanges": "Enregistrer les modifications",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteConfirm": "Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible et toutes vos données seront définitivement perdues.",
+    "deleteError": "Une erreur est survenue lors de la suppression du compte."
   },
   "game": {
     "releaseDate": "Date de sortie",
@@ -321,5 +324,10 @@
     "description": "PlayDex vous permet de suivre les mises à jour de vos jeux préférés. Restez informé des derniers patchnotes, DLC et extensions.",
     "ogTitle": "PlayDex - Ne rate plus aucun patch !",
     "ogDescription": "Suivez les mises à jour de vos jeux préférés avec PlayDex"
+  },
+  "cookie": {
+    "message": "Ce site utilise des cookies et le stockage local pour l'authentification et le bon fonctionnement du site.",
+    "learnMore": "En savoir plus",
+    "accept": "Accepter"
   }
 }

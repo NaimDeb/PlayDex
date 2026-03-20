@@ -176,7 +176,7 @@ export default function Home() {
                 </div>
               ))
             : latestPatchnotes.slice(0, 2).map(({ patchnote, game }) => (
-                <div key={patchnote.id} className="flex gap-4 items-stretch" style={{ height: "300px" }}>
+                <div key={patchnote.id} className="flex gap-4 items-stretch h-[250px] sm:h-[300px]">
                   <div className="flex-shrink-0">
                     <ClassicCard game={game} isAuthenticated={isAuthenticated} />
                   </div>

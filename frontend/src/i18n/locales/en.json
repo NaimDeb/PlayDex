@@ -145,7 +145,10 @@
     "emailRequired": "Email is required",
     "emailInvalid": "Please enter a valid email",
     "currentPasswordRequired": "Current password is required to change password",
-    "saveChanges": "Save changes"
+    "saveChanges": "Save changes",
+    "deleteAccount": "Delete my account",
+    "deleteConfirm": "Are you sure you want to delete your account? This action is irreversible and all your data will be permanently lost.",
+    "deleteError": "An error occurred while deleting the account."
   },
   "game": {
     "releaseDate": "Release date",
@@ -321,5 +324,10 @@
     "description": "PlayDex lets you track updates for your favorite games. Stay informed about the latest patch notes, DLCs, and extensions.",
     "ogTitle": "PlayDex - Never miss a patch again!",
     "ogDescription": "Track updates for your favorite games with PlayDex"
+  },
+  "cookie": {
+    "message": "This site uses cookies and local storage for authentication and site functionality.",
+    "learnMore": "Learn more",
+    "accept": "Accept"
   }
 }

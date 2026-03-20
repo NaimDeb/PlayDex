@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import gameService from "@/lib/api/gameService";
+import userService from "@/lib/api/userService";
 import { FollowedGameWithCount } from "@/types/gameType";
 import { ClassicCard } from "@/components/ArticleCard";
 import { useAuth } from "@/providers/AuthProvider";
@@ -276,13 +277,30 @@ export default function ProfilePage() {
                 href="/profile/edit"
                 className="px-5 py-1.5 text-sm font-semibold text-center border border-off-white/50 text-off-white hover:border-off-white hover:bg-off-white/5 transition-colors duration-150 whitespace-nowrap cursor-pointer"
               >
-                Modifier le profil
+                {t("profile.editAction")}
               </Link>
               <button
                 onClick={logout}
                 className="px-5 py-1.5 text-sm font-semibold border border-off-white/50 text-off-white hover:border-off-white hover:bg-off-white/5 transition-colors duration-150 cursor-pointer"
               >
-                Déconnexion
+                {t("nav.logout")}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!user?.id) return;
+                  const confirmed = window.confirm(t("profile.deleteConfirm"));
+                  if (!confirmed) return;
+                  try {
+                    await userService.deleteAccount(user.id);
+                    logout();
+                  } catch (err) {
+                    console.error("Failed to delete account:", err);
+                    alert(t("profile.deleteError"));
+                  }
+                }}
+                className="px-5 py-1.5 text-sm font-semibold border border-red-500 text-red-400 hover:bg-red-500/10 transition-colors duration-150 cursor-pointer"
+              >
+                {t("profile.deleteAccount")}
               </button>
             </div>
           </div>
