@@ -176,13 +176,16 @@ export default function Home() {
                 </div>
               ))
             : latestPatchnotes.slice(0, 2).map(({ patchnote, game }) => (
-                <div key={patchnote.id} className="flex gap-4 items-stretch h-[250px] sm:h-[300px]">
-                  <div className="flex-shrink-0">
+                <div key={patchnote.id} className="flex gap-4 items-stretch sm:h-[300px]">
+                  <div className="flex-shrink-0 hidden sm:block">
                     <ClassicCard game={game} isAuthenticated={isAuthenticated} />
                   </div>
-                  <div className="flex-1 min-w-0 h-full">
+                  <div className="flex-1 min-w-0 sm:h-full">
                     <PatchnoteCard
-                      patchnote={patchnote}
+                      patchnote={{
+                        ...patchnote,
+                        gameName: game.title,
+                      }}
                       baseUrl={`/article/${game.id}`}
                     />
                   </div>

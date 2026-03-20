@@ -270,6 +270,7 @@ export default function EditPatchnotePage(): React.ReactElement {
                 value={form.userContent}
                 onChange={(val) => setField("userContent", val ?? "")}
                 height={500}
+                preview={typeof window !== "undefined" && window.innerWidth < 640 ? "edit" : "live"}
                 textareaProps={{
                   autoCapitalize: "none",
                   disabled: isLoading,
