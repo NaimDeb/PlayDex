@@ -53,9 +53,10 @@ use App\Traits\TimeStampableTrait;
             processor: DiffMatchPatchProcessor::class,
         ),
         new GetCollection(
-            security: "is_granted('ROLE_ADMIN')",
-            normalizationContext: ['groups' => ['patchnote:admin', 'patchnote:read', 'user:read']],
-            filters: ['order']
+            normalizationContext: ['groups' => ['patchnote:read']],
+            filters: ['order'],
+            paginationEnabled: true,
+            paginationItemsPerPage: 6,
         )
     ]
 )]
