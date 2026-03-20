@@ -1,4 +1,5 @@
 "use client";
+
 import { useParams } from "next/navigation";
 import ReportForm from "@/components/ReportForm";
 import { useTranslation } from "@/i18n/TranslationProvider";
@@ -9,7 +10,7 @@ export default function ReportPatchnotePage() {
 
   return (
     <>
-      <h1 className="text-3xl font-montserrat font-bold mb-2">
+      <h1 className="text-2xl font-montserrat font-bold mb-1 leading-snug">
         {t("report.patchnoteTitle")}
       </h1>
       <ReportForm
