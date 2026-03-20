@@ -4,13 +4,14 @@ import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
-import { Eye, EyeOff } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { isValidEmail } from "@/lib/validationUtils";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{ email?: string }>({});
@@ -31,7 +32,7 @@ export default function LoginPage() {
     event.preventDefault();
     let hasError = false;
     const newFormError: { email?: string } = {};
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    if (!isValidEmail(email)) {
       newFormError.email = t("auth.invalidEmail");
       hasError = true;
     }
@@ -47,8 +48,8 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
-        <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
+      <div className="relative w-full max-w-lg p-4 sm:p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
+        <h1 className="mb-4 text-2xl sm:text-3xl font-extrabold text-center text-offwhite">
           {t("auth.loginTitle")}
         </h1>
         {(formError.email || error) && (
@@ -90,24 +91,14 @@ export default function LoginPage() {
             >
               {t("auth.password")}
             </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
-                placeholder={t("auth.passwordPlaceholder")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+            <PasswordInput
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+              placeholder={t("auth.passwordPlaceholder")}
+            />
           </div>
           <div className="flex items-center">
             <input

@@ -5,8 +5,9 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { isValidEmail, validatePassword } from "@/lib/validationUtils";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -15,8 +16,7 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [formError, setFormError] = useState<{
     email?: string;
     password?: string;
@@ -46,28 +46,14 @@ export default function RegisterPage() {
       acceptTerms?: string;
     } = {};
 
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    if (!isValidEmail(email)) {
       newFormError.email = t("auth.invalidEmail");
       hasError = true;
     }
 
-    if (!password || password.length < 8) {
-      newFormError.password = t("auth.passwordMinLength");
-      hasError = true;
-    } else if (password.length > 100) {
-      newFormError.password = t("auth.passwordMaxLength");
-      hasError = true;
-    } else if (!/[A-Z]/.test(password)) {
-      newFormError.password = t("auth.passwordUppercase");
-      hasError = true;
-    } else if (!/[a-z]/.test(password)) {
-      newFormError.password = t("auth.passwordLowercase");
-      hasError = true;
-    } else if (!/[0-9]/.test(password)) {
-      newFormError.password = t("auth.passwordDigit");
-      hasError = true;
-    } else if (!/[^A-Za-z0-9]/.test(password)) {
-      newFormError.password = t("auth.passwordSpecial");
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      newFormError.password = t(passwordError);
       hasError = true;
     }
 
@@ -121,8 +107,8 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
-        <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
+      <div className="relative w-full max-w-lg p-4 sm:p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
+        <h1 className="mb-4 text-2xl sm:text-3xl font-extrabold text-center text-offwhite">
           {t("auth.registerTitle")}
         </h1>
         <p className="mb-8 text-base font-medium text-center text-offwhite">
@@ -167,28 +153,15 @@ export default function RegisterPage() {
             >
               {t("auth.password")}
             </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className={`w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
-                  formError.password
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                    : ""
-                }`}
-                placeholder={t("auth.passwordChoosePlaceholder")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+            <PasswordInput
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              error={formError.password}
+              className="rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+              placeholder={t("auth.passwordChoosePlaceholder")}
+            />
             {formError.password && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
                 {formError.password}
@@ -202,28 +175,15 @@ export default function RegisterPage() {
             >
               {t("auth.confirmPassword")}
             </label>
-            <div className="relative">
-              <input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className={`w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
-                  formError.confirmPassword
-                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                    : ""
-                }`}
-                placeholder={t("auth.confirmPasswordPlaceholder")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+            <PasswordInput
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              error={formError.confirmPassword}
+              className="rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+              placeholder={t("auth.confirmPasswordPlaceholder")}
+            />
             {formError.confirmPassword && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
                 {formError.confirmPassword}
