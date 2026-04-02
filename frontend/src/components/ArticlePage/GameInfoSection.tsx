@@ -75,7 +75,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
         </div>
 
         {/* Companies */}
-        <address className="not-italic flex flex-wrap gap-1 mb-1">
+        <div className="flex flex-wrap gap-1 mb-1">
           {gameData.companies.map((company, i) => (
             <span key={`${company.name}-${i}`}>
               <a
@@ -89,7 +89,7 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
               )}
             </span>
           ))}
-        </address>
+        </div>
 
         <p className="text-sm text-gray-500 mb-4">
           {t("game.releasedIn", { date: new Date(gameData.releasedAt).toLocaleDateString("fr-FR") })}

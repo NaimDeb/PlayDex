@@ -190,12 +190,14 @@ export default function ProfileEditPage() {
           <Link
             href="/profile"
             className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+            aria-label={t("common.back")}
           >
             <svg
               className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -277,9 +279,9 @@ export default function ProfileEditPage() {
 
             {/* Password Section */}
             <div className="pt-6 border-t border-gray-600">
-              <h3 className="mb-4 text-lg font-semibold text-gray-300">
+              <h2 className="mb-4 text-lg font-semibold text-gray-300">
                 {t("auth.changePassword")}
-              </h3>
+              </h2>
               <p className="mb-4 text-sm text-gray-400">
                 {t("auth.changePasswordHint")}
               </p>

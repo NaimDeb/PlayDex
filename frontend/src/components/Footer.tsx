@@ -14,7 +14,7 @@ export function Footer() {
         {/* Left Section */}
         <div className="flex items-center space-x-4">
           <Logo />
-          <span className="space-x-2 text-sm">
+          <nav aria-label="Footer" className="space-x-2 text-sm">
             <Link href="/about" className="hover:underline">
               {t("footer.about")}
             </Link>
@@ -30,7 +30,7 @@ export function Footer() {
             <Link href="/community-guidelines" className="hover:underline">
               {t("footer.communityGuidelines")}
             </Link>
-          </span>
+          </nav>
         </div>
 
         {/* Right Section */}
