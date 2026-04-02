@@ -143,7 +143,7 @@ export function Header() {
 
         {/* Triangle droit (Bureau) */}
         <div
-          className={`h-full ${triangleRightWidth} z-20 flex-shrink-0 transition-all duration-300 relative`}
+          className={`h-full ${triangleRightWidth} z-20 flex-shrink-0 transition-all duration-300 relative hidden md:block`}
           style={{ clipPath: triangleRightClip, background: "#18181b" }}
         >
           {searchOpen && (
@@ -154,7 +154,7 @@ export function Header() {
         </div>
 
         {/* Section droite */}
-        <div className="bg-[#18181b] h-full flex justify-end items-center px-4 space-x-4 z-30 ml-auto max-md:w-[80vw] md:ml-0 shrink-0">
+        <div className="bg-[#18181b] h-full flex justify-end items-center px-4 space-x-4 z-30 ml-auto max-md:flex-1 md:ml-0 shrink-0">
           {/* Bureau */}
           <div className="items-center hidden space-x-4 md:flex">
             <button
