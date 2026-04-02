@@ -214,7 +214,10 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
 
   useTimelineSVG(containerRef, [openYears, years]);
 
+  const [addLoading, setAddLoading] = useState(false);
+
   const handleAddPatchnote = (): void => {
+    setAddLoading(true);
     if (!isAuthenticated) { void router.push("/login"); return; }
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     void router.push(`${path}/patchnote/new`);
@@ -233,9 +236,16 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
         <button
           type="button"
           onClick={handleAddPatchnote}
-          className="px-4 py-2 font-bold transition duration-200 rounded bg-secondary hover:bg-primary text-off-white"
+          disabled={addLoading}
+          className="px-4 py-2 font-bold transition duration-200 rounded bg-secondary hover:bg-primary text-off-white disabled:opacity-60 min-w-[200px]"
         >
-          {isAuthenticated ? "Ajouter une patchnote" : "Connectez-vous pour ajouter"}
+          {addLoading ? (
+            <svg className="w-5 h-5 mx-auto animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+            </svg>
+          ) : (
+            isAuthenticated ? "Ajouter une patchnote" : "Connectez-vous pour ajouter"
+          )}
         </button>
       </header>
 
