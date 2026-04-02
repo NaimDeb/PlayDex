@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userService from './userService';
 import apiClient from './apiClient';
+import type { User } from '@/types/authType';
 
 vi.mock('./apiClient', () => ({
   default: {
@@ -60,7 +61,7 @@ describe('UserService', () => {
   it('patchUserProfile sends merge-patch+json', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue({ data: {} });
 
-    await userService.patchUserProfile({ id: 1, username: 'newname' } as any);
+    await userService.patchUserProfile({ id: 1, username: 'newname' } as Partial<User>);
 
     const config = vi.mocked(apiClient.patch).mock.calls[0][2];
     expect(config?.headers?.['Content-Type']).toBe('application/merge-patch+json');

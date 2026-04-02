@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import gameService from './gameService';
 import apiClient from './apiClient';
+import type { GameFilters } from '@/types/gameType';
+import type { Patchnote } from '@/types/patchNoteType';
 
 vi.mock('./apiClient', () => ({
   default: {
@@ -29,7 +31,7 @@ describe('GameService', () => {
       data: { member: [], totalItems: 0 },
     });
 
-    await gameService.getGames({ page: 1 } as any);
+    await gameService.getGames({ page: 1 } as GameFilters);
 
     const url = vi.mocked(apiClient.get).mock.calls[0][0];
     expect(url).toContain('/games?');
@@ -41,7 +43,7 @@ describe('GameService', () => {
       data: { member: [], totalItems: 0 },
     });
 
-    await gameService.getGames({ 'genres.name[]': ['Action', 'RPG'] } as any);
+    await gameService.getGames({ 'genres.name[]': ['Action', 'RPG'] } as GameFilters);
 
     const url = vi.mocked(apiClient.get).mock.calls[0][0];
     expect(url).toContain('genres.name%5B%5D=Action');
@@ -64,7 +66,7 @@ describe('GameService', () => {
       data: { id: 1, title: 'Updated' },
     });
 
-    await gameService.patchPatchnote('1', { title: 'Updated' } as any);
+    await gameService.patchPatchnote('1', { title: 'Updated' } as Partial<Patchnote>);
 
     const config = vi.mocked(apiClient.patch).mock.calls[0][2];
     expect(config?.headers?.['Content-Type']).toBe('application/merge-patch+json');
@@ -75,7 +77,7 @@ describe('GameService', () => {
       data: { id: 1, title: 'New' },
     });
 
-    await gameService.postPatchnote({ title: 'New' } as any);
+    await gameService.postPatchnote({ title: 'New' } as Partial<Patchnote>);
 
     const config = vi.mocked(apiClient.post).mock.calls[0][2];
     expect(config?.headers?.Authorization).toBe('Bearer testtoken');
