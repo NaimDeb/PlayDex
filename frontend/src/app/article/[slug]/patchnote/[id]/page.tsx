@@ -2,8 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
@@ -215,60 +213,10 @@ export default function PatchnoteDetailPage() {
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-10 max-w-5xl">
+    <div className="max-w-5xl">
 
-      {/* ── Back link ─────────────────────────────────────────────────────── */}
-      <Link
-        href={`/article/${slug}`}
-        className="inline-flex items-center gap-1.5 text-sm text-off-white/60 hover:text-off-white transition-colors duration-150 mb-6 group"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          className="w-3.5 h-3.5 transition-transform duration-150 group-hover:-translate-x-0.5"
-          aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M9.78 4.22a.75.75 0 010 1.06L7.06 8l2.72 2.72a.75.75 0 11-1.06 1.06L5.47 8.53a.75.75 0 010-1.06l3.25-3.25a.75.75 0 011.06 0z"
-            clipRule="evenodd"
-          />
-        </svg>
-        Retour
-      </Link>
-
-      {/* ── Game identity + action buttons ────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-
-        {/* Game card */}
-        <Link
-          href={`/article/${slug}`}
-          className="flex items-center gap-3 group w-fit"
-        >
-          {game.imageUrl && (
-            <div className="relative w-[56px] h-[56px] sm:w-[72px] sm:h-[72px] shrink-0 overflow-hidden rounded-sm border border-off-white/10">
-              <Image
-                src={game.imageUrl}
-                alt={game.title}
-                fill
-                className="object-cover"
-                sizes="72px"
-              />
-            </div>
-          )}
-          <div>
-            <p className="text-sm font-semibold text-off-white group-hover:text-primary transition-colors duration-150 leading-tight">
-              Patch note pour : {game.title}
-            </p>
-            {game.studio && (
-              <p className="text-xs text-off-white/50 mt-0.5">{game.studio}</p>
-            )}
-          </div>
-        </Link>
-
-        {/* Actions */}
-        <div className="flex items-center gap-3 flex-wrap">
+      {/* ── Action buttons ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap mb-8">
           <ActionButton
             variant="primary"
             loading={loadingAction === "edit"}
@@ -290,7 +238,6 @@ export default function PatchnoteDetailPage() {
           >
             {t("patchnote.viewModifications")}
           </ActionButton>
-        </div>
       </div>
 
       {/* ── Main content card ─────────────────────────────────────────────── */}

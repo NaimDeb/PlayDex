@@ -181,6 +181,7 @@
     "report": "Report patchnote",
     "viewModifications": "View modifications",
     "fromGame": "From game:",
+    "patchnoteFor": "Patch note for",
     "major": "Major patch",
     "minor": "Minor patch",
     "hotfix": "Hotfix",

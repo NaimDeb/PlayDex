@@ -20,6 +20,9 @@ import { useTranslation } from "@/i18n/TranslationProvider";
 import { useFormCache } from "@/hooks/useFormCache";
 import { FormField, FIELD_CLASS } from "@/components/shared/FormField";
 import { MDEditorStyles } from "@/components/shared/MDEditorStyles";
+import { BackButton } from "@/components/BackButton";
+import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
+import { PatchnoteGameHeader } from "@/components/PatchnoteGameHeader";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,6 +49,7 @@ export default function NewPatchnotePage({
   const { t } = useTranslation();
 
   const [gameName, setGameName] = useState<string>("");
+  const [gameImageUrl, setGameImageUrl] = useState<string | null>(null);
   const [gameReleaseDate, setGameReleaseDate] = useState<string>("");
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -80,6 +84,7 @@ export default function NewPatchnotePage({
       setIsLoading(true);
       const gameData = await gameService.getGameById(gameId);
       setGameName(gameData.title);
+      setGameImageUrl(gameData.imageUrl ?? null);
       setGameReleaseDate(gameData.releasedAt);
 
       // Restore cached form if available
@@ -162,6 +167,31 @@ export default function NewPatchnotePage({
 
   return (
     <PageSection className="py-4">
+      <BackButton />
+      <Breadcrumbs underline="hover" className="mb-6">
+        <BreadcrumbItem>
+          <Link href="/" className="text-gray-400 hover:underline">
+            Accueil
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          <Link href={`/article/${slug}`} className="text-gray-400 hover:underline">
+            {gameName || "Jeu..."}
+          </Link>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          <span className="text-white">{t("patchnote.create")}</span>
+        </BreadcrumbItem>
+      </Breadcrumbs>
+
+      {gameName && (
+        <PatchnoteGameHeader
+          gameTitle={gameName}
+          gameSlug={slug}
+          gameImageUrl={gameImageUrl}
+        />
+      )}
+
       {/* ── Page title ── */}
       <h1 className="text-2xl font-bold text-off-white mb-4">
         {t("patchnote.newTitle", { game: gameName })}
