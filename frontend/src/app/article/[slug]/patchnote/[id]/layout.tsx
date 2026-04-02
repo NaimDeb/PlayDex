@@ -8,6 +8,7 @@ import { Game } from "@/types/gameType";
 import { usePathname } from "next/navigation";
 import { PatchnoteLayoutContext } from "@/contexts/PatchnoteLayoutContext";
 import { BackButton } from "@/components/BackButton";
+import { PatchnoteGameHeader } from "@/components/PatchnoteGameHeader";
 
 export default function PatchnoteLayout({
   children,
@@ -84,6 +85,13 @@ export default function PatchnoteLayout({
             </BreadcrumbItem>
           )}
         </Breadcrumbs>
+        {game && (
+          <PatchnoteGameHeader
+            gameTitle={game.title}
+            gameSlug={slug}
+            gameImageUrl={game.imageUrl}
+          />
+        )}
         {children}
       </div>
     </PatchnoteLayoutContext.Provider>

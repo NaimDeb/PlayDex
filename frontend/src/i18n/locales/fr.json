@@ -181,6 +181,7 @@
     "report": "Signaler la patchnote",
     "viewModifications": "Voir les modifications",
     "fromGame": "Du jeu :",
+    "patchnoteFor": "Patch note pour",
     "major": "Patchnote majeure",
     "minor": "Patchnote mineure",
     "hotfix": "Hotfix",
