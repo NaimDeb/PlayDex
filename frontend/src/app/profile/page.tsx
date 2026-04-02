@@ -56,7 +56,7 @@ function Pagination({ currentPage, totalPages, onChange }: PaginationProps) {
       <button
         onClick={() => onChange(currentPage - 1)}
         disabled={currentPage === 1}
-        aria-label="Page précédente"
+        aria-label={t("search.pagination.previous")}
         className={`${btnBase} text-off-white/70 hover:text-off-white disabled:opacity-30 disabled:cursor-not-allowed`}
       >
         &lt;
@@ -88,7 +88,7 @@ function Pagination({ currentPage, totalPages, onChange }: PaginationProps) {
       <button
         onClick={() => onChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        aria-label="Page suivante"
+        aria-label={t("search.pagination.next")}
         className={`${btnBase} text-off-white/70 hover:text-off-white disabled:opacity-30 disabled:cursor-not-allowed`}
       >
         &gt;
@@ -213,7 +213,7 @@ export default function ProfilePage() {
       ════════════════════════════════════════════════════════════════════ */}
       <section
         className="relative w-full overflow-hidden bg-hero bg-cover bg-center"
-        aria-label="Profil utilisateur"
+        aria-label={t("profile.title")}
       >
         {/* Dark overlay */}
         <div aria-hidden="true" className="absolute inset-0 bg-black/60" />
@@ -237,7 +237,7 @@ export default function ProfilePage() {
               {/* Edit overlay button */}
               <Link
                 href="/profile/edit"
-                aria-label="Modifier l'avatar"
+                aria-label={t("profile.editAction")}
                 className="absolute bottom-3 right-3 flex items-center justify-center w-9 h-9 rounded-full bg-primary hover:bg-secondary transition-colors duration-150 shadow-lg cursor-pointer"
               >
                 <Pencil className="w-4 h-4" />
@@ -252,13 +252,13 @@ export default function ProfilePage() {
 
               {/* Contributions */}
               <span className="text-sm text-off-white/80">
-                {(user?.contributionsCount ?? 0).toLocaleString("fr-FR")} contributions
+                {t("profile.modifications", { count: (user?.contributionsCount ?? 0) })}
               </span>
 
               {/* Member since */}
               {formattedJoinDate && (
                 <p className="text-sm text-off-white/70">
-                  Utilisateur depuis le : {formattedJoinDate}
+                  {t("profile.userSince")} {formattedJoinDate}
                 </p>
               )}
 
@@ -266,7 +266,7 @@ export default function ProfilePage() {
               <p className="text-sm text-off-white/70">
                 {loading
                   ? t("profile.loadingGames")
-                  : `${followedGames.length.toLocaleString("fr-FR")} jeux dans sa liste`}
+                  : t("profile.gamesInList", { count: followedGames.length })}
               </p>
             </div>
 
@@ -292,12 +292,12 @@ export default function ProfilePage() {
       {/* ════════════════════════════════════════════════════════════════════
           MA LISTE
       ════════════════════════════════════════════════════════════════════ */}
-      <section className="container mx-auto px-6 py-10" aria-label="Ma liste de jeux">
+      <section className="container mx-auto px-6 py-10" aria-label={t("profile.myList")}>
 
         {/* ── Header row ──────────────────────────────────────────────────── */}
         <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-3xl font-bold font-montserrat text-off-white">
-            Ma liste
+            {t("profile.myList")}
           </h2>
 
           {/* Search bar */}
@@ -332,7 +332,7 @@ export default function ProfilePage() {
           </select>
           <button
             onClick={toggleSortDir}
-            aria-label={sortDir === "asc" ? "Tri croissant" : "Tri décroissant"}
+            aria-label={sortDir === "asc" ? t("game.sortAsc") : t("game.sortDesc")}
             className="p-1.5 rounded hover:bg-off-white/10 transition-colors duration-150 text-off-white cursor-pointer"
           >
             {sortDir === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}

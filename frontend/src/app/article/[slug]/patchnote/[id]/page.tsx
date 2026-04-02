@@ -44,6 +44,12 @@ const PATCH_TYPE_STYLES: Record<PatchType, { badge: string; accent: string }> = 
 
 const FALLBACK_PATCH_TYPE: PatchType = "Patch Mineur";
 
+const PATCH_TYPE_I18N_KEYS: Record<PatchType, string> = {
+  "Patch Majeur": "patchnote.patchMajor",
+  "Patch Mineur": "patchnote.patchMinor",
+  Hotfix: "patchnote.hotfix",
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -80,9 +86,11 @@ function isPatchType(value: unknown): value is PatchType {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-type PatchBadgeProps = { type: PatchType };
+type TFn = (key: string, params?: Record<string, string | number>) => string;
 
-function PatchBadge({ type }: PatchBadgeProps) {
+type PatchBadgeProps = { type: PatchType; t: TFn };
+
+function PatchBadge({ type, t }: PatchBadgeProps) {
   const styles = PATCH_TYPE_STYLES[type];
   return (
     <span
@@ -91,31 +99,31 @@ function PatchBadge({ type }: PatchBadgeProps) {
         styles.badge,
       ].join(" ")}
     >
-      {type}
+      {t(PATCH_TYPE_I18N_KEYS[type])}
     </span>
   );
 }
 
-type StatsRowProps = { stats: PatchnoteStats };
+type StatsRowProps = { stats: PatchnoteStats; t: TFn };
 
-function StatsRow({ stats }: StatsRowProps) {
+function StatsRow({ stats, t }: StatsRowProps) {
   if (stats.changes === 0 && stats.buffs === 0 && stats.nerfs === 0) return null;
 
   return (
     <div className="flex items-center gap-1.5 text-xs text-off-white/50 flex-wrap">
       {stats.changes > 0 && (
-        <span>{stats.changes} changement{stats.changes > 1 ? "s" : ""}</span>
+        <span>{t(stats.changes > 1 ? "patchnote.changesPlural" : "patchnote.changes", { count: stats.changes })}</span>
       )}
       {stats.buffs > 0 && (
         <>
           <span aria-hidden="true">•</span>
-          <span className="text-green-400">{stats.buffs} buff{stats.buffs > 1 ? "s" : ""}</span>
+          <span className="text-green-400">{t(stats.buffs > 1 ? "patchnote.buffsPlural" : "patchnote.buffs", { count: stats.buffs })}</span>
         </>
       )}
       {stats.nerfs > 0 && (
         <>
           <span aria-hidden="true">•</span>
-          <span className="text-red-400">{stats.nerfs} nerf{stats.nerfs > 1 ? "s" : ""}</span>
+          <span className="text-red-400">{t(stats.nerfs > 1 ? "patchnote.nerfsPlural" : "patchnote.nerfs", { count: stats.nerfs })}</span>
         </>
       )}
     </div>
@@ -259,14 +267,14 @@ export default function PatchnoteDetailPage() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
             {formattedDate && (
               <p className="text-xs text-off-white/50">
-                Date de sortie :{" "}
+                {t("patchnote.patchnoteReleaseDate")}{" "}
                 <time dateTime={patchnote.releasedAt ?? patchnote.createdAt}>
                   {formattedDate}
                 </time>
               </p>
             )}
-            <PatchBadge type={patchType} />
-            <StatsRow stats={stats} />
+            <PatchBadge type={patchType} t={t} />
+            <StatsRow stats={stats} t={t} />
           </div>
         </header>
 
