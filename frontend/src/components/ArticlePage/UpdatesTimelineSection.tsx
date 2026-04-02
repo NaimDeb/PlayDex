@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Patchnote } from "@/types/patchNoteType";
 import { Extension } from "@/types/gameType";
 import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,14 +22,14 @@ type PatchnoteItem = Patchnote & { itemType: "patchnote" };
 type ExtensionItem = Extension & { itemType: "extension" };
 type TimelineItem  = PatchnoteItem | ExtensionItem;
 
-const PATCHNOTE_TYPES = [
-  { label: "Patchnote majeure",  value: "major"     },
-  { label: "Patchnote mineure",  value: "minor"     },
-  { label: "Hotfix",             value: "hotfix"    },
-  { label: "Nouvelle extension", value: "extension" },
+const PATCHNOTE_TYPE_KEYS = [
+  { key: "patchnote.major",     value: "major"     },
+  { key: "patchnote.minor",     value: "minor"     },
+  { key: "patchnote.hotfix",    value: "hotfix"    },
+  { key: "patchnote.extension", value: "extension" },
 ] as const;
 
-type PatchnoteTypeValue = (typeof PATCHNOTE_TYPES)[number]["value"];
+type PatchnoteTypeValue = (typeof PATCHNOTE_TYPE_KEYS)[number]["value"];
 
 // Normalise Date | string | undefined → string ISO sans cast
 function toISO(date: Date | string | undefined): string {
@@ -161,12 +162,13 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
   formatDateDifference,
 }) => {
   const { isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const router              = useRouter();
 
   const [dateFrom,     setDateFrom]     = useState<string>("");
   const [dateTo,       setDateTo]       = useState<string>("");
   const [checkedTypes, setCheckedTypes] = useState<PatchnoteTypeValue[]>(
-    PATCHNOTE_TYPES.map((t) => t.value)
+    PATCHNOTE_TYPE_KEYS.map((t) => t.value)
   );
   const [openYears, setOpenYears] = useState<Record<number, boolean>>({});
 
@@ -231,7 +233,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
       {/* ── Header ── */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h2 id="timeline-heading" className="text-3xl font-bold font-montserrat text-nowrap">
-          Dernières mises à jours
+          {t("game.latestUpdates")}
         </h2>
         <button
           type="button"
@@ -244,23 +246,24 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
             </svg>
           ) : (
-            isAuthenticated ? "Ajouter une patchnote" : "Connectez-vous pour ajouter"
+            isAuthenticated ? t("game.addPatchnote") : t("game.loginToAdd")
           )}
         </button>
       </header>
 
       {/* ── Filtres ── */}
       <fieldset className="flex flex-col gap-4 mb-8 p-4 bg-off-gray rounded-lg border-0">
-        <legend className="sr-only">Filtrer les mises à jour</legend>
+        <legend className="sr-only">{t("game.filterUpdates")}</legend>
 
         {/* Filtre dates */}
         <div className="flex gap-4 flex-wrap">
-          {(["Du", "Au"] as const).map((label) => {
-            const val    = label === "Du" ? dateFrom : dateTo;
-            const setter = label === "Du" ? setDateFrom : setDateTo;
-            const inputId = `date-filter-${label.toLowerCase()}`;
+          {(["from", "to"] as const).map((filterKey) => {
+            const label  = filterKey === "from" ? t("game.filterFrom") : t("game.filterTo");
+            const val    = filterKey === "from" ? dateFrom : dateTo;
+            const setter = filterKey === "from" ? setDateFrom : setDateTo;
+            const inputId = `date-filter-${filterKey}`;
             return (
-              <div key={label} className="relative">
+              <div key={filterKey} className="relative">
                 <label htmlFor={inputId} className="block mb-1 text-sm">
                   {label}
                 </label>
@@ -276,7 +279,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                     type="button"
                     className="absolute right-2 top-[60%] -translate-y-1/2 text-gray-400 hover:text-white"
                     onClick={() => setter("")}
-                    aria-label={`Effacer filtre ${label}`}
+                    aria-label={t("game.clearFilter", { label })}
                   >
                     ✕
                   </button>
@@ -287,16 +290,16 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
         </div>
 
         {/* Filtre types */}
-        <div className="flex gap-4 flex-wrap" role="group" aria-label="Types de mise à jour">
-          {PATCHNOTE_TYPES.map((t) => (
-            <label key={t.value} className="flex items-center gap-2 text-sm cursor-pointer select-none">
+        <div className="flex gap-4 flex-wrap" role="group" aria-label={t("game.updateTypes")}>
+          {PATCHNOTE_TYPE_KEYS.map((pt) => (
+            <label key={pt.value} className="flex items-center gap-2 text-sm cursor-pointer select-none">
               <input
                 type="checkbox"
                 className="accent-secondary"
-                checked={checkedTypes.includes(t.value)}
-                onChange={() => toggleType(t.value)}
+                checked={checkedTypes.includes(pt.value)}
+                onChange={() => toggleType(pt.value)}
               />
-              {t.label}
+              {t(pt.key)}
             </label>
           ))}
         </div>
@@ -305,16 +308,16 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
       {/* ── Timeline ── */}
       {years.length === 0 ? (
         <p className="text-gray-500">
-          Aucune mise à jour répertoriée.{" "}
+          {t("game.noUpdates")}{" "}
           <button type="button" onClick={handleAddPatchnote} className="underline text-secondary">
-            Ajoutez-en une !
+            {t("game.addOne")}
           </button>
         </p>
       ) : (
         <ul
           ref={containerRef}
           className="relative list-none p-0 pb-8"
-          aria-label="Historique des mises à jour"
+          aria-label={t("game.updatesHistory")}
         >
           {/* Spine principale CSS — height gérée par useTimelineSVG, hidden sur mobile */}
           <div
@@ -384,10 +387,10 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                       {/* Année visible sur mobile dans le bouton */}
                       <span className="md:hidden font-bold text-white mr-2">{year}</span>
                       <span>
-                        {extItems.length   > 0 && <>{extItems.length} extension{extItems.length > 1 ? "s" : ""}&nbsp;·&nbsp;</>}
-                        {majorCount        > 0 && <>{majorCount} majeure{majorCount > 1 ? "s" : ""}&nbsp;·&nbsp;</>}
-                        {minorCount        > 0 && <>{minorCount} mineure{minorCount > 1 ? "s" : ""}&nbsp;·&nbsp;</>}
-                        {hotfixCount       > 0 && <>{hotfixCount} hotfix{hotfixCount > 1 ? "es" : ""}</>}
+                        {extItems.length   > 0 && <>{t(extItems.length > 1 ? "game.extensionCountPlural" : "game.extensionCount", { count: extItems.length })}&nbsp;·&nbsp;</>}
+                        {majorCount        > 0 && <>{t(majorCount > 1 ? "game.majorCountPlural" : "game.majorCount", { count: majorCount })}&nbsp;·&nbsp;</>}
+                        {minorCount        > 0 && <>{t(minorCount > 1 ? "game.minorCountPlural" : "game.minorCount", { count: minorCount })}&nbsp;·&nbsp;</>}
+                        {hotfixCount       > 0 && <>{t(hotfixCount > 1 ? "game.hotfixCountPlural" : "game.hotfixCount", { count: hotfixCount })}</>}
                       </span>
                       {extItems.length > 0 && (
                         <div className="flex gap-[5px] mt-2 overflow-hidden" aria-hidden="true">
@@ -425,7 +428,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                     "md:block",
                     isOpen ? "block" : "hidden",
                   ].join(" ")}
-                  aria-label={`Mises à jour ${year}`}
+                  aria-label={t("game.updatesForYear", { year })}
                   // Pour le hook SVG qui vérifie display (desktop)
                   style={{ display: isOpen ? "block" : "none" }}
                 >
@@ -481,11 +484,11 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                               </figure>
                               <div>
                                 <p className="text-[9px] font-medium text-teal-400 uppercase tracking-wider mb-[2px]">
-                                  Nouveau DLC
+                                  {t("game.newDLC")}
                                 </p>
                                 <p className="text-xs font-medium text-white">{item.title}</p>
                                 <p className="text-[10px] text-gray-500 mt-[1px]">
-                                  Sortie : {dateStr}
+                                  {t("game.releasedOn", { date: dateStr })}
                                 </p>
                               </div>
                             </article>
