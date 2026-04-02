@@ -128,7 +128,7 @@ export function Header() {
               <Link href="/" className="px-2 hover:text-gray-200">
                 {t("nav.home")}
               </Link>
-              <Link href="/#jeux" className="px-2 hover:text-gray-200">
+              <Link href="/search" className="px-2 hover:text-gray-200">
                 {t("nav.games")}
               </Link>
               <a
@@ -246,7 +246,7 @@ export function Header() {
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
                 {t("nav.home")}
               </Link>
-              <Link href="/#jeux" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
+              <Link href="/search" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
                 {t("nav.games")}
               </Link>
               <a onClick={handleRandomGame} className="px-2 py-1 cursor-pointer hover:text-gray-200">
