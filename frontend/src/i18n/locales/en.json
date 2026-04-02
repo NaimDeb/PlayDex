@@ -299,7 +299,21 @@
     "sendSuccess": "Report sent",
     "sendError": "Unable to send the report.",
     "warningText": "Please only report genuinely problematic content. Abuse may result in sanctions.",
-    "reportAction": "Report"
+    "reportAction": "Report",
+    "descriptionModification": "Please specify why the modification violates our community guidelines",
+    "descriptionPatchnote": "Please specify why the patch note violates our community guidelines",
+    "optionOffTopicModification": "The modification is off-topic",
+    "optionOffensiveModification": "The modification contains offensive language",
+    "optionLessUsefulModification": "The modification is less useful than the previous one",
+    "optionOther": "Other reason",
+    "optionOffTopicPatchnote": "The patch note is off-topic",
+    "optionOffensivePatchnote": "The patch note contains offensive language",
+    "optionInaccuratePatchnote": "The patch note contains inaccurate information",
+    "reasonFieldLabel": "Reason:",
+    "confirmCheckbox": "I confirm that my report is made in good faith and does not aim to denigrate a person. I understand that misuse of the system may result in sanctions on my account.",
+    "submitError": "An error occurred while sending. Please try again.",
+    "submitting": "Submitting…",
+    "submit": "Report"
   },
   "footer": {
     "about": "About",
