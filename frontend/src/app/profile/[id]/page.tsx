@@ -72,7 +72,7 @@ export default function AccountPage() {
           <div className="relative w-36 h-36 md:w-48 md:h-48">
             <Image
               src={avatarUrl}
-              alt="User Avatar"
+              alt={user?.username ? `${t("profile.title")} ${user.username}` : t("common.user")}
               fill
               className="object-cover border-4 rounded-full shadow-md bg-primary"
               sizes="(max-width: 768px) 9rem, 12rem"

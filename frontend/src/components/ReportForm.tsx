@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useId } from "react";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,24 +20,24 @@ export type ReportFormProps = {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const REPORT_OPTIONS: Record<ReportableEntity, ReportOption[]> = {
+const REPORT_OPTION_KEYS: Record<ReportableEntity, { value: string; labelKey: string }[]> = {
   Modification: [
-    { value: "off_topic",    label: "La modification est hors-sujet" },
-    { value: "offensive",    label: "La modification contient des injures" },
-    { value: "less_useful",  label: "La modification est moins utile que l'ancienne" },
-    { value: "other",        label: "Autre raison" },
+    { value: "off_topic",   labelKey: "report.optionOffTopicModification" },
+    { value: "offensive",   labelKey: "report.optionOffensiveModification" },
+    { value: "less_useful", labelKey: "report.optionLessUsefulModification" },
+    { value: "other",       labelKey: "report.optionOther" },
   ],
   Patchnote: [
-    { value: "off_topic",    label: "Le patch note est hors-sujet" },
-    { value: "offensive",    label: "Le patch note contient des injures" },
-    { value: "inaccurate",   label: "Le patch note contient des informations incorrectes" },
-    { value: "other",        label: "Autre raison" },
+    { value: "off_topic",   labelKey: "report.optionOffTopicPatchnote" },
+    { value: "offensive",   labelKey: "report.optionOffensivePatchnote" },
+    { value: "inaccurate",  labelKey: "report.optionInaccuratePatchnote" },
+    { value: "other",       labelKey: "report.optionOther" },
   ],
 };
 
-const ENTITY_LABELS: Record<ReportableEntity, string> = {
-  Modification: "la modification",
-  Patchnote:    "le patch note",
+const DESCRIPTION_KEYS: Record<ReportableEntity, string> = {
+  Modification: "report.descriptionModification",
+  Patchnote:    "report.descriptionPatchnote",
 };
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -172,6 +173,7 @@ export default function ReportForm({
   successMessage,
 }: ReportFormProps) {
   const uid = useId();
+  const { t } = useTranslation();
 
   const [selectedReason, setSelectedReason] = useState<string>("");
   const [customReason,   setCustomReason]   = useState<string>("");
@@ -180,8 +182,8 @@ export default function ReportForm({
   const [submitted,      setSubmitted]      = useState<boolean>(false);
   const [error,          setError]          = useState<string | null>(null);
 
-  const options     = REPORT_OPTIONS[reportableEntity];
-  const entityLabel = ENTITY_LABELS[reportableEntity];
+  const optionKeys     = REPORT_OPTION_KEYS[reportableEntity];
+  const descriptionKey = DESCRIPTION_KEYS[reportableEntity];
 
   const isValid = selectedReason !== "" && confirmed;
 
@@ -202,7 +204,7 @@ export default function ReportForm({
 
       setSubmitted(true);
     } catch {
-      setError("Une erreur est survenue lors de l'envoi. Veuillez réessayer.");
+      setError(t("report.submitError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -216,19 +218,19 @@ export default function ReportForm({
     <form onSubmit={handleSubmit} noValidate className="mt-4 space-y-7">
       {/* ── Description ─────────────────────────────────────────────────────── */}
       <p className="text-off-white/80 text-sm">
-        Veuillez préciser pourquoi {entityLabel} enfreint nos règles communautaires
+        {t(descriptionKey)}
       </p>
 
       {/* ── Radio options ────────────────────────────────────────────────────── */}
       <fieldset className="space-y-[14px]">
-        <legend className="sr-only">Raison du signalement</legend>
-        {options.map((option) => (
+        <legend className="sr-only">{t("report.reasonLabel")}</legend>
+        {optionKeys.map((option) => (
           <RadioOption
             key={option.value}
             id={`${uid}-radio-${option.value}`}
             name={`${uid}-reason`}
             value={option.value}
-            label={option.label}
+            label={t(option.labelKey)}
             checked={selectedReason === option.value}
             onChange={setSelectedReason}
           />
@@ -241,7 +243,7 @@ export default function ReportForm({
           htmlFor={`${uid}-custom-reason`}
           className="block text-off-white font-semibold text-lg font-montserrat"
         >
-          Raison :
+          {t("report.reasonFieldLabel")}
         </label>
         <textarea
           id={`${uid}-custom-reason`}
@@ -266,9 +268,7 @@ export default function ReportForm({
         checked={confirmed}
         onChange={setConfirmed}
       >
-        Je confirme que mon signalement est fait de bonne foi et qu'il ne vise pas à
-        dénigrer une personne. Je comprends qu'un usage abusif du système peut
-        entraîner des sanctions sur mon compte.
+        {t("report.confirmCheckbox")}
       </CheckboxField>
 
       {/* ── Inline error ─────────────────────────────────────────────────────── */}
@@ -316,10 +316,10 @@ export default function ReportForm({
                   d="M4 12a8 8 0 018-8v8H4z"
                 />
               </svg>
-              Envoi en cours…
+              {t("report.submitting")}
             </>
           ) : (
-            "Signaler"
+            t("report.submit")
           )}
         </button>
       </div>

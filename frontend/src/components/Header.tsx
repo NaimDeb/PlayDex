@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Logo } from "./Logo";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
@@ -18,6 +19,7 @@ import { addToast } from "@heroui/toast";
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { showMessage } = useFlashMessage();
@@ -46,7 +48,7 @@ export function Header() {
     const category = formData.get("category") as string;
     const search = formData.get("search") as string;
     if (!search.trim()) return;
-    window.location.href = `/search?category=${encodeURIComponent(category)}&q=${encodeURIComponent(search)}`;
+    router.push(`/search?category=${encodeURIComponent(category)}&q=${encodeURIComponent(search)}`);
     setSearchOpen(false);
   }
 

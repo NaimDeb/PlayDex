@@ -299,7 +299,21 @@
     "sendSuccess": "Signalement envoyé",
     "sendError": "Impossible d'envoyer le signalement.",
     "warningText": "Merci de ne signaler que les contenus réellement problématiques. Les abus peuvent entraîner des sanctions.",
-    "reportAction": "Signaler"
+    "reportAction": "Signaler",
+    "descriptionModification": "Veuillez préciser pourquoi la modification enfreint nos règles communautaires",
+    "descriptionPatchnote": "Veuillez préciser pourquoi le patch note enfreint nos règles communautaires",
+    "optionOffTopicModification": "La modification est hors-sujet",
+    "optionOffensiveModification": "La modification contient des injures",
+    "optionLessUsefulModification": "La modification est moins utile que l'ancienne",
+    "optionOther": "Autre raison",
+    "optionOffTopicPatchnote": "Le patch note est hors-sujet",
+    "optionOffensivePatchnote": "Le patch note contient des injures",
+    "optionInaccuratePatchnote": "Le patch note contient des informations incorrectes",
+    "reasonFieldLabel": "Raison :",
+    "confirmCheckbox": "Je confirme que mon signalement est fait de bonne foi et qu'il ne vise pas à dénigrer une personne. Je comprends qu'un usage abusif du système peut entraîner des sanctions sur mon compte.",
+    "submitError": "Une erreur est survenue lors de l'envoi. Veuillez réessayer.",
+    "submitting": "Envoi en cours…",
+    "submit": "Signaler"
   },
   "footer": {
     "about": "À propos",

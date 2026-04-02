@@ -167,16 +167,16 @@ export default function Home() {
       </PageSection>
 
       <PageSection title={t("home.latestPatchnotesTitle")}>
-        <div className="flex flex-col gap-6">
+        <ul className="flex flex-col gap-6 list-none">
           {loading
             ? [...Array(2)].map((_, i) => (
-                <div key={`patchnote-${i}`} className="flex gap-4 items-start">
+                <li key={`patchnote-${i}`} className="flex gap-4 items-start">
                   <GameCardPlaceholder />
                   <div className="flex-1"><PatchnoteCardPlaceholder /></div>
-                </div>
+                </li>
               ))
             : latestPatchnotes.slice(0, 2).map(({ patchnote, game }) => (
-                <div key={patchnote.id} className="flex gap-4 items-stretch sm:h-[300px]">
+                <li key={patchnote.id} className="flex gap-4 items-stretch sm:h-[300px]">
                   <div className="flex-shrink-0 hidden sm:block">
                     <ClassicCard game={game} isAuthenticated={isAuthenticated} />
                   </div>
@@ -189,9 +189,9 @@ export default function Home() {
                       baseUrl={`/article/${game.id}`}
                     />
                   </div>
-                </div>
+                </li>
               ))}
-        </div>
+        </ul>
       </PageSection>
     </>
   );

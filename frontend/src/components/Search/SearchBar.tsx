@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/i18n/TranslationProvider";
 
 interface SearchBarProps {
@@ -9,6 +10,7 @@ interface SearchBarProps {
 
 export default function SearchBar({ query }: SearchBarProps): React.ReactElement {
   const { t } = useTranslation();
+  const router = useRouter();
 
   function handleSearch(event: React.FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -21,7 +23,7 @@ export default function SearchBar({ query }: SearchBarProps): React.ReactElement
     } else {
       url.searchParams.delete("q");
     }
-    window.location.href = url.toString();
+    router.push(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";

@@ -3,6 +3,7 @@ import { FollowButton } from "../FollowButton";
 import Image from "next/image";
 import Link from "next/link";
 import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
+import { useTranslation } from "@/i18n/TranslationProvider";
 import React from "react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -20,6 +21,7 @@ interface SearchResultCardProps {
 export function SearchResultCard({
   game,
 }: SearchResultCardProps): React.ReactElement {
+  const { t } = useTranslation();
   const formattedDate: string = game.releasedAt
     ? new Date(game.releasedAt).toLocaleDateString("fr-FR", {
         day: "2-digit",
@@ -75,13 +77,7 @@ export function SearchResultCard({
             {game.title}
           </h3>
           <p className="text-sm text-gray-400 mt-1">
-            {game.releasedAt
-              ? new Date(game.releasedAt).toLocaleDateString("fr-FR", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })
-              : "N/A"}
+            {t("game.releasedOn", { date: formattedDate })}
           </p>
           {truncatedDescription && (
             <p className="text-sm text-gray-400 mt-3 leading-relaxed">
