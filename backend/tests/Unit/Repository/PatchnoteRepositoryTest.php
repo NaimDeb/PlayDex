@@ -20,6 +20,20 @@ class PatchnoteRepositoryTest extends KernelTestCase
         $kernel = self::bootKernel();
         $this->entityManager = $kernel->getContainer()->get('doctrine')->getManager();
         $this->patchnoteRepository = $this->entityManager->getRepository(Patchnote::class);
+
+        // Clean up leftover data from previous failed runs
+        $conn = $this->entityManager->getConnection();
+        foreach (['testpatch@example.com', 'testgame@example.com'] as $email) {
+            $conn->executeStatement(
+                'DELETE m FROM modification m INNER JOIN patchnote p ON m.patchnote_id = p.id INNER JOIN user u ON p.created_by_id = u.id WHERE u.email = ?',
+                [$email]
+            );
+            $conn->executeStatement(
+                'DELETE p FROM patchnote p INNER JOIN user u ON p.created_by_id = u.id WHERE u.email = ?',
+                [$email]
+            );
+            $conn->executeStatement('DELETE FROM user WHERE email = ?', [$email]);
+        }
     }
 
     public function testFindNonDeletedPatchnotes(): void
@@ -62,9 +76,12 @@ class PatchnoteRepositoryTest extends KernelTestCase
 
         // Test finding non-deleted patchnotes
         $activePatchnotes = $this->patchnoteRepository->findBy(['isDeleted' => false]);
+        $deletedPatchnotes = $this->patchnoteRepository->findBy(['isDeleted' => true]);
 
-        $this->assertCount(1, $activePatchnotes);
-        $this->assertEquals('Active Patchnote', $activePatchnotes[0]->getTitle());
+        $this->assertContains($patchnote1, $activePatchnotes);
+        $this->assertNotContains($patchnote2, $activePatchnotes);
+        $this->assertContains($patchnote2, $deletedPatchnotes);
+        $this->assertNotContains($patchnote1, $deletedPatchnotes);
 
         // Cleanup
         $this->entityManager->remove($patchnote1);
