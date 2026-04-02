@@ -40,6 +40,7 @@ function buildPageRange(current: number, total: number): (number | "…")[] {
 }
 
 function Pagination({ currentPage, totalPages, onChange }: PaginationProps) {
+  const { t } = useTranslation();
   if (totalPages <= 1) return null;
 
   const pages = buildPageRange(currentPage, totalPages);

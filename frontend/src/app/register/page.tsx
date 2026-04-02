@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import Link from "next/link";
 import PasswordInput from "@/components/shared/PasswordInput";
@@ -32,7 +32,6 @@ export default function RegisterPage() {
   });
   const { register, error } = useAuth();
   const { showMessage } = useFlashMessage();
-  const router = useRouter();
   const { t } = useTranslation();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

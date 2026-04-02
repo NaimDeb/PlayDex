@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import PasswordInput from "@/components/shared/PasswordInput";
@@ -17,7 +17,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{ email?: string }>({});
 
-  const router = useRouter();
   const { t } = useTranslation();
 
   const { login, error, isAuthenticated } = useAuth();

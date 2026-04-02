@@ -67,7 +67,7 @@ function parsePatchnoteStats(content: string): PatchnoteStats {
   return { changes, buffs: buffMatches, nerfs: nerfMatches };
 }
 
-function formatDate(dateString: string | undefined): string {
+function formatDate(dateString: string | Date | undefined): string {
   if (!dateString) return "";
   return new Date(dateString).toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -76,12 +76,14 @@ function formatDate(dateString: string | undefined): string {
   });
 }
 
-function isPatchType(value: unknown): value is PatchType {
-  return (
-    value === "Patch Majeur" ||
-    value === "Patch Mineur" ||
-    value === "Hotfix"
-  );
+const IMPORTANCE_TO_PATCH_TYPE: Record<string, PatchType> = {
+  major: "Patch Majeur",
+  minor: "Patch Mineur",
+  hotfix: "Hotfix",
+};
+
+function importanceToPatchType(importance: string | undefined): PatchType {
+  return IMPORTANCE_TO_PATCH_TYPE[importance ?? ""] ?? FALLBACK_PATCH_TYPE;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -174,9 +176,7 @@ export default function PatchnoteDetailPage() {
   const { patchnote, game, loading } = usePatchnoteLayout();
   const { t }              = useTranslation();
 
-  const patchType: PatchType = isPatchType(patchnote?.type)
-    ? patchnote.type
-    : FALLBACK_PATCH_TYPE;
+  const patchType: PatchType = importanceToPatchType(patchnote?.importance);
 
   const typeStyles = PATCH_TYPE_STYLES[patchType];
 
@@ -268,7 +268,7 @@ export default function PatchnoteDetailPage() {
             {formattedDate && (
               <p className="text-xs text-off-white/50">
                 {t("patchnote.patchnoteReleaseDate")}{" "}
-                <time dateTime={patchnote.releasedAt ?? patchnote.createdAt}>
+                <time dateTime={String(patchnote.releasedAt ?? patchnote.createdAt)}>
                   {formattedDate}
                 </time>
               </p>

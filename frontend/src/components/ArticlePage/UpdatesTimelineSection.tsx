@@ -138,7 +138,6 @@ function useTimelineSVG(
       );
     });
   // containerRef est stable, pas besoin dans les deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containerRef]);
 
   useEffect((): (() => void) => {

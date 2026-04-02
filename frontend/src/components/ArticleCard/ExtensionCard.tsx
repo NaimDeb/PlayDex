@@ -8,7 +8,7 @@ type ExtensionCardProps = {
   releasedAt: string;
 };
 
-export function ExtensionCard({ id, title, imageUrl, releasedAt }: ExtensionCardProps) {
+export function ExtensionCard({ title, imageUrl, releasedAt }: ExtensionCardProps) {
   const coverUrl = changeIgdbImageFormat(imageUrl, IgdbImageFormat.CoverBig);
 
   return (
