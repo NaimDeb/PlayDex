@@ -3,9 +3,10 @@
 import { Logo } from "./Logo";
 import Link from "next/link";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { locales, localeNames, Locale } from "@/i18n/config";
 
 export function Footer() {
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
 
   return (
     <footer className="bg-off-gray text-off-white">
@@ -37,7 +38,23 @@ export function Footer() {
           <p className="text-sm">
             {t("footer.poweredBy", { year: new Date().getFullYear().toString() })}
           </p>
-          <div className="flex justify-center mt-2 space-x-2 md:justify-end">
+          <div className="flex justify-center mt-2 items-center gap-3 md:justify-end">
+            <div className="flex items-center gap-1 text-sm">
+              {locales.map((loc) => (
+                <button
+                  key={loc}
+                  onClick={() => setLocale(loc as Locale)}
+                  className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                    locale === loc
+                      ? "bg-primary text-white"
+                      : "text-off-white/60 hover:text-white"
+                  }`}
+                >
+                  {localeNames[loc as Locale]}
+                </button>
+              ))}
+            </div>
+            <span className="text-off-white/30">|</span>
             <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
               <svg className="w-5 h-5 text-white transition hover:text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M22.46 5.924c-.793.352-1.646.59-2.542.698a4.48 4.48 0 001.964-2.475 8.94 8.94 0 01-2.828 1.082 4.48 4.48 0 00-7.635 4.084A12.72 12.72 0 013.11 4.86a4.48 4.48 0 001.39 5.976 4.44 4.44 0 01-2.03-.56v.057a4.48 4.48 0 003.59 4.393c-.4.11-.82.17-1.25.17-.31 0-.6-.03-.89-.08a4.48 4.48 0 004.18 3.11A8.98 8.98 0 012 19.54a12.67 12.67 0 006.88 2.02c8.26 0 12.78-6.84 12.78-12.78 0-.19-.01-.37-.02-.56A9.1 9.1 0 0024 4.59a8.93 8.93 0 01-2.54.7z" /></svg>
             </a>

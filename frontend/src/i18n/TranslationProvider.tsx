@@ -1,9 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode, useRef } from "react";
 import { Locale, defaultLocale, locales } from "./config";
 import frMessages from "./locales/fr.json";
-import enMessages from "./locales/en.json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,13 +13,6 @@ interface TranslationContextType {
   setLocale: (locale: Locale) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
 }
-
-// ─── Messages map ─────────────────────────────────────────────────────────────
-
-const messagesMap: Record<Locale, Messages> = {
-  fr: frMessages,
-  en: enMessages,
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -51,12 +43,38 @@ function getStoredLocale(): Locale {
   return defaultLocale;
 }
 
+// ─── Lazy loader ──────────────────────────────────────────────────────────────
+
+// Default locale is always bundled — other locales are loaded on demand
+const messagesCache: Partial<Record<Locale, Messages>> = {
+  fr: frMessages as Messages,
+};
+
+async function loadMessages(locale: Locale): Promise<Messages> {
+  if (messagesCache[locale]) return messagesCache[locale]!;
+  const mod = await import(`./locales/${locale}.json`);
+  messagesCache[locale] = mod.default;
+  return mod.default;
+}
+
 // ─── Context ──────────────────────────────────────────────────────────────────
 
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(getStoredLocale);
+  const initialLocale = useRef(getStoredLocale()).current;
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  // Initialize with cached messages if available (always true for 'fr', may be true for others on re-renders)
+  const [messages, setMessages] = useState<Messages>(messagesCache[initialLocale] ?? frMessages as Messages);
+
+  // Load messages when locale changes (no-op if already cached synchronously)
+  useEffect(() => {
+    let cancelled = false;
+    loadMessages(locale).then((msgs) => {
+      if (!cancelled) setMessages(msgs);
+    });
+    return () => { cancelled = true; };
+  }, [locale]);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
@@ -66,11 +84,11 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
-      const value = getNestedValue(messagesMap[locale], key);
+      const value = getNestedValue(messages, key);
       if (!value) return key;
       return params ? interpolate(value, params) : value;
     },
-    [locale]
+    [messages]
   );
 
   const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t]);
