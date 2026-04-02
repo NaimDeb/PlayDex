@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -126,17 +126,19 @@ function StatsRow({ stats }: StatsRowProps) {
 
 type ActionButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "outlined-primary" | "outlined-warning";
+  loading?: boolean;
   children: React.ReactNode;
 };
 
 function ActionButton({
   variant = "primary",
+  loading = false,
   className = "",
   children,
   ...rest
 }: ActionButtonProps) {
   const base =
-    "inline-flex items-center justify-center px-5 py-2 text-sm font-semibold font-montserrat transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-40 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center px-5 py-2 text-sm font-semibold font-montserrat transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-40 disabled:cursor-not-allowed min-w-[120px] cursor-pointer";
 
   const variants: Record<string, string> = {
     "primary":
@@ -148,8 +150,12 @@ function ActionButton({
   };
 
   return (
-    <button className={[base, variants[variant], className].join(" ")} {...rest}>
-      {children}
+    <button className={[base, variants[variant], className].join(" ")} disabled={loading || rest.disabled} {...rest}>
+      {loading ? (
+        <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+        </svg>
+      ) : children}
     </button>
   );
 }
@@ -172,6 +178,13 @@ export default function PatchnoteDetailPage() {
     () => parsePatchnoteStats(patchnote?.content ?? ""),
     [patchnote?.content]
   );
+
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const handleAction = (key: string, path: string) => {
+    setLoadingAction(key);
+    router.push(path);
+  };
 
   const formattedDate = formatDate(patchnote?.releasedAt ?? patchnote?.createdAt);
   const colorizedContent = useMemo(
@@ -258,19 +271,22 @@ export default function PatchnoteDetailPage() {
         <div className="flex items-center gap-3 flex-wrap">
           <ActionButton
             variant="primary"
-            onClick={() => router.push(`/article/${slug}/patchnote/${id}/edit`)}
+            loading={loadingAction === "edit"}
+            onClick={() => handleAction("edit", `/article/${slug}/patchnote/${id}/edit`)}
           >
             {t("patchnote.edit")}
           </ActionButton>
           <ActionButton
             variant="outlined-warning"
-            onClick={() => router.push(`/report/patchnote/${id}`)}
+            loading={loadingAction === "report"}
+            onClick={() => handleAction("report", `/report/patchnote/${id}`)}
           >
             {t("patchnote.report")}
           </ActionButton>
           <ActionButton
             variant="outlined-primary"
-            onClick={() => router.push(`/article/${slug}/patchnote/${id}/modifications`)}
+            loading={loadingAction === "modifications"}
+            onClick={() => handleAction("modifications", `/article/${slug}/patchnote/${id}/modifications`)}
           >
             {t("patchnote.viewModifications")}
           </ActionButton>
