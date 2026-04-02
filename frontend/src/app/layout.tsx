@@ -33,6 +33,7 @@ export const metadata: Metadata = {
 
 import { HeroUIProvider } from "@heroui/system";
 import { CookieConsent } from "@/components/CookieConsent";
+import { RouteChangeOverlay } from "@/components/RouteChangeOverlay";
 
 export default function RootLayout({
   children,
@@ -50,6 +51,7 @@ export default function RootLayout({
             <AuthProvider>
               <FollowedGamesProvider>
                 <FlashMessageProvider>
+                  <RouteChangeOverlay />
                   <Header />
                   <main className="flex-1">{children}</main>
                   <Footer />
