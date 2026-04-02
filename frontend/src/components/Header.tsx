@@ -131,12 +131,13 @@ export function Header() {
               <Link href="/search" className="px-2 hover:text-gray-200">
                 {t("nav.games")}
               </Link>
-              <a
+              <button
+                type="button"
                 onClick={handleRandomGame}
                 className="px-2 cursor-pointer hover:text-gray-200"
               >
                 {t("nav.randomGame")}
-              </a>
+              </button>
             </nav>
           )}
         </div>
@@ -249,9 +250,9 @@ export function Header() {
               <Link href="/search" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
                 {t("nav.games")}
               </Link>
-              <a onClick={handleRandomGame} className="px-2 py-1 cursor-pointer hover:text-gray-200">
+              <button type="button" onClick={handleRandomGame} className="px-2 py-1 cursor-pointer hover:text-gray-200 text-left">
                 {t("nav.randomGame")}
-              </a>
+              </button>
               {isAuthenticated && (
                 <>
                   <hr className="my-2 border-gray-600" />

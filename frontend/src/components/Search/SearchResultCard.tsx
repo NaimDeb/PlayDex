@@ -1,6 +1,7 @@
 import { Game } from "@/types/gameType";
 import { FollowButton } from "../FollowButton";
 import Image from "next/image";
+import Link from "next/link";
 import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
 import React from "react";
 
@@ -38,7 +39,7 @@ export function SearchResultCard({
     : "/no_cover.png";
 
   return (
-    <a
+    <Link
       href={`/article/${game.id}`}
       className="
         flex w-full rounded-lg overflow-hidden
@@ -74,7 +75,13 @@ export function SearchResultCard({
             {game.title}
           </h3>
           <p className="text-sm text-gray-400 mt-1">
-            Sortie : {formattedDate}
+            {game.releasedAt
+              ? new Date(game.releasedAt).toLocaleDateString("fr-FR", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })
+              : "N/A"}
           </p>
           {truncatedDescription && (
             <p className="text-sm text-gray-400 mt-3 leading-relaxed">
@@ -91,6 +98,6 @@ export function SearchResultCard({
           <FollowButton gameId={game.id} size="md" />
         </div>
       </div>
-    </a>
+    </Link>
   );
 }

@@ -113,7 +113,7 @@ export default function ArticlePage({
   if (!gameData) return notFound();
 
   return (
-    <main className="min-h-screen text-white bg-off-black">
+    <div className="min-h-screen text-white bg-off-black">
       <PageSection className="py-8">
         <nav aria-label="Fil d'Ariane">
           <Breadcrumbs>
@@ -135,6 +135,6 @@ export default function ArticlePage({
           formatDateDifference={formatDateDifference}
         />
       </PageSection>
-    </main>
+    </div>
   );
 }

@@ -115,7 +115,7 @@ export default function RegisterPage() {
           {t("auth.registerSubtitle")}
         </p>
         {error && (
-          <div className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
+          <div role="alert" className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
             {error}
           </div>
         )}
@@ -265,13 +265,12 @@ export default function RegisterPage() {
           </div>
           <div className="mt-2 text-sm text-center text-offwhite">
             {t("auth.hasAccount")}{" "}
-            <button
-              type="button"
-              onClick={() => router.push("/login")}
+            <Link
+              href="/login"
               className="font-bold underline text-offwhite hover:text-secondary"
             >
               {t("auth.loginAction")}
-            </button>
+            </Link>
           </div>
         </form>
       </div>

@@ -82,16 +82,16 @@ export default function Home() {
   }, [isAuthenticated]);
 
   return (
-    <main>
-      <header className="w-full bg-hero bg-cover bg-center mb-12" style={{ height: "40vh", minHeight: "280px" }}>
+    <>
+      <section className="w-full bg-hero bg-cover bg-center mb-12" style={{ height: "40vh", minHeight: "280px" }}>
         <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 h-full
           flex items-center justify-between max-md:justify-center gap-8">
 
-          <figure className="max-md:hidden flex-shrink-0">
+          <div className="max-md:hidden flex-shrink-0">
             <Logo width={240} height={240} />
-          </figure>
+          </div>
 
-          <aside className="flex flex-col items-center gap-4 text-center">
+          <div className="flex flex-col items-center gap-4 text-center">
             {isAuthenticated ? (
               <>
                 <h1 className="text-2xl font-bold lg:text-4xl drop-shadow-lg">
@@ -123,10 +123,10 @@ export default function Home() {
                 </p>
               </>
             )}
-          </aside>
+          </div>
 
         </div>
-      </header>
+      </section>
 
       {isAuthenticated && (
         <PageSection
@@ -193,6 +193,6 @@ export default function Home() {
               ))}
         </div>
       </PageSection>
-    </main>
+    </>
   );
 }
