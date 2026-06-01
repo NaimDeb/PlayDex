@@ -2,6 +2,38 @@
 
 PlayDex is a website that tries to group all video game patch notes in a normalized manner. Follow your favorite games to get the patch notes as soon as they release.
 
+## Quick Start with Docker (recommended)
+
+The fastest way to run the whole stack (frontend + backend + MySQL database) is with Docker. You only need [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed.
+
+1. **Make sure the backend `.env` exists** with your API keys (Steam / Twitch / IGDB). See the "Set Up Environment Variables" step in the Backend Installation section below.
+
+2. **Build and start everything** from the project root:
+
+   ```bash
+   docker compose up --build
+   ```
+
+   On the first run this will download the images and install dependencies, so it can take a few minutes. On startup the backend automatically:
+   - runs the database migrations (creates the tables),
+   - loads the fixtures (demo data).
+
+3. **Access the app**:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000/api
+
+4. **Stop everything**:
+
+   ```bash
+   docker compose down
+   ```
+
+   Add `-v` (`docker compose down -v`) to also delete the database volume and start fresh next time.
+
+> **Note:** the fixtures are reloaded on every startup, which **resets the database**. This is convenient for development but means data entered between two runs is lost.
+
+The sections below describe the manual (non-Docker) installation.
+
 ## Frontend Installation
 
 Follow these steps to set up the frontend:
