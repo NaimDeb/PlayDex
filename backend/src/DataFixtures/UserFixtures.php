@@ -25,8 +25,7 @@ class UserFixtures extends Fixture
             'admin@playdex.com',
             'AdminUser1',
             ['ROLE_ADMIN', 'ROLE_USER'],
-            new \DateTimeImmutable('2025-07-08 10:00:00'),
-            100
+            new \DateTimeImmutable('2025-07-08 10:00:00')
         );
         $manager->persist($admin1);
         $this->addReference('admin-1', $admin1);
@@ -35,8 +34,7 @@ class UserFixtures extends Fixture
             'moderator@playdex.com',
             'ModeratorUser',
             ['ROLE_ADMIN', 'ROLE_USER'],
-            new \DateTimeImmutable('2025-07-09 09:30:00'),
-            75
+            new \DateTimeImmutable('2025-07-09 09:30:00')
         );
         $manager->persist($admin2);
         $this->addReference('admin-2', $admin2);
@@ -46,8 +44,7 @@ class UserFixtures extends Fixture
             'user1@example.com',
             'ActiveUser1',
             ['ROLE_USER'],
-            new \DateTimeImmutable('2025-07-09 08:00:00'),
-            50
+            new \DateTimeImmutable('2025-07-09 08:00:00')
         );
         $manager->persist($user1);
         $this->addReference('user-1', $user1);
@@ -56,8 +53,7 @@ class UserFixtures extends Fixture
             'user2@example.com',
             'RegularUser2',
             ['ROLE_USER'],
-            new \DateTimeImmutable('2025-07-08 15:45:00'),
-            30
+            new \DateTimeImmutable('2025-07-08 15:45:00')
         );
         $manager->persist($user2);
         $this->addReference('user-2', $user2);
@@ -66,8 +62,7 @@ class UserFixtures extends Fixture
             'user3@example.com',
             'CasualUser3',
             ['ROLE_USER'],
-            new \DateTimeImmutable('2025-07-07 11:20:00'),
-            20
+            new \DateTimeImmutable('2025-07-07 11:20:00')
         );
         $manager->persist($user3);
         $this->addReference('user-3', $user3);
@@ -77,8 +72,7 @@ class UserFixtures extends Fixture
             'banned1@example.com',
             'BannedUser1',
             ['ROLE_USER'],
-            new \DateTimeImmutable('2025-07-01 09:00:00'),
-            -10
+            new \DateTimeImmutable('2025-07-01 09:00:00')
         );
         $bannedUser1->setIsBanned(true);
         $bannedUser1->setBanReason('Multiple violations of community guidelines');
@@ -90,8 +84,7 @@ class UserFixtures extends Fixture
             'banned2@example.com',
             'BannedUser2',
             ['ROLE_USER'],
-            new \DateTimeImmutable('2025-07-02 14:30:00'),
-            -5
+            new \DateTimeImmutable('2025-07-02 14:30:00')
         );
         $bannedUser2->setIsBanned(true);
         $bannedUser2->setBanReason('Spamming patchnotes');
@@ -106,8 +99,7 @@ class UserFixtures extends Fixture
         string $email,
         string $username,
         array $roles,
-        \DateTimeImmutable $lastLoginAt,
-        int $reputation
+        \DateTimeImmutable $lastLoginAt
     ): User {
         $user = new User();
         $user->setEmail($email);
@@ -116,7 +108,6 @@ class UserFixtures extends Fixture
         $user->setPassword($this->hasher->hashPassword($user, 'password123'));
         $user->setCreatedAt(new \DateTimeImmutable('2025-01-01'));
         $user->setLastLoginAt($lastLoginAt);
-        $user->setReputation((string) $reputation);
         $user->setIsDeleted(false);
 
         return $user;

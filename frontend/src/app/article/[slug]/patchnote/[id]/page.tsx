@@ -1,104 +1,329 @@
 "use client";
+
+import React, { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-
-import Link from "next/link";
-import { Button } from "@heroui/button";
-import { Card, CardBody } from "@heroui/card";
-import Image from "next/image";
-import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
 import ReactMarkdown from "react-markdown";
-import { colorizeContent } from "@/lib/utils";
 import rehypeRaw from "rehype-raw";
+import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
+import { colorizeContent } from "@/lib/utils";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+/**
+ * Parsed statistics extracted from patchnote content.
+ * Replace with API response shape once the endpoint is available.
+ */
+export type PatchnoteStats = {
+  /** Total number of distinct change lines */
+  changes: number;
+  /** Lines tagged [buff] */
+  buffs: number;
+  /** Lines tagged [debuff] */
+  nerfs: number;
+};
+
+export type PatchType = "Patch Majeur" | "Patch Mineur" | "Hotfix";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PATCH_TYPE_STYLES: Record<PatchType, { badge: string; accent: string }> = {
+  "Patch Majeur": {
+    badge:  "bg-primary/20 text-primary border border-primary/40",
+    accent: "border-l-primary",
+  },
+  "Patch Mineur": {
+    badge:  "bg-off-white/10 text-off-white/70 border border-off-white/20",
+    accent: "border-l-off-white/30",
+  },
+  Hotfix: {
+    badge:  "bg-red-500/20 text-red-400 border border-red-500/40",
+    accent: "border-l-red-500",
+  },
+};
+
+const FALLBACK_PATCH_TYPE: PatchType = "Patch Mineur";
+
+const PATCH_TYPE_I18N_KEYS: Record<PatchType, string> = {
+  "Patch Majeur": "patchnote.patchMajor",
+  "Patch Mineur": "patchnote.patchMinor",
+  Hotfix: "patchnote.hotfix",
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Counts buffs, nerfs and total changes from raw markdown content.
+ * Can be replaced by an API call: `GET /api/patchnote/:id/stats` → PatchnoteStats
+ */
+function parsePatchnoteStats(content: string): PatchnoteStats {
+  const buffMatches  = (content.match(/\[buff\]/gi)   ?? []).length;
+  const nerfMatches  = (content.match(/\[debuff\]/gi) ?? []).length;
+
+  // Each bullet line (starts with "- " or "* ") counts as one change
+  const changeLines  = (content.match(/^[\-\*]\s+/gm) ?? []).length;
+  const changes      = Math.max(changeLines, buffMatches + nerfMatches);
+
+  return { changes, buffs: buffMatches, nerfs: nerfMatches };
+}
+
+function formatDate(dateString: string | Date | undefined): string {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+const IMPORTANCE_TO_PATCH_TYPE: Record<string, PatchType> = {
+  major: "Patch Majeur",
+  minor: "Patch Mineur",
+  hotfix: "Hotfix",
+};
+
+function importanceToPatchType(importance: string | undefined): PatchType {
+  return IMPORTANCE_TO_PATCH_TYPE[importance ?? ""] ?? FALLBACK_PATCH_TYPE;
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+type TFn = (key: string, params?: Record<string, string | number>) => string;
+
+type PatchBadgeProps = { type: PatchType; t: TFn };
+
+function PatchBadge({ type, t }: PatchBadgeProps) {
+  const styles = PATCH_TYPE_STYLES[type];
+  return (
+    <span
+      className={[
+        "inline-block px-2.5 py-0.5 text-xs font-semibold rounded-sm",
+        styles.badge,
+      ].join(" ")}
+    >
+      {t(PATCH_TYPE_I18N_KEYS[type])}
+    </span>
+  );
+}
+
+type StatsRowProps = { stats: PatchnoteStats; t: TFn };
+
+function StatsRow({ stats, t }: StatsRowProps) {
+  if (stats.changes === 0 && stats.buffs === 0 && stats.nerfs === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-off-white/50 flex-wrap">
+      {stats.changes > 0 && (
+        <span>{t(stats.changes > 1 ? "patchnote.changesPlural" : "patchnote.changes", { count: stats.changes })}</span>
+      )}
+      {stats.buffs > 0 && (
+        <>
+          <span aria-hidden="true">•</span>
+          <span className="text-green-400">{t(stats.buffs > 1 ? "patchnote.buffsPlural" : "patchnote.buffs", { count: stats.buffs })}</span>
+        </>
+      )}
+      {stats.nerfs > 0 && (
+        <>
+          <span aria-hidden="true">•</span>
+          <span className="text-red-400">{t(stats.nerfs > 1 ? "patchnote.nerfsPlural" : "patchnote.nerfs", { count: stats.nerfs })}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+type ActionButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: "primary" | "outlined-primary" | "outlined-warning";
+  loading?: boolean;
+  children: React.ReactNode;
+};
+
+function ActionButton({
+  variant = "primary",
+  loading = false,
+  className = "",
+  children,
+  ...rest
+}: ActionButtonProps) {
+  const base =
+    "inline-flex items-center justify-center px-5 py-2 text-sm font-semibold font-montserrat transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-40 disabled:cursor-not-allowed min-w-[120px] cursor-pointer";
+
+  const variants: Record<string, string> = {
+    "primary":
+      "bg-primary hover:bg-secondary text-off-white",
+    "outlined-primary":
+      "border border-primary text-primary hover:bg-primary/10",
+    "outlined-warning":
+      "border border-yellow-400 text-yellow-400 hover:bg-yellow-400/10",
+  };
+
+  return (
+    <button className={[base, variants[variant], className].join(" ")} disabled={loading || rest.disabled} {...rest}>
+      {loading ? (
+        <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+        </svg>
+      ) : children}
+    </button>
+  );
+}
+
+// ─── PatchnoteDetailPage ──────────────────────────────────────────────────────
 
 export default function PatchnoteDetailPage() {
-  const router = useRouter();
-  const { slug, id } = useParams() as { slug: string; id: string };
+  const router             = useRouter();
+  const { slug, id }       = useParams() as { slug: string; id: string };
   const { patchnote, game, loading } = usePatchnoteLayout();
+  const { t }              = useTranslation();
 
+  const patchType: PatchType = importanceToPatchType(patchnote?.importance);
 
+  const typeStyles = PATCH_TYPE_STYLES[patchType];
+
+  const stats = useMemo<PatchnoteStats>(
+    () => parsePatchnoteStats(patchnote?.content ?? ""),
+    [patchnote?.content]
+  );
+
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  const handleAction = (key: string, path: string) => {
+    setLoadingAction(key);
+    router.push(path);
+  };
+
+  const formattedDate = formatDate(patchnote?.releasedAt ?? patchnote?.createdAt);
+  const colorizedContent = useMemo(
+    () => colorizeContent(patchnote?.content ?? ""),
+    [patchnote?.content]
+  );
+
+  // ── Loading ────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="text-center text-gray-400 py-8">
-        Chargement de la patchnote...
+      <div className="flex items-center justify-center min-h-[40vh] text-off-white/40 text-sm">
+        {t("patchnote.loading")}
       </div>
     );
   }
+
+  // ── Not found ─────────────────────────────────────────────────────────
 
   if (!patchnote || !game) {
     return (
-      <div className="text-center text-red-500 py-8">
-        Patchnote introuvable.
+      <div className="flex items-center justify-center min-h-[40vh] text-red-400 text-sm">
+        {t("patchnote.notFound")}
       </div>
     );
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────
+
   return (
-    <>
-        <h1 className="text-3xl font-bold mb-2">{patchnote.title}</h1>
-        <div className="flex items-center mb-6">
-          <span className="mr-2 ">Du jeu :</span>
-          <Link
-            href={`/article/${slug}`}
-            className="flex items-center gap-2 hover:underline bg-off-gray p-2 hover:bg-off-gray/50 rounded-sm border-1 border-gray-200/20"
+    <div className="max-w-5xl">
+
+      {/* ── Action buttons ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap mb-8">
+          <ActionButton
+            variant="primary"
+            loading={loadingAction === "edit"}
+            onClick={() => handleAction("edit", `/article/${slug}/patchnote/${id}/edit`)}
           >
-            {game.imageUrl && (
-              <Image
-                src={game.imageUrl}
-                alt={game.title}
-                width={40}
-                height={40}
-                className="rounded"
-              />
+            {t("patchnote.edit")}
+          </ActionButton>
+          <ActionButton
+            variant="outlined-warning"
+            loading={loadingAction === "report"}
+            onClick={() => handleAction("report", `/report/patchnote/${id}`)}
+          >
+            {t("patchnote.report")}
+          </ActionButton>
+          <ActionButton
+            variant="outlined-primary"
+            loading={loadingAction === "modifications"}
+            onClick={() => handleAction("modifications", `/article/${slug}/patchnote/${id}/modifications`)}
+          >
+            {t("patchnote.viewModifications")}
+          </ActionButton>
+      </div>
+
+      {/* ── Main content card ─────────────────────────────────────────────── */}
+      <article
+        className={[
+          "bg-off-gray border-2 border-off-white/10",
+          "border-l-4",
+          typeStyles.accent,
+          "rounded-sm overflow-hidden",
+        ].join(" ")}
+        aria-label={`Patch note : ${patchnote.title}`}
+      >
+        {/* Card header */}
+        <header className="px-6 pt-6 pb-5 border-b border-off-white/10 space-y-2">
+          <h1 className="text-xl sm:text-2xl font-bold font-montserrat text-off-white leading-snug">
+            {patchnote.title}
+          </h1>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+            {formattedDate && (
+              <p className="text-xs text-off-white/50">
+                {t("patchnote.patchnoteReleaseDate")}{" "}
+                <time dateTime={String(patchnote.releasedAt ?? patchnote.createdAt)}>
+                  {formattedDate}
+                </time>
+              </p>
             )}
-            <span className="font-semibold">{game.title}</span>
-          </Link>
-        </div>
+            <PatchBadge type={patchType} t={t} />
+            <StatsRow stats={stats} t={t} />
+          </div>
+        </header>
 
-        <div className="flex gap-4 mb-8 items-end">
-          <Button
-            color="primary"
-            onPress={() => router.push(`/article/${slug}/patchnote/${id}/edit`)}
-          >
-            Modifier la patchnote
-          </Button>
-          <Button
-            color="warning"
-            variant="bordered"
-            onPress={() => router.push(`/report/patchnote/${id}`)}
-          >
-            Signaler la patchnote
-          </Button>
-          <Button
-            color="secondary"
-            variant="bordered"
-            onPress={() =>
-              router.push(`/article/${slug}/patchnote/${id}/modifications`)
-            }
-          >
-            Voir les modifications
-          </Button>
-        </div>
+        {/* Short description */}
+        {patchnote.smallDescription && (
+          <div className="px-6 py-5 border-b border-off-white/10">
+            <p className="text-sm sm:text-base text-off-white/80 leading-relaxed font-medium">
+              {patchnote.smallDescription}
+            </p>
+          </div>
+        )}
 
-        <Card className="mb-6 bg-off-gray border-gray-200/20 border-2 p-4">
-          <CardBody>
-            <div className="prose max-w-none text-white">
-              <h3 className="text-xl font-semibold mb-4">
-                {patchnote.smallDescription}
-              </h3>
-              <ReactMarkdown
-                rehypePlugins={[rehypeRaw]}
-                components={{
-                  span: (props) => <span {...props} />,
-                }}
-                skipHtml={false}
-              >
-                {colorizeContent(patchnote.content)}
-              </ReactMarkdown>
-            </div>
-          </CardBody>
-        </Card>
-    </>
+        {/* Markdown body */}
+        <div className="px-6 py-6">
+          <div className="prose prose-sm sm:prose-base max-w-none text-off-white patchnote-content">
+            <ReactMarkdown
+              rehypePlugins={[rehypeRaw]}
+              components={{
+                span: (props) => <span {...props} />,
+                // Style headers inside the markdown
+                h2: ({ children }) => (
+                  <h2 className="flex items-center gap-2 text-base font-bold text-off-white mt-6 mb-3 first:mt-0">
+                    {children}
+                  </h2>
+                ),
+                h3: ({ children }) => (
+                  <h3 className="text-sm font-semibold text-off-white/80 mt-4 mb-2">
+                    {children}
+                  </h3>
+                ),
+                ul: ({ children }) => (
+                  <ul className="space-y-1.5 mb-4 list-none pl-0">
+                    {children}
+                  </ul>
+                ),
+                li: ({ children }) => (
+                  <li className="flex items-start gap-2 text-sm leading-relaxed">
+                    <span aria-hidden="true" className="mt-[5px] shrink-0 w-1 h-1 rounded-full bg-off-white/30" />
+                    <span>{children}</span>
+                  </li>
+                ),
+              }}
+              skipHtml={false}
+            >
+              {colorizedContent}
+            </ReactMarkdown>
+          </div>
+        </div>
+      </article>
+    </div>
   );
 }

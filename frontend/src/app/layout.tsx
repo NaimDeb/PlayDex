@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { FollowedGamesProvider } from "@/providers/FollowedGamesProvider";
 import { FlashMessageProvider } from "@/components/FlashMessage/FlashMessageProvider";
+import { TranslationProvider } from "@/i18n/TranslationProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -31,6 +32,8 @@ export const metadata: Metadata = {
 };
 
 import { HeroUIProvider } from "@heroui/system";
+import { CookieConsent } from "@/components/CookieConsent";
+import { RouteChangeOverlay } from "@/components/RouteChangeOverlay";
 
 export default function RootLayout({
   children,
@@ -38,20 +41,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${montserrat.variable} ${radioCanada.variable} antialiased bg-off-black text-off-white min-h-screen flex flex-col`}
       >
         <HeroUIProvider>
-          <AuthProvider>
-            <FollowedGamesProvider>
-              <FlashMessageProvider>
-                <Header />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </FlashMessageProvider>
-            </FollowedGamesProvider>
-          </AuthProvider>
+          <TranslationProvider>
+            <AuthProvider>
+              <FollowedGamesProvider>
+                <FlashMessageProvider>
+                  <RouteChangeOverlay />
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                  <CookieConsent />
+                </FlashMessageProvider>
+              </FollowedGamesProvider>
+            </AuthProvider>
+          </TranslationProvider>
         </HeroUIProvider>
       </body>
     </html>
