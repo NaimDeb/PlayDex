@@ -100,22 +100,6 @@ class UserService {
       throw error;
     }
   }
-
-  /**
-   * Calls the DELETE endpoint /users/{id} to delete the user account (soft delete).
-   * @param userId - The ID of the user to delete
-   */
-  async deleteAccount(userId: number) {
-    const config = authUtils.getAuthorization();
-
-    try {
-      const response = await apiClient.delete(`/users/${userId}`, config);
-      return response;
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      throw error;
-    }
-  }
 }
 
 const userService = new UserService();

@@ -1,63 +1,34 @@
-"use client";
-
 import userService from "@/lib/api/userService";
 import { useState } from "react";
+import { FaMinusCircle, FaPlusCircle } from "react-icons/fa";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
-import React from "react";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type FollowButtonSize = "sm" | "md";
 
 type FollowButtonProps = {
   gameId: number;
-  size?: FollowButtonSize;
 };
 
-// ─── Size tokens ──────────────────────────────────────────────────────────────
-
-const SIZE_STYLES: Record<FollowButtonSize, {
-  button: string;
-  text: string;
-  circle: string;
-  iconSize: string;
-}> = {
-  sm: {
-    button: "pl-3 pr-2 py-1",
-    text: "text-xs",
-    circle: "w-[16px] h-[16px]",
-    iconSize: "10px",
-  },
-  md: {
-    button: "pl-5 pr-3 py-2",
-    text: "text-sm",
-    circle: "w-[20px] h-[20px]",
-    iconSize: "12px",
-  },
-};
-
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export function FollowButton({
-  gameId,
-  size = "sm",
-}: FollowButtonProps): React.ReactElement {
-  const [loading, setLoading] = useState<boolean>(false);
+export function FollowButton({ gameId }: FollowButtonProps) {
+  const [loading, setLoading] = useState(false);
   const { refreshFollowedGames, followedGameIds } = useFollowedGames();
   const { showMessage } = useFlashMessage();
 
-  const isFollowing: boolean = followedGameIds.includes(String(gameId));
-  const s = SIZE_STYLES[size];
+  // console.log("FollowButton - followedGameIds:", followedGameIds);
 
-  const handleFollow = async (): Promise<void> => {
+  let isFollowingState = followedGameIds.includes(String(gameId));
+
+  // console.log("FollowButton - isFollowingState:", isFollowingState);
+
+  const handleFollow = async () => {
     setLoading(true);
     try {
-      if (!isFollowing) {
+      if (!isFollowingState) {
         await userService.followGame(gameId);
+        isFollowingState = true;
         showMessage("Jeu suivi !", "success");
       } else {
         await userService.unfollowGame(gameId);
+        isFollowingState = false;
         showMessage("Jeu retiré !", "info");
       }
       await refreshFollowedGames();
@@ -69,42 +40,35 @@ export function FollowButton({
     }
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
-    e.stopPropagation();
-    e.preventDefault();
-    void handleFollow();
-  };
-
-  const icon = isFollowing ? "−" : "+";
-  const label = isFollowing ? "Suivi" : "Suivre";
-
   return (
     <button
-      onClick={handleClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        handleFollow();
+      }}
       disabled={loading}
-      className={`
-        flex items-center gap-2 ${s.button} rounded-md
-        bg-off-black border border-gray-600
-        text-off-white ${s.text} font-semibold
-        hover:border-red-400 hover:text-red-300
-        transition-colors duration-150 disabled:opacity-50
-      `}
+      tabIndex={0}
+      className={`flex items-center justify-center max-md:text-2xl text-off-white font-bold py-2 px-2 md:px-4 rounded-md transition-colors duration-150 ease-in-out border-2 border-gray-500/50
+        ${
+          loading
+            ? "bg-off-gray cursor-not-allowed"
+            : "bg-off-gray hover:bg-gray-600"
+        }`}
     >
-      {label}
-      <span
-        className={`
-          ${s.circle} rounded-full
-          border border-gray-400
-          flex items-center justify-center flex-shrink-0
-        `}
-      >
-        <span
-          className="text-gray-300 font-bold leading-none"
-          style={{ fontSize: s.iconSize }}
-        >
-          {icon}
-        </span>
-      </span>
+      {loading ? (
+        "Loading..."
+      ) : isFollowingState ? (
+        <>
+          <span className="mr-2">Suivi</span>
+          <FaMinusCircle />
+        </>
+      ) : (
+        <>
+          <span className="mr-2">Suivre</span>
+          <FaPlusCircle />
+        </>
+      )}
     </button>
   );
 }

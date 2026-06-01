@@ -2,12 +2,10 @@
 
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useState } from "react";
-
+import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import Link from "next/link";
-import PasswordInput from "@/components/shared/PasswordInput";
-import { useTranslation } from "@/i18n/TranslationProvider";
-import { isValidEmail, validatePassword } from "@/lib/validationUtils";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -16,6 +14,8 @@ export default function RegisterPage() {
   const [username, setUsername] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<{
     email?: string;
     password?: string;
@@ -29,9 +29,10 @@ export default function RegisterPage() {
     username: undefined,
     acceptTerms: undefined,
   });
+  // Assume register returns: Promise<{ status?: number; description?: string; error?: string } | undefined>
   const { register, error } = useAuth();
   const { showMessage } = useFlashMessage();
-  const { t } = useTranslation();
+  const router = useRouter();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,36 +44,50 @@ export default function RegisterPage() {
       username?: string;
       acceptTerms?: string;
     } = {};
-
-    if (!isValidEmail(email)) {
-      newFormError.email = t("auth.invalidEmail");
+    
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      newFormError.email = "Veuillez entrer une adresse email valide.";
       hasError = true;
     }
-
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      newFormError.password = t(passwordError);
+    
+    if (!password || password.length < 8) {
+      newFormError.password = "Le mot de passe doit contenir au moins 8 caractères.";
+      hasError = true;
+    } else if (password.length > 100) {
+      newFormError.password = "Le mot de passe doit contenir moins de 100 caractères.";
+      hasError = true;
+    } else if (!/[A-Z]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins une majuscule.";
+      hasError = true;
+    } else if (!/[a-z]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins une minuscule.";
+      hasError = true;
+    } else if (!/[0-9]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins un chiffre.";
+      hasError = true;
+    } else if (!/[^A-Za-z0-9]/.test(password)) {
+      newFormError.password = "Le mot de passe doit contenir au moins un caractère spécial.";
       hasError = true;
     }
-
+    
     if (password !== confirmPassword) {
-      newFormError.confirmPassword = t("auth.passwordMismatch");
+      newFormError.confirmPassword = "Les mots de passe ne correspondent pas.";
       hasError = true;
     }
 
     if (!username || username.length < 4) {
-      newFormError.username = t("auth.usernameMinLength");
+      newFormError.username = "Le pseudo doit contenir au moins 4 caractères.";
       hasError = true;
     } else if (username.length > 100) {
-      newFormError.username = t("auth.usernameMaxLength");
+      newFormError.username = "Le pseudo doit contenir moins de 100 caractères.";
       hasError = true;
     }
-
+    
     if (!acceptTerms) {
-      newFormError.acceptTerms = t("auth.mustAcceptTerms");
+      newFormError.acceptTerms = "Vous devez accepter les conditions d'utilisation.";
       hasError = true;
     }
-
+    
     setFormError(newFormError);
     if (hasError) {
       return;
@@ -81,7 +96,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register({ email, password, username });
-      showMessage(t("auth.registerSuccess"), "success");
+      showMessage("Inscription réussie ! Vous pouvez maintenant vous connecter.", "success");
     } catch (err: unknown) {
       const error = err as { response?: { data?: { violations?: Array<{ propertyPath: string; message: string }> } } };
       const violations = error?.response?.data?.violations;
@@ -96,7 +111,7 @@ export default function RegisterPage() {
           }
         });
       } else {
-        showMessage(typeof error === 'string' ? error : t("auth.registerError"), "error");
+        showMessage(typeof error === 'string' ? error : "Une erreur est survenue lors de l'inscription.", "error");
       }
     } finally {
       setLoading(false);
@@ -105,15 +120,17 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="relative w-full max-w-lg p-4 sm:p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
-        <h1 className="mb-4 text-2xl sm:text-3xl font-extrabold text-center text-offwhite">
-          {t("auth.registerTitle")}
+      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
+        <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
+          Inscription
         </h1>
         <p className="mb-8 text-base font-medium text-center text-offwhite">
-          {t("auth.registerSubtitle")}
+          Rejoignez PlayDex pour suivre vos jeux préférés, recevoir des
+          notifications sur les nouveautés, et partager vos avis avec la
+          communauté !
         </p>
         {error && (
-          <div role="alert" className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
+          <div className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
             {error}
           </div>
         )}
@@ -123,7 +140,7 @@ export default function RegisterPage() {
               htmlFor="email"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              {t("auth.email")}
+              Email
             </label>
             <input
               id="email"
@@ -136,7 +153,7 @@ export default function RegisterPage() {
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
               }`}
-              placeholder={t("auth.emailPlaceholder")}
+              placeholder="Votre email"
             />
             {formError.email && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
@@ -149,17 +166,30 @@ export default function RegisterPage() {
               htmlFor="password"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              {t("auth.password")}
+              Mot de passe
             </label>
-            <PasswordInput
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              error={formError.password}
-              className="rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
-              placeholder={t("auth.passwordChoosePlaceholder")}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className={`w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
+                  formError.password
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+                placeholder="Choisissez un mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {formError.password && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
                 {formError.password}
@@ -171,17 +201,30 @@ export default function RegisterPage() {
               htmlFor="confirmPassword"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              {t("auth.confirmPassword")}
+              Confirmer le mot de passe
             </label>
-            <PasswordInput
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              error={formError.confirmPassword}
-              className="rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
-              placeholder={t("auth.confirmPasswordPlaceholder")}
-            />
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className={`w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400 ${
+                  formError.confirmPassword
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }`}
+                placeholder="Confirmez votre mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             {formError.confirmPassword && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
                 {formError.confirmPassword}
@@ -193,7 +236,7 @@ export default function RegisterPage() {
               htmlFor="pseudo"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              {t("auth.pseudo")}
+              Pseudo
             </label>
             <input
               id="pseudo"
@@ -206,7 +249,7 @@ export default function RegisterPage() {
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
               }`}
-              placeholder={t("auth.pseudoPlaceholder")}
+              placeholder="Votre pseudo"
             />
             {formError.username && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
@@ -228,21 +271,21 @@ export default function RegisterPage() {
                 }`}
               />
               <label htmlFor="acceptTerms" className="text-sm text-offwhite">
-                {t("auth.acceptTerms")}{" "}
+                J&#39;accepte les{" "}
                 <Link
                   href="/terms"
                   className="font-semibold underline text-primary hover:text-secondary"
                   target="_blank"
                 >
-                  {t("auth.termsLink")}
+                  conditions d&#39;utilisation
                 </Link>{" "}
-                {t("auth.and")}{" "}
+                et les{" "}
                 <Link
                   href="/privacy"
                   className="font-semibold underline text-primary hover:text-secondary"
                   target="_blank"
                 >
-                  {t("auth.privacyLink")}
+                  termes de confidentialité
                 </Link>
               </label>
             </div>
@@ -258,17 +301,18 @@ export default function RegisterPage() {
               className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-offwhite bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
               disabled={loading}
             >
-              {loading ? t("common.loading") : t("auth.registerAction")}
+              {loading ? "Chargement..." : "S'inscrire"}
             </button>
           </div>
           <div className="mt-2 text-sm text-center text-offwhite">
-            {t("auth.hasAccount")}{" "}
-            <Link
-              href="/login"
+            Déjà un compte ?{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
               className="font-bold underline text-offwhite hover:text-secondary"
             >
-              {t("auth.loginAction")}
-            </Link>
+              Se connecter
+            </button>
           </div>
         </form>
       </div>

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import userService from "@/lib/api/userService";
 import Image from "next/image";
-import { useTranslation } from "@/i18n/TranslationProvider";
 
 interface UserProfile {
   id: number;
@@ -21,7 +20,6 @@ export default function AccountPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params?.id;
-  const { t } = useTranslation();
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +35,7 @@ export default function AccountPage() {
         setError(null);
       } catch (err) {
         console.error("Erreur dans fetchUser:", err);
-        setError(t("common.error"));
+        setError("Utilisateur introuvable ou erreur lors du chargement.");
         setUser(null);
       } finally {
         setLoading(false);
@@ -57,7 +55,7 @@ export default function AccountPage() {
             className="px-6 py-2 font-semibold text-white rounded-md [background-color:var(--color-primary)]"
             onClick={() => router.back()}
           >
-            {t("common.back")}
+            Retour à la page précédente
           </button>
         </div>
       </div>
@@ -72,7 +70,7 @@ export default function AccountPage() {
           <div className="relative w-36 h-36 md:w-48 md:h-48">
             <Image
               src={avatarUrl}
-              alt={user?.username ? `${t("profile.title")} ${user.username}` : t("common.user")}
+              alt="User Avatar"
               fill
               className="object-cover border-4 rounded-full shadow-md bg-primary"
               sizes="(max-width: 768px) 9rem, 12rem"
@@ -81,11 +79,11 @@ export default function AccountPage() {
           </div>
           <div className="flex-grow text-center md:text-left">
             <h1 className="text-3xl font-bold lg:text-4xl font-montserrat [color:var(--color-primary)]">
-              {user?.username || t("common.user")}
+              {user?.username || "Utilisateur"}
             </h1>
             <p className="text-sm text-gray-300">
               {user
-                ? `${t("profile.userSince")} ${
+                ? `Utilisateur depuis le : ${
                     user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()
                       : ""
@@ -94,24 +92,24 @@ export default function AccountPage() {
             </p>
             <p className="text-sm text-gray-300">
               {loading
-                ? t("profile.loadingGames")
-                : t("profile.gamesInList", { count: user?.followedGames?.length ?? 0 })}
+                ? "Chargement des jeux..."
+                : `${user?.followedGames?.length ?? 0} jeux dans sa liste`}
             </p>
             <p className="text-sm text-gray-300">
-              {user ? t("profile.modifications", { count: user.modifications?.length ?? 0 }) : ""}
+              {user ? `${user.modifications?.length ?? 0} modifications` : ""}
             </p>
             <p className="mt-2 text-lg font-semibold text-green-400">
-              {user ? t("profile.reputation", { count: user.reputation }) : ""}
+              {user ? `+ ${user.reputation} Rep` : ""}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Sa Liste Section */}
+      {/* Ma Liste Section */}
       <section>
         <div className="flex flex-col items-center justify-between mb-8 sm:flex-row">
           <h2 className="mb-4 text-3xl font-bold font-montserrat sm:mb-0">
-            {t("profile.hisList")}
+            Sa liste
           </h2>
         </div>
       </section>

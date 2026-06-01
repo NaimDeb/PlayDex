@@ -3,9 +3,8 @@ export interface User {
   email: string;
   roles: string[];
   username: string;
-  createdAt: string;
-  // reputation: number; // pas utilisé pour l'instant
-  contributionsCount: number;
+  createdAt: string; // renommé de created_at à createdAt
+  reputation: number;
   isBanned?: boolean;
   banReason?: string;
   bannedUntil?: string;
