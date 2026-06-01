@@ -51,7 +51,11 @@ jobs:
     - name: Install dependencies
       working-directory: ./backend
       run: composer install --prefer-dist --no-progress
-    
+
+    - name: Generate JWT keypair
+      working-directory: ./backend
+      run: php bin/console lexik:jwt:generate-keypair --skip-if-exists
+
     - name: Setup database
       working-directory: ./backend
       run: |
