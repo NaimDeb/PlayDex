@@ -1,22 +1,18 @@
 "use client";
-
-import { useParams } from "next/navigation";
 import ReportForm from "@/components/ReportForm";
-import { useTranslation } from "@/i18n/TranslationProvider";
+import { useParams } from "next/navigation";
 
 export default function ReportModificationPage() {
   const { id } = useParams() as { id: string };
-  const { t } = useTranslation();
-
   return (
     <>
-      <h1 className="text-2xl font-montserrat font-bold mb-1 leading-snug">
-        {t("report.modificationTitle")}
+      <h1 className="text-3xl font-montserrat font-bold mb-2">
+        Signaler une modification
       </h1>
       <ReportForm
         reportableId={Number(id)}
         reportableEntity="Modification"
-        successMessage={t("report.successModification")}
+        successMessage="Merci d'avoir signalé cette modification."
       />
     </>
   );

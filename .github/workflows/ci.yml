@@ -1,0 +1,85 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: playdex_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: sodium, pdo_mysql
+    
+    - name: Create .env file
+      working-directory: ./backend
+      run: |
+        cat > .env << EOF
+        APP_ENV=test
+        APP_SECRET=test_secret_key_for_ci
+        DATABASE_URL=mysql://root:root@127.0.0.1:3306/playdex_test?serverVersion=8.0&charset=utf8mb4
+        TEST_TOKEN=
+        STEAM_API_KEY=${{ secrets.STEAM_API_KEY }}
+        TWITCH_CLIENT_ID=${{ secrets.TWITCH_CLIENT_ID }}
+        IGDB_ACCESS_TOKEN=${{ secrets.IGDB_ACCESS_TOKEN }}
+        JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
+        JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+        JWT_PASSPHRASE=test_passphrase
+        CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
+        MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0
+        LOCK_DSN=flock
+        EOF
+    
+    - name: Install dependencies
+      working-directory: ./backend
+      run: composer install --prefer-dist --no-progress
+    
+    - name: Setup database
+      working-directory: ./backend
+      run: |
+        php bin/console doctrine:migrations:migrate --no-interaction
+            
+    - name: Run tests
+      working-directory: ./backend
+      run: php bin/phpunit
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Run lint
+      working-directory: ./frontend
+      run: npm run lint
+    
+    - name: Build
+      working-directory: ./frontend
+      run: npm run build

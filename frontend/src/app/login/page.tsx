@@ -2,28 +2,27 @@
 
 import { useAuth } from "@/providers/AuthProvider";
 import { FormEvent, useEffect, useState } from "react";
-
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
-import PasswordInput from "@/components/shared/PasswordInput";
-import { useTranslation } from "@/i18n/TranslationProvider";
-import { isValidEmail } from "@/lib/validationUtils";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{ email?: string }>({});
 
-  const { t } = useTranslation();
+  const router = useRouter();
 
   const { login, error, isAuthenticated } = useAuth();
   const { showMessage } = useFlashMessage();
 
   useEffect(() => {
     if (isAuthenticated && !error) {
-      showMessage(t("auth.loginSuccess"), "success");
+      showMessage("Connexion réussie !", "success");
+      // router.push("/") inutile ici, déjà fait dans le provider
     }
   }, [isAuthenticated, error, showMessage]);
 
@@ -31,8 +30,8 @@ export default function LoginPage() {
     event.preventDefault();
     let hasError = false;
     const newFormError: { email?: string } = {};
-    if (!isValidEmail(email)) {
-      newFormError.email = t("auth.invalidEmail");
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      newFormError.email = "Veuillez entrer une adresse email valide.";
       hasError = true;
     }
     setFormError(newFormError);
@@ -43,16 +42,17 @@ export default function LoginPage() {
     setLoading(true);
     await login({ email, password, rememberMe });
     setLoading(false);
+    // Ne rien faire ici, le message de succès ou d'erreur est géré par le provider et l'effet ci-dessus
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 bg-off-black">
-      <div className="relative w-full max-w-lg p-4 sm:p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
-        <h1 className="mb-4 text-2xl sm:text-3xl font-extrabold text-center text-offwhite">
-          {t("auth.loginTitle")}
+      <div className="relative w-full max-w-lg p-8 overflow-hidden border-4 shadow-2xl bg-offgray border-secondary rounded-xl">
+        <h1 className="mb-4 text-3xl font-extrabold text-center text-offwhite">
+          Se connecter
         </h1>
         {(formError.email || error) && (
-          <div role="alert" className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
+          <div className="px-4 py-3 mb-6 text-sm text-white border border-red-600 rounded-lg bg-red-500/90">
             {formError.email ? formError.email : error}
           </div>
         )}
@@ -62,7 +62,7 @@ export default function LoginPage() {
               htmlFor="email"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              {t("auth.email")}
+              Email
             </label>
             <input
               id="email"
@@ -75,7 +75,7 @@ export default function LoginPage() {
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : ""
               }`}
-              placeholder={t("auth.emailPlaceholder")}
+              placeholder="Votre email"
             />
             {formError.email && (
               <p className="mt-1 text-xs text-red-400 animate-fade-in">
@@ -88,16 +88,26 @@ export default function LoginPage() {
               htmlFor="password"
               className="block mb-1 text-sm font-semibold text-offwhite"
             >
-              {t("auth.password")}
+              Mot de passe
             </label>
-            <PasswordInput
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
-              placeholder={t("auth.passwordPlaceholder")}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 pr-12 border rounded-lg text-offwhite bg-offwhite border-secondary focus:ring-primary focus:border-primary placeholder:text-gray-400"
+                placeholder="Votre mot de passe"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-offwhite"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
           <div className="flex items-center">
             <input
@@ -111,7 +121,7 @@ export default function LoginPage() {
               htmlFor="rememberMe"
               className="block ml-2 text-sm text-offwhite"
             >
-              {t("auth.rememberMe")}
+              Se souvenir de moi
             </label>
           </div>
           <div>
@@ -120,17 +130,18 @@ export default function LoginPage() {
               className="w-full px-4 py-3 text-lg font-bold transition-colors rounded-lg shadow-md text-offwhite bg-primary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-offwhite"
               disabled={loading}
             >
-              {loading ? t("common.loading") : t("auth.loginAction")}
+              {loading ? "Chargement..." : "Se connecter"}
             </button>
           </div>
           <div className="mt-2 text-sm text-center text-offwhite">
-            {t("auth.noAccount")}{" "}
-            <Link
-              href="/register"
+            Pas encore de compte ?{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/register")}
               className="font-bold underline text-offwhite hover:text-secondary"
             >
-              {t("auth.registerAction")}
-            </Link>
+              S&apos;inscrire
+            </button>
           </div>
         </form>
       </div>

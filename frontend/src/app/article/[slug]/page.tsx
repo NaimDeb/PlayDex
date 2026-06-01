@@ -9,10 +9,10 @@ import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
 import { GameArticleSkeleton } from "@/components/Skeletons/GameArticleSkeleton";
 import { GameInfoSection } from "@/components/ArticlePage/GameInfoSection";
+import { ExtensionsSection } from "@/components/ArticlePage/ExtensionsSection";
 import { UpdatesTimelineSection } from "@/components/ArticlePage/UpdatesTimelineSection";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
-import { PageSection } from "@/components/PageSection";
-import { useTranslation } from "@/i18n/TranslationProvider";
+
 
 export default function ArticlePage({
   params,
@@ -20,61 +20,83 @@ export default function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { isAuthenticated } = useAuth();
-  const { followedGameIds }  = useFollowedGames();
-  const { t }               = useTranslation();
-  const router               = useRouter();
-  const { slug }             = use(params);
-  const id                   = slug.split("-").pop();
+  const { followedGameIds } = useFollowedGames(); 
 
-  const [gameData,   setGameData]   = useState<Game | null>(null);
-  const [isLoading,  setIsLoading]  = useState<boolean>(true);
-  const [error,      setError]      = useState<string | null>(null);
-  const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]);
+  const router = useRouter();
+  const { slug } = use(params);
+  const parts = slug.split("-");
+  const id = parts.pop();
+  
+
+  const [gameData, setGameData] = useState<Game | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]); // Explicitly define the type as Patchnote[]
   const [extensions, setExtensions] = useState<Extension[]>([]);
-  const [image,      setImage]      = useState<string>("/no_cover.png");
+  const [image, setImage] = useState<string>("/no_cover.png"); // Assuming extensions is an array of objects
 
+  // --- Filter State ---
+
+  // Todo : date range filter
+  // const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
+
+  // loads the game data and patchnotes when the component mounts or when the id changes
   useEffect(() => {
-    async function loadData(): Promise<void> {
+    async function loadData() {
       setIsLoading(true);
       setError(null);
       try {
-        if (!id) throw new Error("Invalid game ID.");
-
+        if (!id) {
+          throw new Error("Invalid game ID.");
+        }
         const data = await gameService.getGameById(id);
         setGameData(data);
-        document.title = `Playdex - ${data.title}`;
+        document.title = "Playdex - " + data.title;
 
-        const [patchnotesData, extensionsData] = await Promise.all([
-          gameService.getGamePatchNotes(id),
-          data.extensions?.length > 0
-            ? gameService.getGameExtensions(id)
-            : Promise.resolve([]),
-        ]);
-
+        // Fetch patchnotes
+        const patchnotesData = await gameService.getGamePatchNotes(id);
         setPatchnotes(Array.isArray(patchnotesData) ? patchnotesData : []);
-        setExtensions(Array.isArray(extensionsData) ? extensionsData : []);
+
+        // Fetch extensions if available
+        if (data.extensions && data.extensions.length > 0) {
+          const extensionsData = await gameService.getGameExtensions(id);
+          setExtensions(extensionsData);
+        }
+
+        // Set the image
 
         if (data.imageUrl) {
-          setImage(changeIgdbImageFormat(data.imageUrl, IgdbImageFormat.CoverBig2x));
+          const imageUrl = changeIgdbImageFormat(
+            data.imageUrl,
+            IgdbImageFormat.CoverBig2x
+          );
+
+          setImage(imageUrl);
         }
       } catch (err) {
-        console.error(err);
         setError("Failed to load game data.");
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     }
-    void loadData();
-  }, [id]);
+    loadData();
+  }, [id]); // Re-fetch if id changes
 
-  // Mark followed games as checked
+
+
   useEffect(() => {
-    if (isAuthenticated && id && gameData && followedGameIds.includes(id)) {
-      void gameService.postCheckGame(id);
-    }
-  }, [isAuthenticated, id, gameData, followedGameIds]);
+  if (
+    isAuthenticated &&
+    id &&
+    gameData &&
+    followedGameIds.includes(id)
+  ) {
+    gameService.postCheckGame(id);
+  }
+}, [isAuthenticated, id, gameData, followedGameIds]);
 
-  // Canonical slug redirect
+  // --- Slug Logic ---
   const sluggified =
     gameData && id
       ? `${gameData.title
@@ -83,58 +105,70 @@ export default function ArticlePage({
           .replace(/^-+|-+$/g, "")}-${id}`
       : null;
 
+  // Check if the slug in the URL matches the sluggified version
   useEffect(() => {
-    if (sluggified && slug !== sluggified) {
+    if (gameData && id && slug !== sluggified) {
       router.replace(`/article/${sluggified}`);
     }
-  }, [slug, sluggified, router]);
+  }, [gameData, id, slug, sluggified, router]);
 
+
+
+
+
+  /**
+   * Formats the date difference between now and the given date.
+   * @param date
+   * @returns
+   */
   const formatDateDifference = (date: Date | string): string => {
-    const parsed   = typeof date === "string" ? new Date(date) : date;
-    const diffDays = Math.ceil(
-      Math.abs(Date.now() - parsed.getTime()) / (1000 * 60 * 60 * 24)
-    );
+    const parsedDate = typeof date === "string" ? new Date(date) : date;
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - parsedDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     const diffYears = Math.floor(diffDays / 365);
-    if (diffDays <= 1)  return t("time.oneDay");
-    if (diffDays < 365) return t("time.daysAgo", { count: diffDays });
-    if (diffYears === 1) return t("time.oneYear");
-    return t("time.yearsAgo", { count: diffYears });
+
+    if (diffDays <= 1) return "Il y a 1 jour";
+    if (diffDays < 365) return `Il y a ${diffDays} jours`;
+    if (diffYears === 1) return "Il y a 1 an";
+    return `Il y a ${diffYears} ans`;
   };
 
-  // ── Early returns — after all hooks, TypeScript happy ──────────────
-  if (isLoading) return <GameArticleSkeleton />;
+  if (isLoading) {
+    return <GameArticleSkeleton />;
+  }
 
-  if (error) return (
-    <p className="py-16 text-center text-red-500">{error}</p>
-  );
+  if (error) {
+    return (
+      <div className="container px-4 py-8 mx-auto text-center text-red-500">
+        {error}
+      </div>
+    );
+  }
 
-  // notFound() ne renvoie jamais (type `never`), ce qui permet à TS de
-  // savoir que gameData est non-null dans tout le JSX qui suit.
-  if (!gameData) return notFound();
+  if (!gameData) {
+    notFound();
+  }
 
   return (
-    <div className="min-h-screen text-white bg-off-black">
-      <PageSection className="py-8">
-        <nav aria-label="Fil d'Ariane">
-          <Breadcrumbs>
-            <BreadcrumbItem href="/">{t("game.breadcrumbHome")}</BreadcrumbItem>
-            <BreadcrumbItem>{t("game.breadcrumbGame")}</BreadcrumbItem>
-          </Breadcrumbs>
-        </nav>
-
+    <div className="min-h-screen font-sans text-white bg-off-black">
+      <div className="container px-4 py-8 mx-auto">
+        <Breadcrumbs>
+          <BreadcrumbItem href="/">Accueil</BreadcrumbItem>
+          <BreadcrumbItem>Jeu</BreadcrumbItem>
+        </Breadcrumbs>
         <GameInfoSection
           gameData={gameData}
-          extensions={extensions}
           image={image}
           isAuthenticated={isAuthenticated}
         />
-
+        <ExtensionsSection extensions={extensions} />
         <UpdatesTimelineSection
           patchnotes={patchnotes}
           extensions={extensions}
           formatDateDifference={formatDateDifference}
         />
-      </PageSection>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,6 @@ import { fr } from "date-fns/locale";
 import ReactMarkdown from "react-markdown";
 import gameService from "@/lib/api/gameService";
 import DiffViewer from "@/components/DiffViewer";
-import { useTranslation } from "@/i18n/TranslationProvider";
 
 
 // Todo : make the difference show more user friendly
@@ -19,7 +18,6 @@ import { useTranslation } from "@/i18n/TranslationProvider";
 export default function PatchnoteModificationsPage() {
   const { id, slug } = useParams() as { id: string; slug: string };
   const { patchnote, loading } = usePatchnoteLayout();
-  const { t } = useTranslation();
   const [modifications, setModifications] = useState<Modification[]>([]);
   const [loadingMods, setLoadingMods] = useState(true);
   const [page, setPage] = useState(1);
@@ -44,7 +42,7 @@ export default function PatchnoteModificationsPage() {
   if (loading || loadingMods) {
     return (
       <div className="text-center text-gray-400 py-8">
-        {t("patchnote.loadingModifications")}
+        Chargement des modifications...
       </div>
     );
   }
@@ -57,17 +55,17 @@ export default function PatchnoteModificationsPage() {
     <div className="container mx-auto px-4 py-8 text-white">
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{t("patchnote.modificationsTitle")}</h1>
+        <h1 className="text-2xl font-bold">Modifications de la patchnote</h1>
         <Button
           color="secondary"
           onPress={() => router.push(`/article/${slug}/patchnote/${id}`)}
         >
-          {t("patchnote.backToPatchnote")}
+          Retour à la patchnote
         </Button>
       </div>
       {modifications.length === 0 ? (
         <div className="text-gray-400">
-          {t("patchnote.noModifications")}
+          Aucune modification trouvée pour cette patchnote.
         </div>
       ) : (
         <div className="space-y-4">
@@ -86,11 +84,10 @@ export default function PatchnoteModificationsPage() {
                     &gt;
                   </span>
                   <span className="font-semibold text-lg">
-                    {t("patchnote.modificationDate", {
-                      date: mod.createdAt
-                        ? new Date(mod.createdAt).toLocaleDateString("fr-FR")
-                        : "",
-                    })}
+                    Modification du{" "}
+                    {mod.createdAt
+                      ? new Date(mod.createdAt).toLocaleDateString("fr-FR")
+                      : ""}
                   </span>
                   <span className="text-xs text-gray-400">
                     {mod.createdAt
@@ -109,7 +106,7 @@ export default function PatchnoteModificationsPage() {
                     router.push(`/report/modification/${mod.id}`);
                   }}
                 >
-                  {t("report.reportAction")}
+                  Signaler
                 </Button>
               </summary>
               <Card>
@@ -134,10 +131,10 @@ export default function PatchnoteModificationsPage() {
             disabled={page === 1}
             onPress={() => setPage((p) => Math.max(1, p - 1))}
         >
-            {t("common.previous")}
+            Précédent
         </Button>
         <span className="px-4 py-2 rounded bg-gray-800 text-white">
-            {t("common.page")} {page}
+            Page {page}
         </span>
         <Button
             color="secondary"
@@ -145,7 +142,7 @@ export default function PatchnoteModificationsPage() {
             disabled={modifications.length === 0}
             onPress={() => setPage((p) => p + 1)}
         >
-            {t("common.next")}
+            Suivant
         </Button>
     </div>
     </div>

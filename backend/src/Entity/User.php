@@ -349,12 +349,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
         return $this;
     }
 
-    #[Groups(['user:read'])]
-    public function getContributionsCount(): int
-    {
-        return $this->modifications->count() + $this->patchnotes->count();
-    }
-
     /**
      * @return Collection<int, Modification>
      */

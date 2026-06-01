@@ -7,9 +7,6 @@ import { Patchnote } from "@/types/patchNoteType";
 import { Game } from "@/types/gameType";
 import { usePathname } from "next/navigation";
 import { PatchnoteLayoutContext } from "@/contexts/PatchnoteLayoutContext";
-import { BackButton } from "@/components/BackButton";
-import { PatchnoteGameHeader } from "@/components/PatchnoteGameHeader";
-import { useTranslation } from "@/i18n/TranslationProvider";
 
 export default function PatchnoteLayout({
   children,
@@ -56,16 +53,14 @@ export default function PatchnoteLayout({
   }, [id, slug]);
 
   const pathname = usePathname();
-  const { t } = useTranslation();
 
   return (
     <PatchnoteLayoutContext.Provider value={{ patchnote, game, loading }}>
-      <div className="container mx-auto px-4 py-8 text-white flex-1">
-        <BackButton />
+      <div className="container mx-auto px-4 py-8 text-white">
         <Breadcrumbs underline="hover" className="mb-6">
           <BreadcrumbItem>
             <Link href="/" className="text-gray-400 hover:underline">
-              {t("game.breadcrumbHome")}
+              Accueil
             </Link>
           </BreadcrumbItem>
           <BreadcrumbItem>
@@ -73,27 +68,20 @@ export default function PatchnoteLayout({
               href={`/article/${slug}`}
               className="text-gray-400 hover:underline"
             >
-              {game?.title || t("common.loading")}
+              {game?.title || "Jeu..."}
             </Link>
           </BreadcrumbItem>
           <BreadcrumbItem>
             <span className="text-white">
-              {patchnote?.title || t("common.loading")}
+              {patchnote?.title || "Patchnote..."}
             </span>
           </BreadcrumbItem>
           {pathname.endsWith("/modifications") && (
             <BreadcrumbItem>
-              <span className="text-white">{t("patchnote.modificationsTitle")}</span>
+              <span className="text-white">Modifications</span>
             </BreadcrumbItem>
           )}
         </Breadcrumbs>
-        {game && (
-          <PatchnoteGameHeader
-            gameTitle={game.title}
-            gameSlug={slug}
-            gameImageUrl={game.imageUrl}
-          />
-        )}
         {children}
       </div>
     </PatchnoteLayoutContext.Provider>
