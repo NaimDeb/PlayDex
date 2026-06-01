@@ -1,0 +1,12 @@
+# Dépendances : réinstallées dans le conteneur par "npm install"
+# (en plus, les binaires de Windows ne fonctionnent pas dans Linux !)
+node_modules
+
+# Build Next.js : régénéré par "npm run build"
+.next
+
+# Secrets et divers
+.env
+.env.local
+.git
+.gitignore
