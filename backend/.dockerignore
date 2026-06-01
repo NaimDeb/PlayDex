@@ -1,0 +1,16 @@
+# Dépendances : réinstallées dans le conteneur par "composer install"
+vendor
+
+# Fichiers de cache/logs générés par Symfony
+var
+
+# Note : on NE peut PAS ignorer .env -> Symfony en a besoin pour démarrer.
+# TODO prod: garder les secrets hors de l'image avec "composer dump-env prod"
+#   (génère un .env.local.php) au lieu d'embarquer .env.
+# On ignore quand même les variantes locales/test qui n'ont rien à faire dans l'image :
+.env.local
+.env.test
+
+# Divers
+.git
+.gitignore
