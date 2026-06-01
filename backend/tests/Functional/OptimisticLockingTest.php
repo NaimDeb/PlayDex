@@ -3,6 +3,7 @@
 namespace App\Tests\Functional;
 
 use App\Entity\Game;
+use App\Entity\Patchnote;
 use App\Entity\User;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -94,5 +95,31 @@ class OptimisticLockingTest extends WebTestCase
         ]));
 
         $this->assertResponseStatusCodeSame(409);
+    }
+
+    protected function tearDown(): void
+    {
+        $em = $this->entityManager;
+
+        // Remove patchnotes (and their modifications via orphanRemoval) created by the test user
+        $user = $em->getRepository(User::class)->findOneBy(['email' => 'locking@test.com']);
+        if ($user) {
+            foreach ($em->getRepository(Patchnote::class)->findBy(['createdBy' => $user]) as $patchnote) {
+                $em->remove($patchnote);
+            }
+            $em->flush();
+            $em->remove($user);
+        }
+
+        if ($this->game->getId()) {
+            $game = $em->getRepository(Game::class)->find($this->game->getId());
+            if ($game) {
+                $em->remove($game);
+            }
+        }
+
+        $em->flush();
+
+        parent::tearDown();
     }
 }
