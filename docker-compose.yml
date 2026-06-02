@@ -6,7 +6,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # on injecte les secrets au runtime
+    env_file:
+      - ./backend/.env
+    # clés JWT via un volume
+    volumes:
+      - ./backend/config/jwt:/app/config/jwt:ro
     environment:
+      # Surcharge le DATABASE_URL du .env pour viser le conteneur "db" (et non 127.0.0.1).
       DATABASE_URL: "mysql://root:root@db:3306/playdex?serverVersion=8.4&charset=utf8mb4"
 
   frontend:
