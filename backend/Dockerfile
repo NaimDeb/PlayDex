@@ -33,9 +33,7 @@ EXPOSE 8000
 
 # Au démarrage, dans l'ordre :
 #  1. migrations  -> crée/met à jour les tables (--allow-no-migration : pas d'erreur si rien à faire)
-#  2. fixtures    -> remplit la base de données de démo
-#                    ATTENTION : --no-interaction purge (VIDE) les tables à chaque démarrage.
-#                    Pour ajouter sans vider, utiliser --append à la place.
-#  3. serveur     -> lance l'application
-# Le && enchaîne chaque étape seulement si la précédente a réussi.
-CMD ["sh", "-c", "php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration && php bin/console doctrine:fixtures:load --no-interaction && php -S 0.0.0.0:8000 -t public"]
+#  2. serveur     -> lance l'application
+# Pour (re)remplir la base de démo en local, lancer manuellement une fois :
+#   docker compose exec backend php bin/console doctrine:fixtures:load
+CMD ["sh", "-c", "php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration && php -S 0.0.0.0:8000 -t public"]
