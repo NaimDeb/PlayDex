@@ -76,8 +76,13 @@ class OptimisticLockingTest extends WebTestCase
         ]));
 
         $this->assertResponseIsSuccessful();
+
+        // The patch processor returns void, so the patched version is read back via GET
+        $this->client->request('GET', '/api/patchnotes/' . $patchnoteId);
+        $this->assertResponseIsSuccessful();
         $updatedResponse = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertEquals($version + 1, $updatedResponse['version']);
+        $this->assertEquals('Updated content', $updatedResponse['content']);
     }
 
     public function testPatchnoteUpdateWithIncorrectVersion(): void
