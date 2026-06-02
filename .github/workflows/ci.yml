@@ -52,6 +52,16 @@ jobs:
       working-directory: ./backend
       run: composer install --prefer-dist --no-progress
 
+    - name: PHP CodeSniffer (PSR12)
+      working-directory: ./backend
+      continue-on-error: true
+      run: php vendor/bin/phpcs -q
+
+    - name: PHPStan (level 3)
+      working-directory: ./backend
+      continue-on-error: true
+      run: php vendor/bin/phpstan analyse --no-progress
+
     - name: Generate JWT keypair
       working-directory: ./backend
       run: php bin/console lexik:jwt:generate-keypair --skip-if-exists
