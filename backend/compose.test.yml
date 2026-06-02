@@ -1,0 +1,18 @@
+# Base MySQL jetable pour lancer la suite de tests en local,
+# identique au service mysql du job CI (.github/workflows/ci.yml).
+#   docker compose -f compose.test.yml up -d
+#   docker compose -f compose.test.yml down -v   (supprime aussi les donnees)
+services:
+  mysql-test:
+    image: mysql:8.0
+    container_name: playdex-mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: playdex_test
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
