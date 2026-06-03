@@ -1,0 +1,39 @@
+services:
+  backend:
+    image: naimdeb/playdex-backend:latest 
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env                                 
+    volumes:
+      - ./config/jwt:/app/config/jwt:ro      
+    environment:
+      # ${MYSQL_ROOT_PASSWORD} est lu depuis le fichier .env posé À CÔTÉ de ce compose sur le serveur.
+      DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD}@db:3306/playdex?serverVersion=8.4&charset=utf8mb4"
+    ports:
+      - "127.0.0.1:8000:8000"                # 👈 exposé UNIQUEMENT en local -> le reverse proxy nginx tape ici
+
+  frontend:
+    image: naimdeb/playdex-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}   # valeur réelle dans le .env du serveur
+      MYSQL_DATABASE: playdex
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
