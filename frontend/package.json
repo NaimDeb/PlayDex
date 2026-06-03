@@ -57,11 +57,10 @@
     "diff": "^8.0.3",
     "embla-carousel-react": "^8.3.0",
     "eslint": "^9",
-    "eslint-config-next": "15.2.4",
     "framer-motion": "^12.7.5",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.446.0",
-    "next": "15.2.4",
+    "next": "^15.5.19",
     "next-utils": "^0.2.1",
     "pnpm": "^10.8.0",
     "postcss": "^8.5.3",
@@ -90,7 +89,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.2.4",
+    "eslint-config-next": "^15.5.19",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

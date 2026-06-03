@@ -1,6 +1,6 @@
-# Image Node de base.
-# TODO: envisager un multi-stage build (étape "builder" + étape runtime légère) pour réduire la taille de l'image finale.
-FROM node:22
+# Image Node de base — variante "slim" : beaucoup moins de vulnérabilités OS et ~300 MB de moins.
+# TODO: envisager un multi-stage build (étape "builder" + étape runtime légère) pour réduire encore la taille.
+FROM node:22-slim
 
 WORKDIR /app
 

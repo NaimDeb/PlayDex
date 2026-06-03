@@ -8,15 +8,14 @@ use ApiPlatform\Metadata\Get;
 
 
 #[ApiResource(
-    collectionOperations: [
+    operations: [
         new Get(
             name: 'getLatestReleases',
             uriTemplate: '/latest-releases',
             normalizationContext: ['groups' => ['game:read', 'extension:read']],
             provider: LatestReleasesProvider::class,
         )
-    ],
-    itemOperations: []
+    ]
 )]
 class LatestReleaseItem
 {
