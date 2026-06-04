@@ -4,8 +4,11 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import PasswordInput from "@/components/shared/PasswordInput";
+import { useTranslation } from "@/i18n/TranslationProvider";
+import { isValidEmail, validatePassword } from "@/lib/validationUtils";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,8 +29,9 @@ interface FormErrors {
 }
 
 export default function ProfileEditPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState<ProfileUpdateData & { password?: string }>({
     username: user?.username || "",
@@ -37,12 +41,18 @@ export default function ProfileEditPage() {
   });
 
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Redirect if not authenticated (in an effect so it never runs during SSR/prerender)
   useEffect(() => {
@@ -60,39 +70,30 @@ export default function ProfileEditPage() {
 
     // Username validation
     if (!formData.username.trim()) {
-      newErrors.username = "Le nom d'utilisateur est requis";
+      newErrors.username = t("profile.usernameRequired");
     } else if (formData.username.length < 3) {
-      newErrors.username =
-        "Le nom d'utilisateur doit contenir au moins 3 caractères";
+      newErrors.username = t("profile.usernameMinLength");
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
-      newErrors.email = "L'email est requis";
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = "Veuillez entrer un email valide";
+      newErrors.email = t("profile.emailRequired");
+    } else if (!isValidEmail(formData.email)) {
+      newErrors.email = t("auth.invalidEmail");
     }
 
     // Password validation (only if password is provided)
     if (formData.password) {
       if (!formData.currentPassword) {
-        newErrors.currentPassword = "L'ancien mot de passe est requis pour changer le mot de passe";
+        newErrors.currentPassword = t("auth.currentPasswordRequired");
       }
-      if (formData.password.length < 8) {
-        newErrors.password = "Le mot de passe doit contenir au moins 8 caractères";
-      } else if (!/[A-Z]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins une majuscule";
-      } else if (!/[a-z]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins une minuscule";
-      } else if (!/[0-9]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins un chiffre";
-      } else if (!/[^A-Za-z0-9]/.test(formData.password)) {
-        newErrors.password = "Le mot de passe doit contenir au moins un caractère spécial";
+      const passwordError = validatePassword(formData.password);
+      if (passwordError) {
+        newErrors.password = t(passwordError);
       }
 
       if (formData.password !== confirmPassword) {
-        newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
+        newErrors.confirmPassword = t("auth.passwordMismatch");
       }
     }
 
@@ -172,7 +173,7 @@ export default function ProfileEditPage() {
         setErrors(apiErrors);
       } else {
         setErrors({
-          general: "Une erreur est survenue lors de la mise à jour du profil",
+          general: t("profile.updateError"),
         });
       }
     } finally {
@@ -197,13 +198,15 @@ export default function ProfileEditPage() {
         <div className="flex items-center gap-4 mb-8">
           <Link
             href="/profile"
-            className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+            className="p-2 transition-colors bg-gray-800 rounded-lg hover:bg-gray-700"
+            aria-label={t("common.back")}
           >
             <svg
               className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -213,15 +216,15 @@ export default function ProfileEditPage() {
               />
             </svg>
           </Link>
-          <h1 className="text-3xl font-bold font-montserrat [color:var(--color-primary)]">
-            Modifier le profil
+          <h1 className="text-2xl sm:text-3xl font-bold font-montserrat [color:var(--color-primary)]">
+            {t("profile.editTitle")}
           </h1>
         </div>
 
         {/* Success Message */}
         {success && (
           <div className="p-4 mb-6 text-green-400 bg-green-900 rounded-md bg-opacity-30">
-            Profil mis à jour avec succès ! Redirection en cours...
+            {t("profile.updateSuccess")}
           </div>
         )}
 
@@ -234,14 +237,14 @@ export default function ProfileEditPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="p-6 bg-gray-800 rounded-lg shadow-xl bg-opacity-70 backdrop-blur-sm">
+          <div className="p-4 bg-gray-800 rounded-lg shadow-xl sm:p-6 bg-opacity-70 backdrop-blur-sm">
             {/* Username Field */}
             <div className="mb-6">
               <label
                 htmlFor="username"
                 className="block mb-2 text-sm font-medium text-gray-300"
               >
-                Nom d&apos;utilisateur
+                {t("profile.usernameLabel")}
               </label>
               <input
                 type="text"
@@ -252,7 +255,7 @@ export default function ProfileEditPage() {
                 className={`w-full px-4 py-3 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
                   errors.username ? "border-red-500" : "border-gray-600"
                 }`}
-                placeholder="Votre nom d'utilisateur"
+                placeholder={t("auth.pseudoPlaceholder")}
               />
               {errors.username && (
                 <p className="mt-1 text-sm text-red-400">{errors.username}</p>
@@ -265,7 +268,7 @@ export default function ProfileEditPage() {
                 htmlFor="email"
                 className="block mb-2 text-sm font-medium text-gray-300"
               >
-                Adresse email
+                {t("profile.emailLabel")}
               </label>
               <input
                 type="email"
@@ -285,11 +288,11 @@ export default function ProfileEditPage() {
 
             {/* Password Section */}
             <div className="pt-6 border-t border-gray-600">
-              <h3 className="mb-4 text-lg font-semibold text-gray-300">
-                Changer le mot de passe
-              </h3>
+              <h2 className="mb-4 text-lg font-semibold text-gray-300">
+                {t("auth.changePassword")}
+              </h2>
               <p className="mb-4 text-sm text-gray-400">
-                Laissez vide si vous ne souhaitez pas changer votre mot de passe
+                {t("auth.changePasswordHint")}
               </p>
 
               {/* Current Password Field */}
@@ -298,28 +301,20 @@ export default function ProfileEditPage() {
                   htmlFor="currentPassword"
                   className="block mb-2 text-sm font-medium text-gray-300"
                 >
-                  Mot de passe actuel
+                  {t("auth.currentPassword")}
                 </label>
-                <div className="relative">
-                  <input
-                    type={showCurrentPassword ? "text" : "password"}
-                    id="currentPassword"
-                    name="currentPassword"
-                    value={formData.currentPassword}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                      errors.currentPassword ? "border-red-500" : "border-gray-600"
-                    }`}
-                    placeholder="Votre mot de passe actuel"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
-                  >
-                    {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={formData.currentPassword}
+                  onChange={handleInputChange}
+                  error={errors.currentPassword}
+                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                    !errors.currentPassword ? "border-gray-600" : ""
+                  }`}
+                  buttonClassName="text-gray-400 hover:text-off-white"
+                  placeholder={t("auth.currentPasswordPlaceholder")}
+                />
                 {errors.currentPassword && (
                   <p className="mt-1 text-sm text-red-400">{errors.currentPassword}</p>
                 )}
@@ -331,28 +326,20 @@ export default function ProfileEditPage() {
                   htmlFor="password"
                   className="block mb-2 text-sm font-medium text-gray-300"
                 >
-                  Nouveau mot de passe
+                  {t("auth.newPassword")}
                 </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    id="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                      errors.password ? "border-red-500" : "border-gray-600"
-                    }`}
-                    placeholder="Nouveau mot de passe (optionnel)"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  error={errors.password}
+                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                    !errors.password ? "border-gray-600" : ""
+                  }`}
+                  buttonClassName="text-gray-400 hover:text-off-white"
+                  placeholder={t("auth.newPasswordPlaceholder")}
+                />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-400">{errors.password}</p>
                 )}
@@ -364,39 +351,28 @@ export default function ProfileEditPage() {
                   htmlFor="confirmPassword"
                   className="block mb-2 text-sm font-medium text-gray-300"
                 >
-                  Confirmer le nouveau mot de passe
+                  {t("auth.confirmNewPassword")}
                 </label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    id="confirmPassword"
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (errors.confirmPassword) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          confirmPassword: undefined,
-                        }));
-                      }
-                    }}
-                    className={`w-full px-4 py-3 pr-12 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                      errors.confirmPassword
-                        ? "border-red-500"
-                        : "border-gray-600"
-                    }`}
-                    placeholder="Confirmez le nouveau mot de passe"
-                    disabled={!formData.password}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-off-white"
-                    disabled={!formData.password}
-                  >
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        confirmPassword: undefined,
+                      }));
+                    }
+                  }}
+                  error={errors.confirmPassword}
+                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
+                    !errors.confirmPassword ? "border-gray-600" : ""
+                  }`}
+                  buttonClassName="text-gray-400 hover:text-off-white"
+                  placeholder={t("auth.confirmNewPasswordPlaceholder")}
+                  disabled={!formData.password}
+                />
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-400">
                     {errors.confirmPassword}
@@ -411,7 +387,7 @@ export default function ProfileEditPage() {
                 href="/profile"
                 className="px-6 py-3 text-center text-gray-300 transition duration-150 ease-in-out bg-gray-600 rounded-md hover:bg-gray-500"
               >
-                Annuler
+                {t("common.cancel")}
               </Link>
               <button
                 type="submit"
@@ -423,12 +399,66 @@ export default function ProfileEditPage() {
                 }`}
               >
                 {loading
-                  ? "Enregistrement..."
-                  : "Enregistrer les modifications"}
+                  ? t("common.saving")
+                  : t("profile.saveChanges")}
               </button>
             </div>
           </div>
         </form>
+
+        {/* ── Delete account ── */}
+        <div className="pt-8 mt-10 border-t border-red-500/30">
+          <h2 className="flex items-center gap-2 mb-2 text-lg font-bold text-red-400">
+            <Trash2 className="w-5 h-5" />
+            {t("profile.deleteAccount")}
+          </h2>
+          <p className="mb-4 text-sm text-off-white/60">
+            {t("profile.deleteConfirm")}
+          </p>
+
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-end">
+            <div className="w-full sm:w-64">
+              <label htmlFor="deletePassword" className="block text-sm font-semibold text-gray-300 mb-1.5">
+                {t("auth.password")}
+              </label>
+              <PasswordInput
+                id="deletePassword"
+                name="deletePassword"
+                value={deletePassword}
+                onChange={(e) => {
+                  setDeletePassword(e.target.value);
+                  setDeleteError(null);
+                }}
+                placeholder={t("auth.passwordPlaceholder")}
+                className="bg-gray-700 border-gray-600 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary"
+                buttonClassName="text-gray-400 hover:text-off-white"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!deletePassword || deleteLoading}
+              onClick={async () => {
+                if (!user?.id || !deletePassword) return;
+                setDeleteLoading(true);
+                setDeleteError(null);
+                try {
+                  await userService.deleteAccount(user.id);
+                  logout();
+                } catch {
+                  setDeleteError(t("profile.deleteError"));
+                } finally {
+                  setDeleteLoading(false);
+                }
+              }}
+              className="px-6 py-2.5 text-sm font-semibold bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {deleteLoading ? t("common.loading") : t("profile.deleteAccount")}
+            </button>
+          </div>
+          {deleteError && (
+            <p className="mt-2 text-sm text-red-400">{deleteError}</p>
+          )}
+        </div>
       </div>
     </div>
   );

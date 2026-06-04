@@ -79,7 +79,7 @@ function ReportDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="w-full max-w-2xl p-6 mx-4 bg-gray-800 rounded-lg">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-white">
@@ -230,7 +230,7 @@ function ModificationDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-white">
@@ -380,7 +380,7 @@ function BanModal({ isOpen, user, onClose, onBan }: BanModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 ban-modal">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm ban-modal">
       <div className="w-full max-w-md p-6 mx-4 bg-gray-800 rounded-lg">
         <h3 className="mb-4 text-xl font-bold text-white">
           Bannir l&apos;utilisateur {user.username}

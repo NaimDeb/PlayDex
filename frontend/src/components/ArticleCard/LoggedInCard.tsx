@@ -1,7 +1,21 @@
-export function LoggedInCard() {
+import { ClassicCard } from "./ClassicCard";
+import { Game } from "@/types/gameType";
+
+type LoggedInCardProps = {
+  game: Game;
+  isDlc?: boolean;
+  updatesCount?: number;
+  isFollowed?: boolean | null;
+};
+
+export function LoggedInCard({ game, isDlc, updatesCount, isFollowed }: LoggedInCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      Logged In Article Card with Updates & Follow
-    </div>
+    <ClassicCard
+      game={game}
+      isDlc={isDlc}
+      updatesCount={updatesCount}
+      isAuthenticated={true}
+      isFollowed={isFollowed}
+    />
   );
 }
