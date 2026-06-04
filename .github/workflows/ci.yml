@@ -121,7 +121,7 @@ jobs:
     - name: Build & push frontend image
       run: |
         docker build \
-          --build-arg NEXT_PUBLIC_API_URL="${{ vars.NEXT_PUBLIC_API_URL }}" \ 
+          --build-arg NEXT_PUBLIC_API_URL="${{ vars.NEXT_PUBLIC_API_URL }}" \
           -t "${{ secrets.DOCKERHUB_USER }}"/playdex-frontend:latest ./frontend
         docker push "${{ secrets.DOCKERHUB_USER }}"/playdex-frontend:latest
 
