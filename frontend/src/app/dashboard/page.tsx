@@ -889,7 +889,7 @@ export default function AdminDashboard() {
                                       email: "",
                                       roles: [],
                                       createdAt: "",
-                                      reputation: 0,
+                                      contributionsCount: 0,
                                     })
                                   }
                                   className="px-2 py-1 text-xs text-white bg-yellow-600 rounded hover:bg-yellow-700"
@@ -985,7 +985,7 @@ export default function AdminDashboard() {
                                     email: "",
                                     roles: [],
                                     createdAt: "",
-                                    reputation: 0,
+                                    contributionsCount: 0,
                                   })
                                 }
                                 className="px-2 py-1 text-xs text-white bg-yellow-600 rounded admin-btn hover:bg-yellow-700"
