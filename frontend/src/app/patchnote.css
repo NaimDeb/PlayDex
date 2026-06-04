@@ -1,0 +1,30 @@
+/*
+ * Patchnote content — buff / debuff / nerfed coloring
+ * colorizeContent() converts [buff]…[/buff] → <span class="buff">…</span>
+ * and [debuff]…[/debuff] → <span class="debuff">…</span>
+ *
+ * Add this to your globals.css (or a patchnote.css that you import there).
+ */
+
+.patchnote-content .buff {
+  color: #4ade80; /* green-400 */
+  background-color: rgb(74 222 128 / 0.08);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.patchnote-content .debuff,
+.patchnote-content .nerf {
+  color: #f87171; /* red-400 */
+  background-color: rgb(248 113 113 / 0.08);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/*
+ * Prose override — keep Tailwind prose from fighting our custom styles
+ */
+.patchnote-content.prose :where(ul):not(:where([class~="not-prose"] *)) {
+  list-style: none;
+  padding-left: 0;
+}

@@ -1,38 +1,38 @@
 import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
 import Image from "next/image";
+
 type ExtensionCardProps = {
-      id: number;
-      title: string;
-      imageUrl: string;
-      releasedAt: string;
+  id: number;
+  title: string;
+  imageUrl: string;
+  releasedAt: string;
 };
 
+export function ExtensionCard({ id, title, imageUrl, releasedAt }: ExtensionCardProps) {
+  const coverUrl = changeIgdbImageFormat(imageUrl, IgdbImageFormat.CoverBig);
 
-export function ExtensionCard(extension: ExtensionCardProps) {
-
-    const imageUrl = changeIgdbImageFormat(
-                extension.imageUrl, IgdbImageFormat.CoverBig)
-
-    
   return (
     <div
-      key={extension.id}
-      className="relative flex-shrink-0 w-40 h-60 bg-[#2a2a2a] rounded overflow-hidden hover:scale-105 transition-transform duration-200 ease-in-out cursor-pointer"
+      className="relative flex-shrink-0 bg-[#2a2a2a] rounded overflow-hidden cursor-pointer
+        hover:scale-105 transition-transform duration-200 ease-in-out opacity-85 hover:opacity-100"
+      style={{ width: "110px", height: "162px" }}
     >
       <Image
-        src={imageUrl}
-        alt={extension.title}
-        layout="fill"
-        objectFit="cover"
+        src={coverUrl || "/no_cover.png"}
+        alt={title}
+        fill
+        style={{ objectFit: "cover" }}
         className="absolute inset-0"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-      <div className="absolute bottom-2 left-2 right-2 text-white">
-        <p className="text-sm font-semibold">{extension.title}</p>
-        <p className="text-xs text-gray-300">
-          Sortie: {new Date(extension.releasedAt).toLocaleDateString()}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
+      <div className="absolute bottom-2 left-2 right-2 text-white z-10">
+        <p className="font-semibold leading-tight truncate" style={{ fontSize: "11px" }}>
+          {title}
         </p>
-    </div>
+        <p className="text-gray-400 mt-0.5" style={{ fontSize: "9px" }}>
+          {new Date(releasedAt).toLocaleDateString("fr-FR")}
+        </p>
+      </div>
     </div>
   );
 }
