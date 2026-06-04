@@ -76,7 +76,7 @@ describe('AuthService', () => {
     // Mock window.location.href setter
     const hrefSetter = vi.fn();
     Object.defineProperty(window, 'location', {
-      value: { href: '/', set href(v: string) { hrefSetter(v); } },
+      value: { get href() { return '/'; }, set href(v: string) { hrefSetter(v); } },
       writable: true,
     });
 

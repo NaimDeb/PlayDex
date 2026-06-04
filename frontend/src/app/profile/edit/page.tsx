@@ -50,10 +50,6 @@ export default function ProfileEditPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const [deletePassword, setDeletePassword] = useState("");
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleteLoading, setDeleteLoading] = useState(false);
-
   // Redirect if not authenticated (in an effect so it never runs during SSR/prerender)
   useEffect(() => {
     if (!user) {
