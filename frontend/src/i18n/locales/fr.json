@@ -2,6 +2,7 @@
   "common": {
     "loading": "Chargement...",
     "error": "Erreur",
+    "networkError": "Connexion impossible. Vérifiez votre connexion internet puis réessayez.",
     "success": "Succès !",
     "user": "Utilisateur",
     "warning": "Attention !",
@@ -189,7 +190,7 @@
     "newUpdates": "{count} mises à jour",
     "seeAll": "Tout voir",
     "coverAlt": "Couverture de {title}",
-    "loadError": "Failed to load game data.",
+    "loadError": "Impossible de charger les données du jeu.",
     "breadcrumbHome": "Accueil",
     "breadcrumbGame": "Jeu"
   },
