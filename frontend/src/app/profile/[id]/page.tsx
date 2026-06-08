@@ -44,7 +44,7 @@ export default function AccountPage() {
       }
     };
     if (userId) fetchUser();
-  }, [userId]);
+  }, [userId, t]);
 
   const avatarUrl = "/user_placeholder.svg";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
@@ -50,9 +50,12 @@ export default function ProfileEditPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated (side effect must not run during render)
+  useEffect(() => {
+    if (!user) router.push("/login");
+  }, [user, router]);
+
   if (!user) {
-    router.push("/login");
     return null;
   }
 

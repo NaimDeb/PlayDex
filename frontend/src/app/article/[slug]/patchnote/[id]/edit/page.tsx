@@ -100,7 +100,7 @@ export default function EditPatchnotePage(): React.ReactElement {
     };
 
     fetchData().catch((err) => console.error("[EditPatchnote] fetchData:", err));
-  }, [slug, id]);
+  }, [slug, id, loadCachedForm]);
 
   // ── Handlers ──
 
