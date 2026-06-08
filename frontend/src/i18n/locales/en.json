@@ -322,6 +322,12 @@
     "communityGuidelines": "Community guidelines",
     "poweredBy": "© {year} PlayDex | Powered by IGDB and Steamworks"
   },
+  "offline": {
+    "title": "You are offline",
+    "intro": "We can't reach PlayDex right now. Check your internet connection and try again.",
+    "hint": "Pages you've already visited remain available as long as the app stays open.",
+    "retry": "Retry"
+  },
   "legal": {
     "aboutTitle": "About",
     "aboutIntro": "Welcome to PlayDex! This page presents our mission, our team, and our passion for video games. We are committed to providing a reliable and enriching community platform for all gamers.",
