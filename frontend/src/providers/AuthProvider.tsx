@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import authService from "@/lib/api/authService";
 import { AuthState, LoginFormData, RegisterFormData } from "@/types/authType";
+import { useTranslation } from "@/i18n/TranslationProvider";
 
 interface AuthContextType extends AuthState {
   login: (data: LoginFormData) => Promise<void>;
@@ -31,6 +32,7 @@ const initialState: AuthState = {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>(initialState);
   const router = useRouter();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -71,10 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/");
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
-        const message =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Échec de la connexion";
+        const message = !err?.response
+          ? t("common.networkError")
+          : err?.response?.data?.message || "Échec de la connexion";
         setState((prev) => ({
           ...prev,
           error: message,
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }));
       }
     },
-    [router]
+    [router, t]
   );
 
   /**
@@ -98,9 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.push("/login?registered=true");
       } catch (error: unknown) {
         const err = error as { response?: { data?: { detail?: string }; status?: number }; message?: string };
-        const errorMessage = err?.response?.data?.detail || 
-                            err?.message || 
-                            "Échec de l'inscription";
+        const errorMessage = !err?.response
+          ? t("common.networkError")
+          : err?.response?.data?.detail || "Échec de l'inscription";
         setState((prev) => ({
           ...prev,
           error: errorMessage,
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router]
+    [router, t]
   );
 
   /**
