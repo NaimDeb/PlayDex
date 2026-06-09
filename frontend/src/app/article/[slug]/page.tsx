@@ -59,13 +59,13 @@ export default function ArticlePage({
         }
       } catch (err) {
         console.error(err);
-        setError("Failed to load game data.");
+        setError(t("game.loadError"));
       } finally {
         setIsLoading(false);
       }
     }
     void loadData();
-  }, [id]);
+  }, [id, t]);
 
   // Mark followed games as checked
   useEffect(() => {

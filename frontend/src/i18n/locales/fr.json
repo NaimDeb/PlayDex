@@ -2,6 +2,7 @@
   "common": {
     "loading": "Chargement...",
     "error": "Erreur",
+    "networkError": "Connexion impossible. Vérifiez votre connexion internet puis réessayez.",
     "success": "Succès !",
     "user": "Utilisateur",
     "warning": "Attention !",
@@ -189,7 +190,7 @@
     "newUpdates": "{count} mises à jour",
     "seeAll": "Tout voir",
     "coverAlt": "Couverture de {title}",
-    "loadError": "Failed to load game data.",
+    "loadError": "Impossible de charger les données du jeu.",
     "breadcrumbHome": "Accueil",
     "breadcrumbGame": "Jeu"
   },
@@ -321,6 +322,12 @@
     "terms": "Conditions d'utilisation",
     "communityGuidelines": "Règles de la communauté",
     "poweredBy": "© {year} PlayDex | Powered by IGDB and Steamworks"
+  },
+  "offline": {
+    "title": "Vous êtes hors ligne",
+    "intro": "Impossible de joindre PlayDex pour le moment. Vérifiez votre connexion internet puis réessayez.",
+    "hint": "Les pages déjà visitées restent accessibles tant que l'application est ouverte.",
+    "retry": "Réessayer"
   },
   "legal": {
     "aboutTitle": "À propos",

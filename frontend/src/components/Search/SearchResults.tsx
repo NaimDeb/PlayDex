@@ -239,7 +239,7 @@ export default function SearchResults({
     return () => {
       cancelled = true;
     };
-  }, [filters, page]);
+  }, [filters, page, t]);
 
   const handlePageChange = (newPage: number): void => {
     const clamped = Math.max(1, Math.min(totalPages, newPage));

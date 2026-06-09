@@ -2,6 +2,7 @@
   "common": {
     "loading": "Loading...",
     "error": "Error",
+    "networkError": "Can't connect. Check your internet connection and try again.",
     "success": "Success!",
     "user": "User",
     "warning": "Warning!",
@@ -321,6 +322,12 @@
     "terms": "Terms of use",
     "communityGuidelines": "Community guidelines",
     "poweredBy": "© {year} PlayDex | Powered by IGDB and Steamworks"
+  },
+  "offline": {
+    "title": "You are offline",
+    "intro": "We can't reach PlayDex right now. Check your internet connection and try again.",
+    "hint": "Pages you've already visited remain available as long as the app stays open.",
+    "retry": "Retry"
   },
   "legal": {
     "aboutTitle": "About",
