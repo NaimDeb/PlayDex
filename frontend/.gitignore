@@ -41,5 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Serwist service workers
+public/sw*
+public/swe-worker*
+
 
 package-lock.json

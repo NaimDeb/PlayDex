@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Montserrat, Radio_Canada } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
@@ -20,15 +20,40 @@ const radioCanada = Radio_Canada({
   display: "swap",
 });
 
+const APP_NAME = "PlayDex";
+const APP_TITLE = "PlayDex - Ne rate plus aucun patch !";
+const APP_DESCRIPTION =
+  "PlayDex vous permet de suivre les mises à jour de vos jeux préférés. Restez informé des derniers patchnotes, DLC et extensions.";
+
 export const metadata: Metadata = {
-  title: "PlayDex - Ne rate plus aucun patch !",
-  description: "PlayDex vous permet de suivre les mises à jour de vos jeux préférés. Restez informé des derniers patchnotes, DLC et extensions.",
+  applicationName: APP_NAME,
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: APP_NAME,
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
-    title: "PlayDex - Ne rate plus aucun patch !",
-    description: "Suivez les mises à jour de vos jeux préférés avec PlayDex",
     type: "website",
+    siteName: APP_NAME,
+    title: APP_TITLE,
+    description: "Suivez les mises à jour de vos jeux préférés avec PlayDex",
     locale: "fr_FR",
   },
+  twitter: {
+    card: "summary",
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1A1A1A",
 };
 
 import { HeroUIProvider } from "@heroui/system";

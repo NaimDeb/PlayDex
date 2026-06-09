@@ -27,7 +27,7 @@ export default function LoginPage() {
     if (isAuthenticated && !error) {
       showMessage(t("auth.loginSuccess"), "success");
     }
-  }, [isAuthenticated, error, showMessage]);
+  }, [isAuthenticated, error, showMessage, t]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

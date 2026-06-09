@@ -98,7 +98,7 @@ export default function NewPatchnotePage({
       console.error("[NewPatchnote] fetchGameData:", err);
       setIsLoading(false);
     });
-  }, [slug]);
+  }, [slug, loadCachedForm]);
 
   // ── Validation ──
 
