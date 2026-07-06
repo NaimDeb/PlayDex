@@ -1,32 +1,35 @@
-# TODO: envisager un multi-stage build pour alléger l'image finale (séparer build / runtime).
-FROM php:8.3-cli
+# FrankenPHP : serveur HTTP avec Caddy + PHP intégrés.
+# Remplace `php -S`, qui n'est pas adapté à la production. (pas de log, compression, peu de connexion en parallèle etc.)
+FROM dunglas/frankenphp:1-php8.3
 
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libzip-dev \
-    libicu-dev \
-    && docker-php-ext-install zip pdo_mysql intl
+# Installe les extensions nécessaires
+# - zip : composer en a besoin pr composer install
+#  - pdo_mysql : pilot pour requêtes sql
+#  - opcache : cache les requêtes php, gain de perf
+RUN install-php-extensions zip pdo_mysql intl opcache
 
-# On récupère Composer depuis son image officielle
+# Récupère Composer depuis son image officielle
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# On copie tout le code du backend dans l'image.
+# On copie tout le code du backend dans l'image (le .env est exclu via .dockerignore).
 COPY . .
 
 # Installation des dépendances PHP.
-# --no-scripts : on n'exécute PAS les scripts post-install de Symfony (cache:clear),
-#   car ils essaient de démarrer l'app pendant le build (sans base de données) → erreur.
-#   Le cache sera construit au runtime, au démarrage du conteneur.
+# --no-dev : N'installe pas les dépendances de développement.
+# --no-interaction : pas de y/n dans le composer i
+# --no-scripts : évite de démarrer l'app sans bdd (évite les commandes comme cache:clear direct apres install)
+# --optimize-autoloader : crée une table statique de la ou se trouve les entités, gain de perf en prod
 RUN composer install --no-dev --no-interaction --no-scripts --optimize-autoloader
 
+# Choix port
+ENV SERVER_NAME=:8000
 EXPOSE 8000
 
 # Au démarrage, dans l'ordre :
-#  1. migrations  -> crée/met à jour les tables (--allow-no-migration : pas d'erreur si rien à faire)
-#  2. serveur     -> lance l'application
-# Pour (re)remplir la base de démo en local, lancer manuellement une fois :
-#   docker compose exec backend php bin/console doctrine:fixtures:load
-CMD ["sh", "-c", "php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration && php -S 0.0.0.0:8000 -t public"]
+#  - Lance les migrations
+#  - Lance le serveur frankenphp
+# ? Pour lancer les fixtures en local
+# ? docker compose exec backend php bin/console doctrine:fixtures:load
+CMD ["sh", "-c", "php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration && frankenphp run --config /etc/caddy/Caddyfile"]
