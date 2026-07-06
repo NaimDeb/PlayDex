@@ -34,6 +34,16 @@ vi.mock('@/lib/api/userService', () => ({
   },
 }));
 
+// Mock TranslationProvider: the AuthProvider parent calls useTranslation,
+// which throws without a surrounding TranslationProvider.
+vi.mock('@/i18n/TranslationProvider', () => ({
+  useTranslation: () => ({
+    locale: 'fr',
+    setLocale: vi.fn(),
+    t: (key: string) => key,
+  }),
+}));
+
 // We need AuthProvider as parent
 import { AuthProvider } from './AuthProvider';
 

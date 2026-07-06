@@ -31,6 +31,16 @@ vi.mock('@/lib/api/authService', () => ({
   },
 }));
 
+// Mock TranslationProvider: AuthProvider calls useTranslation, which throws
+// without a surrounding TranslationProvider. We only need `t` here.
+vi.mock('@/i18n/TranslationProvider', () => ({
+  useTranslation: () => ({
+    locale: 'fr',
+    setLocale: vi.fn(),
+    t: (key: string) => key,
+  }),
+}));
+
 function wrapper({ children }: { children: React.ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;
 }

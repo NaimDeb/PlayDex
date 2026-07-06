@@ -15,5 +15,9 @@ framework:
         #app: cache.adapter.apcu
 
         # Namespaced pools use the above "app" backend by default
-        #pools:
-            #my.dedicated.cache: null
+        pools:
+            # Dedicated pool backing the API rate limiters (see framework.yaml).
+            # Isolated from the rest of cache.app so tests can clear just the
+            # limiter counters between test methods (see RateLimiterTest::setUp).
+            app.limiter_storage:
+                adapter: cache.app
