@@ -1,14 +1,15 @@
 services:
   backend:
-    image: naimdeb/playdex-backend:latest 
+    image: naimdeb/playdex-backend:latest
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     env_file:
-      - .env                                 
+      - .env
     volumes:
-      - ./config/jwt:/app/config/jwt:ro      
+      - ./config/jwt:/app/config/jwt:ro
+      - steam_data:/app/var/steam-user        # token Steam Guard du poller (persistant entre redéploiements)
     environment:
       # ${MYSQL_ROOT_PASSWORD} est lu depuis le fichier .env posé À CÔTÉ de ce compose sur le serveur.
       DATABASE_URL: "mysql://root:${MYSQL_ROOT_PASSWORD}@db:3306/playdex?serverVersion=8.4&charset=utf8mb4"
@@ -37,3 +38,4 @@ services:
 
 volumes:
   db_data:
+  steam_data:

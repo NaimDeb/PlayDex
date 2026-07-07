@@ -188,7 +188,13 @@ node firstLogin.js
 
 It reads the credentials from `backend/.env`, prompts for the **Steam Guard code** (check your email), and on success saves a **device token** in `backend/var/steam-user/`. After that, Steam no longer asks for a code on this machine — so the automated command below runs headlessly.
 
-> In production (Docker), run this once **on the server** and mount `backend/var/steam-user/` as a **volume** — otherwise a container restart wipes the token and there is no terminal to re-enter the code.
+**In production (Docker)** — the backend image already ships Node.js and the poller's dependencies, and `var/steam-user/` is mounted as the `steam_data` volume (see `docker-compose-prod.yml`), so the device token survives redeployments. Do the one-time login **on the server**, inside the running container:
+
+```bash
+docker compose exec -it backend node scripts/steam-poller/firstLogin.js
+```
+
+Enter the emailed Steam Guard code once; the token is saved in the `steam_data` volume, and every scheduled poll afterwards runs headlessly (no code, no terminal needed).
 
 ### Run it (automated)
 
