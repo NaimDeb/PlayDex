@@ -62,7 +62,7 @@ class ExternalApiService
     public function getIgdbGames(int $limit, int $offset = 0, ?int $from = null)
     {
         $body = $this->buildQueryBody([
-            'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
+            'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url, external_games.category, external_games.uid',
             'where' => 'game_type = 0 & themes != (' . ApiConfig::FORBIDDEN_THEMES . ')'
                 . ($from ? ' & updated_at >= ' . $from : ''),
             'limit' => $limit,
