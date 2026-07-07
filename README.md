@@ -175,11 +175,24 @@ Besides the IGDB catalog import, PlayDex can automatically collect **patch notes
 
    > ⚠️ Use a **dedicated Steam account** ("bot" account), not your personal one.
    >
-   > ⚠️ The poller logs in with username + password only. If the account has **Steam Guard (2FA)** enabled, the login will fail — the script does not handle Steam Guard codes. Use a bot account with Steam Guard **disabled**.
-   >
    > These are the Steam **login** credentials, which are different from `STEAM_API_KEY` (that key is used for other Steam Web API calls, not for the poller).
 
-### Run it
+### First login (one-time — Steam Guard)
+
+A new Steam account has **Steam Guard (2FA)** enabled, so the very first login needs the code Steam emails you. Do it **once**, interactively, with the dedicated script:
+
+```bash
+cd backend/scripts/steam-poller
+node firstLogin.js
+```
+
+It reads the credentials from `backend/.env`, prompts for the **Steam Guard code** (check your email), and on success saves a **device token** in `backend/var/steam-user/`. After that, Steam no longer asks for a code on this machine — so the automated command below runs headlessly.
+
+> In production (Docker), run this once **on the server** and mount `backend/var/steam-user/` as a **volume** — otherwise a container restart wipes the token and there is no terminal to re-enter the code.
+
+### Run it (automated)
+
+Once the device token is saved, the Symfony command logs in **without any code**:
 
 ```bash
 cd backend
