@@ -69,11 +69,11 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
 
   const importanceLabel = patchnote.importance
     ? (IMPORTANCE_LABELS[patchnote.importance] ?? patchnote.importance)
-    : null;
+    : "Non défini";
 
   const importanceColor = patchnote.importance
     ? (IMPORTANCE_COLORS[patchnote.importance] ?? "bg-gray-600 text-gray-200")
-    : null;
+    : "bg-gray-600 text-gray-200";
 
   return (
     <article
