@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Config\SteamConfig;
-use App\Entity\Game;
 use App\Entity\Patchnote;
 use App\Repository\GameRepository;
 use App\Repository\PatchnoteRepository;
@@ -54,7 +53,6 @@ class PollSteamPatchnotesCommand extends Command
         $botUser = $this->botUserProvider->getBotUser();
         $created = 0;
         $skipped = 0;
-        $gamesCreated = 0;
         $pendingFlush = 0;
 
         foreach ($rawPatchnotes as $data) {
@@ -83,11 +81,12 @@ class PollSteamPatchnotesCommand extends Command
                 continue;
             }
 
-            // Game check: find or create
+            // On n'attache les patchnotes qu'aux jeux déjà présents dans le catalogue.
+            // Les apps Steam inconnues sont ignorées (pas de création de jeu vide).
             $game = $this->gameRepository->findBySteamId($appId);
             if ($game === null) {
-                $game = $this->createGame($appId, $data['title'] ?? 'Unknown');
-                $gamesCreated++;
+                $skipped++;
+                continue;
             }
 
             // Create patchnote
@@ -124,24 +123,11 @@ class PollSteamPatchnotesCommand extends Command
         }
 
         $io->success(sprintf(
-            'Done. Created: %d patchnote(s), %d game(s). Skipped: %d.',
+            'Done. Created: %d patchnote(s). Skipped: %d.',
             $created,
-            $gamesCreated,
             $skipped
         ));
 
         return Command::SUCCESS;
-    }
-
-    private function createGame(int $steamId, string $title): Game
-    {
-        $game = new Game();
-        $game->setSteamId($steamId);
-        $game->setTitle($title);
-
-        $this->em->persist($game);
-        $this->em->flush();
-
-        return $game;
     }
 }
