@@ -2,6 +2,7 @@
 
 import userService from "@/lib/api/userService";
 import { useState } from "react";
+import { useAuth } from "@/providers/AuthProvider";
 import { useFollowedGames } from "@/providers/FollowedGamesProvider";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import React from "react";
@@ -42,13 +43,17 @@ const SIZE_STYLES: Record<FollowButtonSize, {
 export function FollowButton({
   gameId,
   size = "sm",
-}: FollowButtonProps): React.ReactElement {
+}: FollowButtonProps): React.ReactElement | null {
+  const { isAuthenticated } = useAuth();
   const [loading, setLoading] = useState<boolean>(false);
   const { refreshFollowedGames, followedGameIds } = useFollowedGames();
   const { showMessage } = useFlashMessage();
 
   const isFollowing: boolean = followedGameIds.includes(String(gameId));
   const s = SIZE_STYLES[size];
+
+  // Masqué pour les visiteurs non connectés : impossible de suivre sans compte.
+  if (!isAuthenticated) return null;
 
   const handleFollow = async (): Promise<void> => {
     setLoading(true);
