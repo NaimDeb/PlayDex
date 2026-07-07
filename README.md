@@ -85,6 +85,11 @@ Follow these steps to set up the backend:
      TWITCH_CLIENT_ID=your_twitch_client_id
      IGDB_ACCESS_TOKEN=your_igdb_access_token
      DATABASE_URL=mysql://db_user:db_password@127.0.0.1:3306/db_name
+
+     # Steam account used by the patch note poller (see "Steam Patch Note Polling" below).
+     # This is a real Steam LOGIN (username + password) — NOT the STEAM_API_KEY above.
+     STEAM_USERNAME=your_steam_bot_username
+     STEAM_PASSWORD=your_steam_bot_password
      ```
 
 3. **Launch Your SQL Database**:
@@ -142,3 +147,54 @@ Follow these steps to set up the backend:
 
 
 Your backend is now ready to use!
+
+## Steam Patch Note Polling
+
+Besides the IGDB catalog import, PlayDex can automatically collect **patch notes** published on Steam. It works in two layers:
+
+- a small **Node.js poller** (`backend/scripts/steam-poller/`) that logs into Steam, detects recently updated apps and fetches their community "update" events;
+- the Symfony command **`app:poll-steam-patchnotes`**, which runs that poller, de-duplicates the results and stores the new patch notes in the database (attributed to an auto-created `SteamBot` user).
+
+### Prerequisites
+
+1. **Node.js** must be installed on the machine running the backend — the PHP command shells out to `node`.
+
+2. **Install the poller's dependencies** (separate from the main project's dependencies):
+
+   ```bash
+   cd backend/scripts/steam-poller
+   npm install
+   ```
+
+3. **Set the Steam account credentials** in `backend/.env` (see step 2 of the Backend Installation):
+
+   ```env
+   STEAM_USERNAME=your_steam_bot_username
+   STEAM_PASSWORD=your_steam_bot_password
+   ```
+
+   > ⚠️ Use a **dedicated Steam account** ("bot" account), not your personal one.
+   >
+   > ⚠️ The poller logs in with username + password only. If the account has **Steam Guard (2FA)** enabled, the login will fail — the script does not handle Steam Guard codes. Use a bot account with Steam Guard **disabled**.
+   >
+   > These are the Steam **login** credentials, which are different from `STEAM_API_KEY` (that key is used for other Steam Web API calls, not for the poller).
+
+### Run it
+
+```bash
+cd backend
+php bin/console app:poll-steam-patchnotes
+```
+
+The command reports how many patch notes and games were created or skipped. Already-seen updates are skipped (cached for ~20 minutes and de-duplicated against the database), so the command is **idempotent** — running it repeatedly is safe.
+
+### Scheduling
+
+Unlike the IGDB import — which is scheduled to run **daily at midnight UTC** by the Symfony scheduler (see step 8 above) — the Steam poller is **not scheduled automatically**. To run it regularly, either:
+
+- add it to the Symfony scheduler (a `#[AsCronTask]` attribute on the command, or a recurring message in `src/Schedule.php`), or
+- call it from a system cron, for example every 15 minutes:
+
+  ```cron
+  */15 * * * * cd /path/to/backend && php bin/console app:poll-steam-patchnotes >> var/log/steam-poll.log 2>&1
+  ```
