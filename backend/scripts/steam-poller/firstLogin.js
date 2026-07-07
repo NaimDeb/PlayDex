@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 // Premier login Steam — À LANCER UNE SEULE FOIS, À LA MAIN, dans un terminal.
 //
 //   cd backend/scripts/steam-poller
