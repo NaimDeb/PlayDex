@@ -39,8 +39,8 @@ class PollSteamPatchnotesCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Steam Patchnote Polling');
+        $io->writeln(sprintf('[%s] Démarrage du poll Steam...', date('Y-m-d H:i:s')));
 
-        $io->info('Running Steam poller...');
         $rawPatchnotes = $this->patchnoteSource->fetchRecentPatchnotes();
 
         if (empty($rawPatchnotes)) {
@@ -53,39 +53,55 @@ class PollSteamPatchnotesCommand extends Command
         $botUser = $this->botUserProvider->getBotUser();
         $created = 0;
         $skipped = 0;
+        $skipCache = 0;
+        $skipDb = 0;
+        $skipUnknown = 0;
+        $skipInvalid = 0;
         $pendingFlush = 0;
 
         foreach ($rawPatchnotes as $data) {
             $gid = (string) ($data['gid'] ?? '');
             $appId = (int) ($data['appid'] ?? 0);
+            $title = (string) ($data['title'] ?? '(sans titre)');
 
             if ($gid === '' || $appId === 0) {
                 $skipped++;
+                $skipInvalid++;
+                $io->writeln(sprintf('  - appid=%d gid=%s "%s" — SKIP (gid/appId manquant)', $appId, $gid !== '' ? $gid : '?', $title));
                 continue;
             }
 
-            // Cache check: skip recently processed GIDs
+            // Cache check: skip recently processed GIDs (chemin rapide, sans requête jeu)
             $cacheKey = 'steam_gid_' . $gid;
             $cacheItem = $this->cache->getItem($cacheKey);
             if ($cacheItem->isHit()) {
                 $skipped++;
+                $skipCache++;
+                $io->writeln(sprintf('  ~ appid=%d gid=%s "%s" — SKIP (déjà traité récemment / cache)', $appId, $gid, $title));
                 continue;
             }
 
+            $game = $this->gameRepository->findBySteamId($appId);
+            $gameName = $game !== null ? $game->getTitle() : '(jeu inconnu)';
+
             // DB dedup check
-            if ($this->patchnoteRepository->findByExternalId($gid) !== null) {
+            $existing = $this->patchnoteRepository->findByExternalId($gid);
+            if ($existing !== null) {
                 // Still cache it so we don't query DB again for 20 min
                 $cacheItem->set(true)->expiresAfter(SteamConfig::CACHE_TTL);
                 $this->cache->save($cacheItem);
                 $skipped++;
+                $skipDb++;
+                $io->writeln(sprintf('  - [%s] appid=%d gid=%s "%s" — SKIP (déjà en base, patchnote #%d)', $gameName, $appId, $gid, $title, $existing->getId()));
                 continue;
             }
 
             // On n'attache les patchnotes qu'aux jeux déjà présents dans le catalogue.
             // Les apps Steam inconnues sont ignorées (pas de création de jeu vide).
-            $game = $this->gameRepository->findBySteamId($appId);
             if ($game === null) {
                 $skipped++;
+                $skipUnknown++;
+                $io->writeln(sprintf('  - appid=%d gid=%s "%s" — SKIP (jeu absent du catalogue)', $appId, $gid, $title));
                 continue;
             }
 
@@ -105,6 +121,7 @@ class PollSteamPatchnotesCommand extends Command
             $this->em->persist($patchnote);
             $created++;
             $pendingFlush++;
+            $io->writeln(sprintf('  ✓ [%s] appid=%d gid=%s "%s" — CRÉÉ', $gameName, $appId, $gid, $title));
 
             // Cache the GID
             $cacheItem->set(true)->expiresAfter(SteamConfig::CACHE_TTL);
@@ -123,9 +140,14 @@ class PollSteamPatchnotesCommand extends Command
         }
 
         $io->success(sprintf(
-            'Done. Created: %d patchnote(s). Skipped: %d.',
+            '[%s] Terminé. Créés: %d — Skippés: %d (déjà en base: %d, cache: %d, jeu inconnu: %d, invalides: %d).',
+            date('Y-m-d H:i:s'),
             $created,
-            $skipped
+            $skipped,
+            $skipDb,
+            $skipCache,
+            $skipUnknown,
+            $skipInvalid
         ));
 
         return Command::SUCCESS;
