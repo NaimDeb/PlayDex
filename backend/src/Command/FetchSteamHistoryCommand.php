@@ -6,6 +6,7 @@ namespace App\Command;
 
 use App\Config\SteamConfig;
 use App\Entity\Patchnote;
+use App\Entity\User;
 use App\Repository\GameRepository;
 use App\Repository\PatchnoteRepository;
 use App\Service\Steam\SteamBotUserProvider;
@@ -53,12 +54,25 @@ class FetchSteamHistoryCommand extends Command
             return Command::FAILURE;
         }
 
-        $botUser = $this->botUserProvider->getBotUser();
+        // On ne garde que les IDs : em->clear() (entre chaque jeu, pour la mémoire) détache
+        // les entités. On re-fetch donc le jeu + le bot user en "managed" à chaque itération,
+        // sinon Doctrine les voit comme de nouvelles entités non persistées et plante.
+        $gameIds = array_map(static fn ($g) => $g->getId(), $games);
+        $botUserId = $this->botUserProvider->getBotUser()->getId();
+
         $dryRun = $input->getOption('dry-run');
         $totalCreated = 0;
         $totalSkipped = 0;
 
-        foreach ($games as $game) {
+        foreach ($gameIds as $gameId) {
+            $this->em->clear();
+
+            $game = $this->gameRepository->find($gameId);
+            if ($game === null) {
+                continue;
+            }
+            $botUser = $this->em->getReference(User::class, $botUserId);
+
             $steamId = $game->getSteamId();
             $io->section(sprintf('Processing: %s (Steam ID: %d)', $game->getTitle(), $steamId));
 
@@ -136,10 +150,6 @@ class FetchSteamHistoryCommand extends Command
             $totalSkipped += $gameSkipped;
 
             $io->text(sprintf('  Done: %d created, %d skipped (duplicates)', $gameCreated, $gameSkipped));
-
-            // Free memory between games
-            $this->em->clear();
-            $botUser = $this->botUserProvider->getBotUser();
         }
 
         $prefix = $dryRun ? '[DRY RUN] Would have created' : 'Created';
