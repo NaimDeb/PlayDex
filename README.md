@@ -1,6 +1,7 @@
 # PlayDex
 
 PlayDex is a website that tries to group all video game patch notes in a normalized manner. Follow your favorite games to get the patch notes as soon as they release.
+(Projet pour examen Concepteur Développeur d'applications)
 
 ## Quick Start with Docker (recommended)
 
