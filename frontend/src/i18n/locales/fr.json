@@ -149,7 +149,20 @@
     "saveChanges": "Enregistrer les modifications",
     "deleteAccount": "Supprimer mon compte",
     "deleteConfirm": "Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible et toutes vos données seront définitivement perdues.",
-    "deleteError": "Une erreur est survenue lors de la suppression du compte."
+    "deleteError": "Une erreur est survenue lors de la suppression du compte.",
+    "notificationsTitle": "Notifications",
+    "notificationsHint": "Choisis comment PlayDex te prévient des nouveautés sur les jeux que tu suis.",
+    "emailNotificationsLabel": "Emails de mise à jour",
+    "emailNotificationsDescription": "Recevoir un email quand une patchnote est publiée sur un jeu suivi.",
+    "notificationsError": "Impossible d'enregistrer ta préférence de notification."
+  },
+  "unsubscribe": {
+    "successTitle": "Désinscription effectuée",
+    "successMessage": "Tu ne recevras plus d'emails lors des mises à jour des jeux que tu suis. Tu continues de suivre tes jeux : les nouveautés restent visibles sur le site.",
+    "invalidTitle": "Lien invalide ou expiré",
+    "invalidMessage": "Ce lien de désinscription n'est plus valable. Connecte-toi et modifie tes préférences depuis ton profil.",
+    "backToProfile": "Gérer mes préférences",
+    "backToHome": "Retour à l'accueil"
   },
   "game": {
     "latestUpdates": "Dernières mises à jour",

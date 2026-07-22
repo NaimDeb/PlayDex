@@ -9,6 +9,8 @@ parameters:
   STEAM_API_KEY: "%env(STEAM_API_KEY)%"
   STEAM_USERNAME: "%env(STEAM_USERNAME)%"
   STEAM_PASSWORD: "%env(STEAM_PASSWORD)%"
+  MAILER_FROM: "%env(MAILER_FROM)%"
+  FRONTEND_URL: "%env(FRONTEND_URL)%"
 
 services:
   # default configuration for services in *this* file

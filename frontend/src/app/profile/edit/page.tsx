@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import userService from "@/lib/api/userService";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import Link from "next/link";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";
@@ -49,6 +49,38 @@ export default function ProfileEditPage() {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Préférence de notification : enregistrée immédiatement, hors du formulaire
+  // principal, pour que la désinscription reste possible en un clic.
+  const [emailNotifications, setEmailNotifications] = useState(
+    user?.emailNotifications ?? true
+  );
+  const [notificationsError, setNotificationsError] = useState<string | null>(null);
+  const [notificationsSaving, setNotificationsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user?.emailNotifications !== undefined) {
+      setEmailNotifications(user.emailNotifications);
+    }
+  }, [user?.emailNotifications]);
+
+  const handleToggleEmailNotifications = async () => {
+    const next = !emailNotifications;
+
+    setEmailNotifications(next); // optimiste
+    setNotificationsError(null);
+    setNotificationsSaving(true);
+
+    try {
+      const saved = await userService.updateEmailNotifications(next);
+      setEmailNotifications(saved);
+    } catch {
+      setEmailNotifications(!next); // rollback
+      setNotificationsError(t("profile.notificationsError"));
+    } finally {
+      setNotificationsSaving(false);
+    }
+  };
 
   // Redirect if not authenticated (in an effect so it never runs during SSR/prerender)
   useEffect(() => {
@@ -401,6 +433,55 @@ export default function ProfileEditPage() {
             </div>
           </div>
         </form>
+
+        {/* ── Notifications ── */}
+        <div className="p-4 mt-6 bg-gray-800 rounded-lg shadow-xl sm:p-6 bg-opacity-70 backdrop-blur-sm">
+          <h2 className="flex items-center gap-2 mb-2 text-lg font-semibold text-gray-300">
+            <Bell className="w-5 h-5" aria-hidden="true" />
+            {t("profile.notificationsTitle")}
+          </h2>
+          <p className="mb-4 text-sm text-gray-400">
+            {t("profile.notificationsHint")}
+          </p>
+
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <label
+                htmlFor="emailNotifications"
+                className="block text-sm font-medium text-gray-300"
+              >
+                {t("profile.emailNotificationsLabel")}
+              </label>
+              <p className="mt-1 text-sm text-gray-400">
+                {t("profile.emailNotificationsDescription")}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              id="emailNotifications"
+              role="switch"
+              aria-checked={emailNotifications}
+              disabled={notificationsSaving}
+              onClick={handleToggleEmailNotifications}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 shrink-0 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed ${
+                emailNotifications
+                  ? "[background-color:var(--color-primary)]"
+                  : "bg-gray-600"
+              }`}
+            >
+              <span
+                className={`inline-block w-4 h-4 transition-transform bg-white rounded-full ${
+                  emailNotifications ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          {notificationsError && (
+            <p className="mt-3 text-sm text-red-400">{notificationsError}</p>
+          )}
+        </div>
 
         {/* ── Delete account ── */}
         <div className="pt-8 mt-10 border-t border-red-500/30">

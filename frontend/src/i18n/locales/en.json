@@ -149,7 +149,20 @@
     "saveChanges": "Save changes",
     "deleteAccount": "Delete my account",
     "deleteConfirm": "Are you sure you want to delete your account? This action is irreversible and all your data will be permanently lost.",
-    "deleteError": "An error occurred while deleting the account."
+    "deleteError": "An error occurred while deleting the account.",
+    "notificationsTitle": "Notifications",
+    "notificationsHint": "Choose how PlayDex tells you about updates on the games you follow.",
+    "emailNotificationsLabel": "Update emails",
+    "emailNotificationsDescription": "Receive an email when a patchnote is published for a game you follow.",
+    "notificationsError": "Could not save your notification preference."
+  },
+  "unsubscribe": {
+    "successTitle": "You're unsubscribed",
+    "successMessage": "You will no longer receive emails when the games you follow are updated. You still follow them: updates stay visible on the site.",
+    "invalidTitle": "Invalid or expired link",
+    "invalidMessage": "This unsubscribe link is no longer valid. Sign in and update your preferences from your profile.",
+    "backToProfile": "Manage my preferences",
+    "backToHome": "Back to home"
   },
   "game": {
     "latestUpdates": "Latest updates",

@@ -26,6 +26,7 @@
         "symfony/framework-bundle": "7.4.*",
         "symfony/http-client": "7.4.*",
         "symfony/lock": "7.4.*",
+        "symfony/mailer": "7.4.*",
         "symfony/messenger": "7.4.*",
         "symfony/process": "7.4.*",
         "symfony/property-access": "7.4.*",

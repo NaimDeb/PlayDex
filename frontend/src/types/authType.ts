@@ -9,6 +9,8 @@ export interface User {
   isBanned?: boolean;
   banReason?: string;
   bannedUntil?: string;
+  /** Opt-out des emails envoyés lors des mises à jour des jeux suivis. */
+  emailNotifications?: boolean;
 }
 
 export interface AuthState {
