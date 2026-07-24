@@ -101,6 +101,12 @@ class FetchSteamHistoryCommand extends Command
                         continue;
                     }
 
+                    // Bannières sans texte : rien à afficher côté site.
+                    if (!SteamPatchnoteSource::hasTextContent($data['content'] ?? null)) {
+                        $gameSkipped++;
+                        continue;
+                    }
+
                     if ($this->patchnoteRepository->findByExternalId($gid) !== null) {
                         $gameSkipped++;
                         continue;
@@ -149,11 +155,20 @@ class FetchSteamHistoryCommand extends Command
             $totalCreated += $gameCreated;
             $totalSkipped += $gameSkipped;
 
-            $io->text(sprintf('  Done: %d created, %d skipped (duplicates)', $gameCreated, $gameSkipped));
+            $io->text(sprintf(
+                '  Done: %d created, %d skipped (duplicates or empty content)',
+                $gameCreated,
+                $gameSkipped
+            ));
         }
 
         $prefix = $dryRun ? '[DRY RUN] Would have created' : 'Created';
-        $io->success(sprintf('%s %d patchnote(s). Skipped %d duplicate(s).', $prefix, $totalCreated, $totalSkipped));
+        $io->success(sprintf(
+            '%s %d patchnote(s). Skipped %d (duplicates or empty content).',
+            $prefix,
+            $totalCreated,
+            $totalSkipped
+        ));
 
         return Command::SUCCESS;
     }

@@ -22,6 +22,34 @@ class SteamPatchnoteSource implements PatchnoteSourceInterface
         return $game->getSteamId() !== null;
     }
 
+    /**
+     * Une patchnote Steam peut n'être qu'une bannière : uniquement une image,
+     * un lien ou du balisage, sans une ligne de texte. Ces notes n'apportent
+     * rien au site, on ne les importe pas.
+     *
+     * Le balisage (BBCode Steam + HTML) est retiré avant le test : seule la
+     * présence de texte réel compte, le contenu stocké n'est pas modifié.
+     */
+    public static function hasTextContent(?string $content): bool
+    {
+        if ($content === null) {
+            return false;
+        }
+
+        // Balises média : leur contenu est l'URL de l'image / de la vidéo, pas du texte.
+        $text = preg_replace('/\[(img|previewyoutube|video)\b[^\]]*\].*?\[\/\1\]/isu', ' ', $content) ?? $content;
+        // BBCode et HTML restants.
+        $text = preg_replace('/\[[^\]]*\]/u', ' ', $text) ?? $text;
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // URLs nues (balise média non fermée, lien collé seul).
+        $text = preg_replace('#https?://\S+#iu', ' ', $text) ?? $text;
+        // Espaces insécables inclus : Steam en met en guise de contenu "vide".
+        $text = preg_replace('/[\s\x{00A0}]+/u', '', $text) ?? '';
+
+        return $text !== '';
+    }
+
     public function getSourceIdentifier(): string
     {
         return 'steam';

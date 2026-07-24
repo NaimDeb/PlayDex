@@ -78,6 +78,7 @@ class PollSteamPatchnotesCommand extends Command
         $skipDb = 0;
         $skipUnknown = 0;
         $skipInvalid = 0;
+        $skipEmpty = 0;
         $pendingFlush = 0;
 
         foreach ($rawPatchnotes as $data) {
@@ -89,6 +90,13 @@ class PollSteamPatchnotesCommand extends Command
                 $skipped++;
                 $skipInvalid++;
                 $io->writeln(sprintf('  - appid=%d gid=%s "%s" — SKIP (gid/appId manquant)', $appId, $gid !== '' ? $gid : '?', $title));
+                continue;
+            }
+
+            if (!SteamPatchnoteSource::hasTextContent($data['content'] ?? null)) {
+                $skipped++;
+                $skipEmpty++;
+                $io->writeln(sprintf('  - appid=%d gid=%s "%s" — SKIP (contenu vide)', $appId, $gid, $title));
                 continue;
             }
 
@@ -165,7 +173,8 @@ class PollSteamPatchnotesCommand extends Command
         $notified += $this->notifyFollowers($pendingNotifications, $notificationsEnabled, $io);
 
         $io->success(sprintf(
-            '[%s] Terminé. Créés: %d — Skippés: %d (déjà en base: %d, cache: %d, jeu inconnu: %d, invalides: %d) — Emails envoyés: %d.',
+            '[%s] Terminé. Créés: %d — Skippés: %d (déjà en base: %d, cache: %d, jeu inconnu: %d,'
+                . ' invalides: %d, contenu vide: %d) — Emails envoyés: %d.',
             date('Y-m-d H:i:s'),
             $created,
             $skipped,
@@ -173,6 +182,7 @@ class PollSteamPatchnotesCommand extends Command
             $skipCache,
             $skipUnknown,
             $skipInvalid,
+            $skipEmpty,
             $notified
         ));
 
