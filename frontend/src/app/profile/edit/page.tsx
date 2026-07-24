@@ -12,6 +12,18 @@ import { isValidEmail, validatePassword } from "@/lib/validationUtils";
 
 export const dynamic = 'force-dynamic';
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+// Palette du site (cf. FIELD_CLASS de components/shared/FormField) : panneaux
+// off-gray, champs off-black, focus primary.
+
+const PANEL_CLASS = "p-4 rounded-lg shadow-xl sm:p-6 bg-off-gray border border-off-white/10";
+
+const INPUT_CLASS =
+  "bg-off-black border-gray-600 rounded text-off-white placeholder:text-gray-600 " +
+  "focus:outline-none focus:border-primary transition-colors [color-scheme:dark]";
+
+const TEXT_INPUT_CLASS = `w-full px-4 py-3 border ${INPUT_CLASS}`;
+
 interface ProfileUpdateData {
   username: string;
   email: string;
@@ -226,7 +238,7 @@ export default function ProfileEditPage() {
         <div className="flex items-center gap-4 mb-8">
           <Link
             href="/profile"
-            className="p-2 transition-colors bg-gray-800 rounded-lg hover:bg-gray-700"
+            className="p-2 transition-colors duration-150 rounded-lg bg-off-gray hover:bg-off-white/10"
             aria-label={t("common.back")}
           >
             <svg
@@ -244,28 +256,28 @@ export default function ProfileEditPage() {
               />
             </svg>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold font-montserrat [color:var(--color-primary)]">
+          <h1 className="text-2xl sm:text-3xl font-bold font-montserrat text-off-white">
             {t("profile.editTitle")}
           </h1>
         </div>
 
         {/* Success Message */}
         {success && (
-          <div className="p-4 mb-6 text-green-400 bg-green-900 rounded-md bg-opacity-30">
+          <div className="p-4 mb-6 text-green-300 border rounded-md bg-green-500/15 border-green-500/40">
             {t("profile.updateSuccess")}
           </div>
         )}
 
         {/* General Error */}
         {errors.general && (
-          <div className="p-4 mb-6 text-red-400 bg-red-900 rounded-md bg-opacity-30">
+          <div className="p-4 mb-6 text-red-300 border rounded-md bg-red-500/15 border-red-500/40">
             {errors.general}
           </div>
         )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="p-4 bg-gray-800 rounded-lg shadow-xl sm:p-6 bg-opacity-70 backdrop-blur-sm">
+          <div className={PANEL_CLASS}>
             {/* Username Field */}
             <div className="mb-6">
               <label
@@ -280,9 +292,7 @@ export default function ProfileEditPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-3 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                  errors.username ? "border-red-500" : "border-gray-600"
-                }`}
+                className={`${TEXT_INPUT_CLASS} ${errors.username ? "border-red-500" : ""}`}
                 placeholder={t("auth.pseudoPlaceholder")}
               />
               {errors.username && (
@@ -304,9 +314,7 @@ export default function ProfileEditPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-3 bg-gray-700 border rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                  errors.email ? "border-red-500" : "border-gray-600"
-                }`}
+                className={`${TEXT_INPUT_CLASS} ${errors.email ? "border-red-500" : ""}`}
                 placeholder="votre.email@exemple.com"
               />
               {errors.email && (
@@ -337,10 +345,9 @@ export default function ProfileEditPage() {
                   value={formData.currentPassword}
                   onChange={handleInputChange}
                   error={errors.currentPassword}
-                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                    !errors.currentPassword ? "border-gray-600" : ""
-                  }`}
+                  className={INPUT_CLASS}
                   buttonClassName="text-gray-400 hover:text-off-white"
+                  autoComplete="current-password"
                   placeholder={t("auth.currentPasswordPlaceholder")}
                 />
                 {errors.currentPassword && (
@@ -362,10 +369,9 @@ export default function ProfileEditPage() {
                   value={formData.password}
                   onChange={handleInputChange}
                   error={errors.password}
-                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                    !errors.password ? "border-gray-600" : ""
-                  }`}
+                  className={INPUT_CLASS}
                   buttonClassName="text-gray-400 hover:text-off-white"
+                  autoComplete="new-password"
                   placeholder={t("auth.newPasswordPlaceholder")}
                 />
                 {errors.password && (
@@ -394,10 +400,9 @@ export default function ProfileEditPage() {
                     }
                   }}
                   error={errors.confirmPassword}
-                  className={`bg-gray-700 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary ${
-                    !errors.confirmPassword ? "border-gray-600" : ""
-                  }`}
+                  className={INPUT_CLASS}
                   buttonClassName="text-gray-400 hover:text-off-white"
+                  autoComplete="new-password"
                   placeholder={t("auth.confirmNewPasswordPlaceholder")}
                   disabled={!formData.password}
                 />
@@ -413,17 +418,17 @@ export default function ProfileEditPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
               <Link
                 href="/profile"
-                className="px-6 py-3 text-center text-gray-300 transition duration-150 ease-in-out bg-gray-600 rounded-md hover:bg-gray-500"
+                className="px-6 py-3 text-center transition-colors duration-150 border rounded-md border-off-white/50 text-off-white hover:border-off-white hover:bg-off-white/5"
               >
                 {t("common.cancel")}
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className={`px-6 py-3 font-semibold text-white rounded-md transition duration-150 ease-in-out ${
+                className={`px-6 py-3 font-semibold rounded-md text-off-white transition-colors duration-150 ${
                   loading
-                    ? "bg-gray-500 cursor-not-allowed"
-                    : "[background-color:var(--color-primary)] hover:opacity-90"
+                    ? "bg-off-black cursor-not-allowed opacity-60"
+                    : "bg-primary hover:bg-secondary cursor-pointer"
                 }`}
               >
                 {loading
@@ -435,7 +440,7 @@ export default function ProfileEditPage() {
         </form>
 
         {/* ── Notifications ── */}
-        <div className="p-4 mt-6 bg-gray-800 rounded-lg shadow-xl sm:p-6 bg-opacity-70 backdrop-blur-sm">
+        <div className={`mt-6 ${PANEL_CLASS}`}>
           <h2 className="flex items-center gap-2 mb-2 text-lg font-semibold text-gray-300">
             <Bell className="w-5 h-5" aria-hidden="true" />
             {t("profile.notificationsTitle")}
@@ -464,10 +469,8 @@ export default function ProfileEditPage() {
               aria-checked={emailNotifications}
               disabled={notificationsSaving}
               onClick={handleToggleEmailNotifications}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 shrink-0 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed ${
-                emailNotifications
-                  ? "[background-color:var(--color-primary)]"
-                  : "bg-gray-600"
+              className={`relative inline-flex items-center h-6 rounded-full w-11 shrink-0 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-off-gray disabled:opacity-50 disabled:cursor-not-allowed ${
+                emailNotifications ? "bg-primary" : "bg-off-black"
               }`}
             >
               <span
@@ -507,8 +510,12 @@ export default function ProfileEditPage() {
                   setDeleteError(null);
                 }}
                 placeholder={t("auth.passwordPlaceholder")}
-                className="bg-gray-700 border-gray-600 rounded-md text-off-white focus:ring-2 focus:border-0 focus:outline-primary"
+                className={INPUT_CLASS}
                 buttonClassName="text-gray-400 hover:text-off-white"
+                // "off" est ignoré par la plupart des gestionnaires de mots de
+                // passe : "new-password" est ce qui empêche réellement le
+                // pré-remplissage sur ce champ de confirmation.
+                autoComplete="new-password"
               />
             </div>
             <button
