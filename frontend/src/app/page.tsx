@@ -11,6 +11,21 @@ import { Patchnote } from "@/types/patchNoteType";
 import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
 import Link from "next/link";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { readCache, writeCache } from "@/lib/api/responseCache";
+
+// ─── Cache ────────────────────────────────────────────────────────────────────
+
+/** Nouveautés + dernières patchnotes : identiques pour tous, inutile de les
+ *  retélécharger à chaque retour sur l'accueil. */
+const PUBLIC_DATA_CACHE_KEY = "home:public";
+const PUBLIC_DATA_CACHE_TTL = 5 * 60 * 1000;
+
+type PatchnoteWithGame = { patchnote: Patchnote; game: Game };
+
+interface HomePublicData {
+  newGames: Game[];
+  latestPatchnotes: PatchnoteWithGame[];
+}
 
 const GameCardPlaceholder = () => (
   <div
@@ -41,18 +56,26 @@ const PatchnoteCardPlaceholder = () => (
 export default function Home() {
   const [followedGames, setFollowedGames] = useState<FollowedGameWithCount[]>([]);
   const [newGames, setNewGames] = useState<Game[]>([]);
-  const [latestPatchnotes, setLatestPatchnotes] = useState<{ patchnote: Patchnote; game: Game }[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [latestPatchnotes, setLatestPatchnotes] = useState<PatchnoteWithGame[]>([]);
+  const [loadingPublic, setLoadingPublic] = useState(true);
+  const [loadingFollowed, setLoadingFollowed] = useState(true);
   const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
 
+  // Données publiques : servies depuis le cache tant qu'il est frais.
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      const [followed, nouveautes, patchnotes] = await Promise.all([
-        isAuthenticated
-          ? gameService.getFollowedGames?.() ?? []
-          : Promise.resolve([]),
+    let cancelled = false;
+
+    const cached = readCache<HomePublicData>(PUBLIC_DATA_CACHE_KEY);
+    if (cached) {
+      setNewGames(cached.newGames);
+      setLatestPatchnotes(cached.latestPatchnotes);
+      setLoadingPublic(false);
+      return;
+    }
+
+    async function fetchPublicData() {
+      const [nouveautes, patchnotes] = await Promise.all([
         gameService.getLatestReleases(),
         gameService.getLatestPatchnotes(),
       ]);
@@ -73,12 +96,46 @@ export default function Home() {
         })
       );
 
-      setFollowedGames(followed);
-      setNewGames(nouveautes);
-      setLatestPatchnotes(patchnotesWithGames.filter((p): p is { patchnote: Patchnote; game: Game } => p !== null));
-      setLoading(false);
+      const data: HomePublicData = {
+        newGames: nouveautes,
+        latestPatchnotes: patchnotesWithGames.filter((p): p is PatchnoteWithGame => p !== null),
+      };
+      writeCache(PUBLIC_DATA_CACHE_KEY, data, PUBLIC_DATA_CACHE_TTL);
+
+      if (cancelled) return;
+      setNewGames(data.newGames);
+      setLatestPatchnotes(data.latestPatchnotes);
+      setLoadingPublic(false);
     }
-    fetchData();
+
+    fetchPublicData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Liste suivie : propre à l'utilisateur et modifiable à tout moment (bouton
+  // "Suivre"), donc jamais mise en cache.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchFollowedGames() {
+      setLoadingFollowed(true);
+      const followed = isAuthenticated
+        ? await (gameService.getFollowedGames?.() ?? Promise.resolve([]))
+        : [];
+
+      if (cancelled) return;
+      setFollowedGames(followed);
+      setLoadingFollowed(false);
+    }
+
+    fetchFollowedGames();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated]);
 
   return (
@@ -134,19 +191,28 @@ export default function Home() {
           seeMoreLabel={t("home.seeAllMyList")}
           seeMoreHref="/profile"
         >
-          <ul className="flex gap-4 pb-4 overflow-x-auto list-none">
-            {loading
-              ? [...Array(6)].map((_, i) => <li key={`followed-${i}`}><GameCardPlaceholder /></li>)
-              : followedGames.map((data) => (
-                  <li key={data.game.id}>
-                    <ClassicCard
-                      game={data.game}
-                      updatesCount={data.newPatchnoteCount}
-                      isAuthenticated={isAuthenticated}
-                    />
-                  </li>
-                ))}
-          </ul>
+          {!loadingFollowed && followedGames.length === 0 ? (
+            <p className="text-sm text-off-white/60">
+              {t("home.emptyList")}{" "}
+              <Link href="/search" className="underline hover:text-off-white">
+                {t("home.emptyListCta")}
+              </Link>
+            </p>
+          ) : (
+            <ul className="flex gap-4 pb-4 overflow-x-auto list-none">
+              {loadingFollowed
+                ? [...Array(6)].map((_, i) => <li key={`followed-${i}`}><GameCardPlaceholder /></li>)
+                : followedGames.map((data) => (
+                    <li key={data.game.id}>
+                      <ClassicCard
+                        game={data.game}
+                        updatesCount={data.newPatchnoteCount}
+                        isAuthenticated={isAuthenticated}
+                      />
+                    </li>
+                  ))}
+            </ul>
+          )}
         </PageSection>
       )}
 
@@ -156,7 +222,7 @@ export default function Home() {
         seeMoreHref="/search?category=jeux"
       >
         <ul className="flex gap-4 pb-4 overflow-x-auto list-none">
-          {loading
+          {loadingPublic
             ? [...Array(6)].map((_, i) => <li key={`new-${i}`}><GameCardPlaceholder /></li>)
             : newGames.map((game) => (
                 <li key={game.id}>
@@ -168,7 +234,7 @@ export default function Home() {
 
       <PageSection title={t("home.latestPatchnotesTitle")}>
         <ul className="flex flex-col gap-6 list-none">
-          {loading
+          {loadingPublic
             ? [...Array(2)].map((_, i) => (
                 <li key={`patchnote-${i}`} className="flex gap-4 items-start">
                   <GameCardPlaceholder />
