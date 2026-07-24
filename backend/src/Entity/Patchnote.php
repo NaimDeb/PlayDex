@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use App\Config\PatchNoteImportance;
 use App\Repository\PatchnoteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -54,13 +56,13 @@ use App\Traits\TimeStampableTrait;
         ),
         new GetCollection(
             normalizationContext: ['groups' => ['patchnote:read']],
-            filters: ['order'],
             paginationEnabled: true,
             paginationItemsPerPage: 6,
+            paginationClientItemsPerPage: true,
         )
     ]
 )]
-
+#[ApiFilter(OrderFilter::class, properties: ['createdAt', 'releasedAt'])]
 class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
     use SoftDeletableTrait;

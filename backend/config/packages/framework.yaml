@@ -16,12 +16,12 @@ framework:
             policy: sliding_window
             limit: 60
             interval: '1 minute'
-            cache_pool: cache.app
+            cache_pool: app.limiter_storage
         api_login:
             policy: sliding_window
             limit: 5
             interval: '1 minute'
-            cache_pool: cache.app
+            cache_pool: app.limiter_storage
 
 when@test:
     framework:

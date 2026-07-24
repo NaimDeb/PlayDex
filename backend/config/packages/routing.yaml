@@ -1,8 +1,10 @@
 framework:
     router:
         # Configure how to generate URLs in non-HTTP contexts, such as CLI commands.
+        # Indispensable pour le poller Steam : il génère les liens de désinscription
+        # des emails hors contexte HTTP.
         # See https://symfony.com/doc/current/routing.html#generating-urls-in-commands
-        #default_uri: http://localhost
+        default_uri: '%env(BACKEND_URL)%'
 
 when@prod:
     framework:

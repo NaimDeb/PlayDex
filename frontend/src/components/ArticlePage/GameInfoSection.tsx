@@ -7,6 +7,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { ExtensionCard } from "@/components/ArticleCard/ExtensionCard";
 import { Game, Extension } from "@/types/gameType";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { formatReleaseDate } from "@/lib/utils";
 
 interface GameInfoSectionProps {
   gameData: Game;
@@ -23,6 +24,10 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
 }) => {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Chaîne vide = date absente ou invalide : on bascule sur une mention dédiée
+  // plutôt que d'afficher "Sorti en Invalid Date".
+  const releaseDate = formatReleaseDate(gameData.releasedAt, "");
 
   const scroll = (dir: "left" | "right") => {
     scrollRef.current?.scrollBy({
@@ -92,7 +97,9 @@ export const GameInfoSection: React.FC<GameInfoSectionProps> = ({
         </div>
 
         <p className="text-sm text-gray-500 mb-4">
-          {t("game.releasedIn", { date: new Date(gameData.releasedAt).toLocaleDateString("fr-FR") })}
+          {releaseDate
+            ? t("game.releasedIn", { date: releaseDate })
+            : t("game.releasedUnknown")}
         </p>
 
         {/* Genres */}

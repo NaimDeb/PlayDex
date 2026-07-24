@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@/providers/AuthProvider";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { loginHref } from "@/lib/navigation";
 import { Patchnote } from "@/types/patchNoteType";
 import { Extension } from "@/types/gameType";
 import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
@@ -26,6 +27,7 @@ const PATCHNOTE_TYPE_KEYS = [
   { key: "patchnote.major",     value: "major"     },
   { key: "patchnote.minor",     value: "minor"     },
   { key: "patchnote.hotfix",    value: "hotfix"    },
+  { key: "patchnote.undefined", value: "undefined" },
   { key: "patchnote.extension", value: "extension" },
 ] as const;
 
@@ -164,6 +166,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
   const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const router              = useRouter();
+  const pathname            = usePathname();
 
   const [dateFrom,     setDateFrom]     = useState<string>("");
   const [dateTo,       setDateTo]       = useState<string>("");
@@ -185,7 +188,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
     const d       = new Date(toISO(item.releasedAt));
     const typeKey: string = isExtensionItem(item)
       ? "extension"
-      : item.importance ?? "";
+      : item.importance ?? "undefined";
     return (
       (!dateFrom || d >= new Date(dateFrom)) &&
       (!dateTo   || d <= new Date(dateTo))   &&
@@ -220,9 +223,8 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
 
   const handleAddPatchnote = (): void => {
     setAddLoading(true);
-    if (!isAuthenticated) { void router.push("/login"); return; }
-    const path = typeof window !== "undefined" ? window.location.pathname : "";
-    void router.push(`${path}/patchnote/new`);
+    if (!isAuthenticated) { void router.push(loginHref(pathname)); return; }
+    void router.push(`${pathname}/patchnote/new`);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -337,6 +339,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
             const majorCount  = yearItems.filter((i) => isPatchnoteItem(i) && i.importance === "major").length;
             const minorCount  = yearItems.filter((i) => isPatchnoteItem(i) && i.importance === "minor").length;
             const hotfixCount = yearItems.filter((i) => isPatchnoteItem(i) && i.importance === "hotfix").length;
+            const undefinedCount = yearItems.filter((i) => isPatchnoteItem(i) && i.importance == null).length;
 
             return (
               <li key={year} className="tl-yr relative mb-[2px]">
@@ -387,10 +390,13 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
                       {/* Année visible sur mobile dans le bouton */}
                       <span className="md:hidden font-bold text-white mr-2">{year}</span>
                       <span>
-                        {extItems.length   > 0 && <>{t(extItems.length > 1 ? "game.extensionCountPlural" : "game.extensionCount", { count: extItems.length })}&nbsp;·&nbsp;</>}
-                        {majorCount        > 0 && <>{t(majorCount > 1 ? "game.majorCountPlural" : "game.majorCount", { count: majorCount })}&nbsp;·&nbsp;</>}
-                        {minorCount        > 0 && <>{t(minorCount > 1 ? "game.minorCountPlural" : "game.minorCount", { count: minorCount })}&nbsp;·&nbsp;</>}
-                        {hotfixCount       > 0 && <>{t(hotfixCount > 1 ? "game.hotfixCountPlural" : "game.hotfixCount", { count: hotfixCount })}</>}
+                        {[
+                          extItems.length   > 0 && t(extItems.length > 1 ? "game.extensionCountPlural" : "game.extensionCount", { count: extItems.length }),
+                          majorCount        > 0 && t(majorCount > 1 ? "game.majorCountPlural" : "game.majorCount", { count: majorCount }),
+                          minorCount        > 0 && t(minorCount > 1 ? "game.minorCountPlural" : "game.minorCount", { count: minorCount }),
+                          hotfixCount       > 0 && t(hotfixCount > 1 ? "game.hotfixCountPlural" : "game.hotfixCount", { count: hotfixCount }),
+                          undefinedCount    > 0 && t(undefinedCount > 1 ? "game.undefinedCountPlural" : "game.undefinedCount", { count: undefinedCount }),
+                        ].filter(Boolean).join(" · ")}
                       </span>
                       {extItems.length > 0 && (
                         <div className="flex gap-[5px] mt-2 overflow-hidden" aria-hidden="true">

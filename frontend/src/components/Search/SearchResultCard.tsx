@@ -2,7 +2,7 @@ import { Game } from "@/types/gameType";
 import { FollowButton } from "../FollowButton";
 import Image from "next/image";
 import Link from "next/link";
-import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
+import { changeIgdbImageFormat, formatReleaseDate, IgdbImageFormat } from "@/lib/utils";
 import { useTranslation } from "@/i18n/TranslationProvider";
 import React from "react";
 
@@ -22,13 +22,11 @@ export function SearchResultCard({
   game,
 }: SearchResultCardProps): React.ReactElement {
   const { t } = useTranslation();
-  const formattedDate: string = game.releasedAt
-    ? new Date(game.releasedAt).toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "N/A";
+  const formattedDate: string = formatReleaseDate(
+    game.releasedAt,
+    t("game.dateUnknown"),
+    { day: "2-digit", month: "2-digit", year: "numeric" }
+  );
 
   const truncatedDescription: string = game.description
     ? game.description.length > DESCRIPTION_MAX_LENGTH

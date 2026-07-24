@@ -1,4 +1,4 @@
-import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
+import { changeIgdbImageFormat, formatReleaseDate, IgdbImageFormat } from "@/lib/utils";
 import Image from "next/image";
 
 type ExtensionCardProps = {
@@ -8,7 +8,7 @@ type ExtensionCardProps = {
   releasedAt: string;
 };
 
-export function ExtensionCard({ id, title, imageUrl, releasedAt }: ExtensionCardProps) {
+export function ExtensionCard({ title, imageUrl, releasedAt }: ExtensionCardProps) {
   const coverUrl = changeIgdbImageFormat(imageUrl, IgdbImageFormat.CoverBig);
 
   return (
@@ -30,7 +30,7 @@ export function ExtensionCard({ id, title, imageUrl, releasedAt }: ExtensionCard
           {title}
         </p>
         <p className="text-gray-400 mt-0.5" style={{ fontSize: "9px" }}>
-          {new Date(releasedAt).toLocaleDateString("fr-FR")}
+          {formatReleaseDate(releasedAt, "inconnue")}
         </p>
       </div>
     </div>

@@ -1,15 +1,18 @@
 "use client";
 
 import { useAuth } from "@/providers/AuthProvider";
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import PasswordInput from "@/components/shared/PasswordInput";
 import { useTranslation } from "@/i18n/TranslationProvider";
 import { isValidEmail } from "@/lib/validationUtils";
+import { sanitizeRedirectPath } from "@/lib/navigation";
 
-export default function LoginPage() {
+export const dynamic = "force-dynamic";
+
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -17,8 +20,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<{ email?: string }>({});
 
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const { t } = useTranslation();
+
+  // Page d'où vient l'utilisateur : on l'y ramène une fois connecté.
+  const redirectTo = sanitizeRedirectPath(searchParams.get("redirect"));
 
   const { login, error, isAuthenticated } = useAuth();
   const { showMessage } = useFlashMessage();
@@ -43,7 +49,7 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    await login({ email, password, rememberMe });
+    await login({ email, password, rememberMe }, redirectTo);
     setLoading(false);
   };
 
@@ -153,5 +159,14 @@ export default function LoginPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams impose une frontière Suspense côté App Router.
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-off-black" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

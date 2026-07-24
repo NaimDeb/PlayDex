@@ -29,6 +29,9 @@ class SecurityAccessControlTest extends WebTestCase
     {
         $this->client = static::createClient();
         $this->entityManager = static::getContainer()->get('doctrine')->getManager();
+        // Reset rate-limiter counters: the banned-login test must not inherit the
+        // exhausted login limiter (keyed by IP) left by RateLimiterTest.
+        static::getContainer()->get('app.limiter_storage')->clear();
     }
 
     private function createUser(string $email, array $roles = [], ?string $plainPassword = null): User

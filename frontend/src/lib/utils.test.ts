@@ -6,6 +6,7 @@ import {
   changeIgdbImageFormat,
   IgdbImageFormat,
   colorizeContent,
+  formatReleaseDate,
 } from './utils';
 
 describe('cn', () => {
@@ -83,6 +84,37 @@ describe('formatDateDifference', () => {
 
   it('accepts a string date', () => {
     expect(formatDateDifference('2026-03-25T11:59:30Z')).toBe('Il y a quelques secondes');
+  });
+});
+
+describe('formatReleaseDate', () => {
+  it('formats a valid ISO date', () => {
+    expect(formatReleaseDate('2024-01-15T00:00:00+00:00', 'inconnue')).toBe('15/01/2024');
+  });
+
+  it('accepts a Date instance', () => {
+    expect(formatReleaseDate(new Date('2024-01-15T12:00:00Z'), 'inconnue')).toBe('15/01/2024');
+  });
+
+  it('returns the fallback for a null or empty date', () => {
+    expect(formatReleaseDate(null, 'inconnue')).toBe('inconnue');
+    expect(formatReleaseDate(undefined, 'inconnue')).toBe('inconnue');
+    expect(formatReleaseDate('', 'inconnue')).toBe('inconnue');
+  });
+
+  it('returns the fallback instead of "Invalid Date"', () => {
+    expect(formatReleaseDate('not-a-date', 'inconnue')).toBe('inconnue');
+    expect(formatReleaseDate('0000-00-00', 'inconnue')).toBe('inconnue');
+  });
+
+  it('forwards Intl options', () => {
+    expect(
+      formatReleaseDate('2024-01-15T00:00:00+00:00', 'inconnue', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+    ).toBe('15/01/2024');
   });
 });
 
