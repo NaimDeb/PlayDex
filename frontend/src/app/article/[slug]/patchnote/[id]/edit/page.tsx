@@ -5,7 +5,8 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { redirect, useParams } from "next/navigation";
+import { redirect, useParams, usePathname } from "next/navigation";
+import { loginHref } from "@/lib/navigation";
 import { Patchnote } from "@/types/patchNoteType";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
@@ -36,6 +37,7 @@ interface PatchnoteFormState {
 
 export default function EditPatchnotePage(): React.ReactElement {
   const params = useParams();
+  const pathname = usePathname();
   const slug = params.slug as string;
   const id = params.id as string;
 
@@ -312,7 +314,7 @@ export default function EditPatchnotePage(): React.ReactElement {
               </button>
             ) : (
               <Link
-                href="/login"
+                href={loginHref(pathname)}
                 className="
                   bg-primary hover:bg-secondary
                   text-white font-semibold

@@ -13,9 +13,11 @@ import { useRouter } from "next/navigation";
 import authService from "@/lib/api/authService";
 import { AuthState, LoginFormData, RegisterFormData } from "@/types/authType";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { sanitizeRedirectPath } from "@/lib/navigation";
 
 interface AuthContextType extends AuthState {
-  login: (data: LoginFormData) => Promise<void>;
+  /** @param redirectTo - Page to return to after login (defaults to home) */
+  login: (data: LoginFormData, redirectTo?: string) => Promise<void>;
   register: (data: RegisterFormData) => Promise<void>;
   logout: () => void;
 }
@@ -59,9 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * * * Fonction de connexion
    * @param data - Les données de connexion de l'utilisateur
+   * @param redirectTo - Page sur laquelle revenir après connexion (accueil par défaut)
    */
   const login = useCallback(
-    async (data: LoginFormData) => {
+    async (data: LoginFormData, redirectTo?: string) => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
       try {
         const res = await authService.login(data);
@@ -70,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: null,
           isAuthenticated: true,
         });
-        router.push("/");
+        router.push(sanitizeRedirectPath(redirectTo));
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
         const message = !err?.response

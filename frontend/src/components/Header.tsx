@@ -1,8 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "./Logo";
+import { loginHref } from "@/lib/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import { useTranslation } from "@/i18n/TranslationProvider";
@@ -20,6 +21,9 @@ import { addToast } from "@heroui/toast";
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  // Connexion depuis le header : on renvoie l'utilisateur sur sa page de départ.
+  const loginUrl = loginHref(pathname);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { showMessage } = useFlashMessage();
@@ -193,7 +197,7 @@ export function Header() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link href="/login" className="hover:text-gray-200">
+                <Link href={loginUrl} className="hover:text-gray-200">
                   {t("nav.login")}
                 </Link>
                 <Link
@@ -220,7 +224,7 @@ export function Header() {
                 <UserCircleIcon className="h-7 w-7" />
               </Link>
             ) : (
-              <Link href="/login" className="hover:text-gray-200" aria-label={t("nav.login")}>
+              <Link href={loginUrl} className="hover:text-gray-200" aria-label={t("nav.login")}>
                 <LoginIcon className="w-6 h-6" />
               </Link>
             )}
@@ -290,7 +294,7 @@ export function Header() {
               {!isAuthenticated && (
                 <>
                   <hr className="my-2 border-gray-600" />
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
+                  <Link href={loginUrl} onClick={() => setMobileMenuOpen(false)} className="px-2 py-1 hover:text-gray-200">
                     {t("nav.login")}
                   </Link>
                   <Link
