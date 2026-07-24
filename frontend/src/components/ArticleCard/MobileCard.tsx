@@ -1,4 +1,4 @@
-import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
+import { changeIgdbImageFormat, formatReleaseDate, IgdbImageFormat } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { FollowButton } from "../FollowButton";
@@ -49,7 +49,7 @@ export function MobileCard({
         <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white z-10">
           <p className="text-xs font-bold leading-tight truncate">{title}</p>
           <p className="text-gray-400 mt-0.5" style={{ fontSize: "10px" }}>
-            sortie : {new Date(releasedAt).toLocaleDateString("fr-FR")}
+            sortie : {formatReleaseDate(releasedAt, "inconnue")}
           </p>
         </div>
       </div>
