@@ -14,11 +14,7 @@ export const PATCHNOTE_TYPES = [
 /** Type for patchnote type values */
 export type PatchnoteType = typeof PATCHNOTE_TYPES[number]['value'];
 
-/**
- * Badge and left-accent classes per importance.
- * Single source of truth so the patchnote cards and the patchnote detail page
- * stay on the same palette (primary / off-white / red — no stray purple).
- */
+/** Single source of truth: the cards and the detail page must share one palette. */
 export const PATCHNOTE_IMPORTANCE_STYLES = {
   major: {
     badge: "bg-primary/20 text-primary border border-primary/40",

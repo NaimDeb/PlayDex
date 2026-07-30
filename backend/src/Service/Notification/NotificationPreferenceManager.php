@@ -11,15 +11,11 @@ use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 /**
- * Gère l'opt-out des notifications email.
- *
- * La désinscription doit rester accessible sans connexion (RGPD : moyen simple
- * de s'opposer). On s'appuie donc sur une URL signée (HMAC dérivé d'APP_SECRET)
- * plutôt que sur l'authentification : le lien est infalsifiable et expire.
+ * La désinscription doit rester possible sans connexion (RGPD) : la légitimité
+ * vient d'une URL signée qui expire, pas d'une session.
  */
 class NotificationPreferenceManager
 {
-    /** Durée de validité d'un lien de désinscription. */
     public const LINK_TTL = '+90 days';
 
     public const ROUTE_UNSUBSCRIBE = 'notifications_unsubscribe';
@@ -31,9 +27,6 @@ class NotificationPreferenceManager
     ) {
     }
 
-    /**
-     * Construit le lien de désinscription en un clic pour un utilisateur donné.
-     */
     public function generateUnsubscribeUrl(User $user): string
     {
         $url = $this->urlGenerator->generate(
@@ -45,9 +38,7 @@ class NotificationPreferenceManager
         return $this->uriSigner->sign($url, new \DateTimeImmutable(self::LINK_TTL));
     }
 
-    /**
-     * Vérifie la signature ET la date d'expiration de la requête entrante.
-     */
+    /** Vérifie la signature et la date d'expiration. */
     public function isValidUnsubscribeRequest(Request $request): bool
     {
         return $this->uriSigner->checkRequest($request);

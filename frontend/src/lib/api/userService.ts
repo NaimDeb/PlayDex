@@ -90,12 +90,7 @@ class UserService {
     }
   }
 
-  /**
-   * Calls the PATCH endpoint /me/notifications to toggle the email notifications
-   * sent when a followed game gets a new patchnote.
-   * @param enabled - Whether the user wants to receive those emails
-   * @returns The persisted preference
-   */
+  /** @returns the preference as persisted by the API, not the requested value */
   async updateEmailNotifications(enabled: boolean): Promise<boolean> {
     const config = authUtils.getAuthorization();
 

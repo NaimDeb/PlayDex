@@ -25,11 +25,7 @@ class NotificationPreferenceController extends AbstractController
     }
 
     /**
-     * Désinscription globale en un clic, sans authentification.
-     *
-     * GET  : suivi d'un lien depuis l'email -> redirection vers une page de confirmation du front.
-     * POST : "one-click unsubscribe" (RFC 8058), déclenché par le bouton natif de Gmail/Yahoo.
-     *
+     * GET : lien cliqué dans l'email. POST : bouton natif Gmail/Yahoo (RFC 8058).
      * La légitimité vient de la signature de l'URL, pas d'une session.
      */
     #[Route(
@@ -55,14 +51,10 @@ class NotificationPreferenceController extends AbstractController
             $this->preferences->setEmailNotifications($user, false);
         }
 
-        // Réponse identique que l'utilisateur existe ou non : un lien valide ne
-        // doit pas permettre d'énumérer les comptes.
+        // Réponse identique que l'utilisateur existe ou non : pas d'énumération de comptes.
         return $this->unsubscribeResponse($request, $frontendUrl, true);
     }
 
-    /**
-     * Active/désactive les emails depuis les préférences du compte connecté.
-     */
     #[Route('/api/me/notifications', name: 'notifications_preferences_update', methods: ['PATCH'])]
     #[IsGranted('ROLE_USER')]
     public function updatePreferences(Request $request): JsonResponse
@@ -86,10 +78,7 @@ class NotificationPreferenceController extends AbstractController
         return $this->json(['emailNotifications' => $user->isEmailNotifications()]);
     }
 
-    /**
-     * Le one-click POST attend un 2xx sans corps ; le GET vient d'un navigateur
-     * et mérite une vraie page, donc on renvoie vers le front.
-     */
+    /** Le one-click POST attend un 2xx sans corps ; le GET vient d'un navigateur, donc redirection. */
     private function unsubscribeResponse(Request $request, string $frontendUrl, bool $success): Response
     {
         if ($request->isMethod('POST')) {

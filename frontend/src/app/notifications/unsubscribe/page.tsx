@@ -8,11 +8,7 @@ import { useTranslation } from "@/i18n/TranslationProvider";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Page d'atterrissage du lien « Ne plus recevoir ces emails ».
- * L'opt-out est déjà appliqué côté API : cette page ne fait que confirmer,
- * le paramètre `status` étant posé par la redirection du back.
- */
+/** L'opt-out est déjà appliqué côté API : `status` vient de la redirection du back. */
 function UnsubscribeContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();

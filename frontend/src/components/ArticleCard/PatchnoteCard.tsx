@@ -35,13 +35,9 @@ interface PatchnoteCardComponentProps {
   baseUrl?: string;
 }
 
-/** Longueur max de l'aperçu, avant coupure sur une fin de ligne. */
 const PREVIEW_MAX_LENGTH = 400;
 
-/**
- * Rendu markdown compact de l'aperçu : mêmes règles que la page patchnote,
- * en plus petit. Sans ça, la card affichait la source markdown brute.
- */
+/** Mêmes règles de rendu que la page patchnote, en plus petit. */
 const PREVIEW_MARKDOWN_COMPONENTS = {
   span: (props: React.ComponentPropsWithoutRef<"span">) => <span {...props} />,
   h1: ({ children }: { children?: React.ReactNode }) => (
@@ -65,7 +61,7 @@ const PREVIEW_MARKDOWN_COMPONENTS = {
       <span>{children}</span>
     </li>
   ),
-  // Un lien dans l'aperçu ouvrirait une page hors du site au clic sur la card.
+  // Rendu inerte : un lien capterait le clic destiné à la card.
   a: ({ children }: { children?: React.ReactNode }) => (
     <span className="text-primary">{children}</span>
   ),
@@ -93,8 +89,7 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  // Aperçu markdown : on coupe sur une fin de ligne pour ne pas tronquer une
-  // liste ou un titre au milieu, ce qui casserait le rendu.
+  // Coupe sur une fin de ligne : tronquer au milieu d'une liste ou d'un titre casse le rendu.
   const preview = useMemo(() => {
     const raw = patchnote.content ?? "";
     if (raw.length <= PREVIEW_MAX_LENGTH) return colorizeContent(raw);
@@ -124,23 +119,18 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
       onClick={() => window.location.href = patchnoteUrl}
     >
 
-      {/* ── Row 0 : game name (if provided) ───────────────── */}
       {patchnote.gameName && (
         <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1 block">
           {patchnote.gameName}
         </span>
       )}
 
-      {/* ── Row 1 : title + menu ────────────────────────────── */}
       <div className="flex items-start justify-between gap-3 mb-1">
         <h3 className="font-bold text-base leading-snug">{patchnote.title}</h3>
 
-        {/* ··· menu */}
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             className="text-off-white/50 hover:text-off-white px-1 leading-none text-lg"
-            // Sans stopPropagation, le clic remonte jusqu'à la card et navigue
-            // vers la patchnote au lieu d'ouvrir le menu.
             onClick={(e) => {
               e.stopPropagation();
               setMenuOpen((v) => !v);
@@ -193,7 +183,6 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
         </div>
       </div>
 
-      {/* ── Row 2 : date + importance badge ─────────────────── */}
       <div className="flex flex-wrap items-center gap-3 mb-3">
         {formattedDate && (
           <span className="text-sm text-off-white/50">
@@ -205,7 +194,6 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
         </span>
       </div>
 
-      {/* ── Row 3 : stats (changements / buffs / nerfs) ─────── */}
       {(patchnote.changesCount !== undefined ||
         patchnote.buffsCount   !== undefined ||
         patchnote.nerfsCount   !== undefined) && (
@@ -226,14 +214,12 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
         </p>
       )}
 
-      {/* ── Row 4 : résumé ──────────────────────────────────── */}
       {patchnote.smallDescription && (
         <p className="text-sm font-medium text-off-white/80 leading-relaxed mb-3">
           {patchnote.smallDescription}
         </p>
       )}
 
-      {/* ── Row 5 : content preview (markdown, tronqué) ─────── */}
       <div className="prose prose-sm max-w-none text-sm text-off-white/70 leading-relaxed
         mb-4 max-h-40 overflow-hidden patchnote-content">
         <ReactMarkdown rehypePlugins={[rehypeRaw]} components={PREVIEW_MARKDOWN_COMPONENTS}>
@@ -241,7 +227,6 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
         </ReactMarkdown>
       </div>
 
-      {/* ── Row 6 : footer ──────────────────────────────────── */}
       <div className="flex items-center justify-between mt-auto">
         <span className="text-xs text-off-white/40">
           {patchnote.lineCount ? `${patchnote.lineCount} lignes...` : ""}

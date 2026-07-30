@@ -16,7 +16,7 @@ import { useTranslation } from "@/i18n/TranslationProvider";
 import { sanitizeRedirectPath } from "@/lib/navigation";
 
 interface AuthContextType extends AuthState {
-  /** @param redirectTo - Page to return to after login (defaults to home) */
+  /** @param redirectTo - page sur laquelle revenir après connexion (accueil par défaut) */
   login: (data: LoginFormData, redirectTo?: string) => Promise<void>;
   register: (data: RegisterFormData) => Promise<void>;
   logout: () => void;
@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /**
    * * * Fonction de connexion
    * @param data - Les données de connexion de l'utilisateur
-   * @param redirectTo - Page sur laquelle revenir après connexion (accueil par défaut)
    */
   const login = useCallback(
     async (data: LoginFormData, redirectTo?: string) => {

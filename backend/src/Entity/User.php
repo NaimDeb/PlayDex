@@ -209,10 +209,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
-    /**
-     * Opt-out des emails de notification de nouvelles patchnotes.
-     * Activé par défaut : l'utilisateur suit un jeu pour être prévenu.
-     */
+    /** Activé par défaut : suivre un jeu implique vouloir être prévenu. */
     #[ORM\Column(options: ['default' => true])]
     #[Groups(['user:read', 'user:update'])]
     private bool $emailNotifications = true;

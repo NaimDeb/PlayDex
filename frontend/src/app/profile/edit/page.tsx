@@ -12,10 +12,7 @@ import { isValidEmail, validatePassword } from "@/lib/validationUtils";
 
 export const dynamic = 'force-dynamic';
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-// Palette du site (cf. FIELD_CLASS de components/shared/FormField) : panneaux
-// off-gray, champs off-black, focus primary.
-
+// Aligné sur FIELD_CLASS de components/shared/FormField.
 const PANEL_CLASS = "p-4 rounded-lg shadow-xl sm:p-6 bg-off-gray border border-off-white/10";
 
 const INPUT_CLASS =
@@ -62,8 +59,7 @@ export default function ProfileEditPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Préférence de notification : enregistrée immédiatement, hors du formulaire
-  // principal, pour que la désinscription reste possible en un clic.
+  // Hors du formulaire principal : la désinscription doit rester possible en un clic.
   const [emailNotifications, setEmailNotifications] = useState(
     user?.emailNotifications ?? true
   );
@@ -439,7 +435,6 @@ export default function ProfileEditPage() {
           </div>
         </form>
 
-        {/* ── Notifications ── */}
         <div className={`mt-6 ${PANEL_CLASS}`}>
           <h2 className="flex items-center gap-2 mb-2 text-lg font-semibold text-gray-300">
             <Bell className="w-5 h-5" aria-hidden="true" />
@@ -512,9 +507,7 @@ export default function ProfileEditPage() {
                 placeholder={t("auth.passwordPlaceholder")}
                 className={INPUT_CLASS}
                 buttonClassName="text-gray-400 hover:text-off-white"
-                // "off" est ignoré par la plupart des gestionnaires de mots de
-                // passe : "new-password" est ce qui empêche réellement le
-                // pré-remplissage sur ce champ de confirmation.
+                // "off" est ignoré par la plupart des gestionnaires de mots de passe.
                 autoComplete="new-password"
               />
             </div>

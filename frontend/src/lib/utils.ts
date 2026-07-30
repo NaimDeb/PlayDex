@@ -43,20 +43,7 @@ export const formatDateToLocal = (
   return formatter.format(date);
 };
 
-/**
- * Formats a release date, tolerating missing or malformed values.
- * Some games come back from the API without a release date (or with an
- * unparsable one), which would otherwise render as "Invalid Date".
- * @param date - Date value coming from the API (ISO string, Date, null…)
- * @param fallback - Text to return when the date is missing or unparsable
- * @param options - Intl options forwarded to toLocaleDateString
- * @param locale - Locale code (default: 'fr-FR')
- * @returns Formatted date string, or `fallback` if the date is unusable
- * @example
- * formatReleaseDate('2024-01-15', 'inconnue') // "15/01/2024"
- * formatReleaseDate('', 'inconnue')           // "inconnue"
- * formatReleaseDate('not-a-date', 'inconnue') // "inconnue"
- */
+/** Returns `fallback` when the API sends no release date, or one Date cannot parse. */
 export function formatReleaseDate(
   date: string | Date | null | undefined,
   fallback: string,

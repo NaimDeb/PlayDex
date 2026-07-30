@@ -71,7 +71,7 @@ class PollSteamPatchnotesCommand extends Command
         $botUser = $this->botUserProvider->getBotUser();
         $created = 0;
         $notified = 0;
-        /** @var Patchnote[] $pendingNotifications patchnotes créées, en attente de flush (id non encore assigné) */
+        /** @var Patchnote[] $pendingNotifications en attente de flush, id non encore assigné */
         $pendingNotifications = [];
         $skipped = 0;
         $skipCache = 0;
@@ -100,7 +100,7 @@ class PollSteamPatchnotesCommand extends Command
                 continue;
             }
 
-            // Cache check: skip recently processed GIDs (chemin rapide, sans requête jeu)
+            // Placé avant la recherche du jeu : un GID déjà traité ne coûte qu'un accès cache.
             $cacheKey = 'steam_gid_' . $gid;
             $cacheItem = $this->cache->getItem($cacheKey);
             if ($cacheItem->isHit()) {
@@ -190,10 +190,8 @@ class PollSteamPatchnotesCommand extends Command
     }
 
     /**
-     * Notifie les abonnés des patchnotes fraîchement flushées (leur id est désormais assigné).
-     *
-     * L'envoi est volontairement non bloquant : une erreur de mail ne doit pas
-     * faire échouer le poll, sinon les patchnotes suivantes ne seraient pas importées.
+     * À n'appeler qu'après un flush : l'email référence l'id de la patchnote.
+     * Une erreur d'envoi n'interrompt pas le poll, sinon les patchnotes suivantes seraient perdues.
      *
      * @param Patchnote[] $patchnotes
      *

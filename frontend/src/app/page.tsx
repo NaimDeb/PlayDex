@@ -13,10 +13,7 @@ import Link from "next/link";
 import { useTranslation } from "@/i18n/TranslationProvider";
 import { readCache, writeCache } from "@/lib/api/responseCache";
 
-// ─── Cache ────────────────────────────────────────────────────────────────────
-
-/** Nouveautés + dernières patchnotes : identiques pour tous, inutile de les
- *  retélécharger à chaque retour sur l'accueil. */
+// Nouveautés + dernières patchnotes : identiques pour tous les visiteurs.
 const PUBLIC_DATA_CACHE_KEY = "home:public";
 const PUBLIC_DATA_CACHE_TTL = 5 * 60 * 1000;
 
@@ -62,7 +59,6 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
 
-  // Données publiques : servies depuis le cache tant qu'il est frais.
   useEffect(() => {
     let cancelled = false;
 
@@ -115,8 +111,7 @@ export default function Home() {
     };
   }, []);
 
-  // Liste suivie : propre à l'utilisateur et modifiable à tout moment (bouton
-  // "Suivre"), donc jamais mise en cache.
+  // Jamais mis en cache : modifiable à tout moment via le bouton "Suivre".
   useEffect(() => {
     let cancelled = false;
 

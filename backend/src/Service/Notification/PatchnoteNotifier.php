@@ -15,11 +15,8 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
 /**
- * Envoie un email aux utilisateurs qui suivent un jeu lorsqu'une nouvelle
- * patchnote est publiée pour ce jeu.
- *
- * L'échec d'envoi d'un email ne doit jamais interrompre le traitement :
- * chaque destinataire est isolé et les erreurs sont loguées.
+ * Notifie par email les utilisateurs qui suivent un jeu à chaque nouvelle patchnote.
+ * Un échec d'envoi est logué et n'interrompt pas les destinataires suivants.
  */
 class PatchnoteNotifier
 {
@@ -36,8 +33,6 @@ class PatchnoteNotifier
     }
 
     /**
-     * Notifie tous les abonnés éligibles du jeu concerné.
-     *
      * @return int nombre d'emails effectivement envoyés
      */
     public function notifyNewPatchnote(Patchnote $patchnote): int
@@ -65,10 +60,6 @@ class PatchnoteNotifier
         return $sent;
     }
 
-    /**
-     * Un utilisateur est notifiable s'il a une adresse email, un compte actif,
-     * les notifications activées, et qu'il n'est pas l'auteur de la patchnote.
-     */
     private function isNotifiable(User $user, Patchnote $patchnote): bool
     {
         if ($user->isDeleted() || !$user->isEmailNotifications()) {
