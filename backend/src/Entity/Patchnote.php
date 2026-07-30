@@ -46,7 +46,8 @@ use App\Traits\TimeStampableTrait;
         new Get(
             normalizationContext: ['groups' => ['patchnote:read']],
             provider: SoftDeletedStateProvider::class,
-            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 300],
+            // max_age 0 : une édition doit être visible dès la redirection.
+            cacheHeaders: ['max_age' => 0, 'shared_max_age' => 60],
         ),
         new Patch(
             security: "is_granted('ROLE_USER')",

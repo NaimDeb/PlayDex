@@ -52,7 +52,8 @@ use App\Filter\NotNullReleasedAtFilter;
             uriTemplate: '/games/{id}/patchnotes',
             normalizationContext: ['groups' => ['game:read', 'patchnote:read']],
             provider: GamePatchnotesProvider::class,
-            cacheHeaders: ['max_age' => 60, 'shared_max_age' => 300],
+            // max_age 0 : l'auteur doit voir sa patchnote dès la redirection.
+            cacheHeaders: ['max_age' => 0, 'shared_max_age' => 60],
         )
     ]
 )]
