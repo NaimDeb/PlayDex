@@ -545,7 +545,7 @@ export default function AdminDashboard() {
     }
   };
 
-
+  // Le back refuse les appels admin, mais l'UI doit aussi rester fermée.
   useEffect(() => {
     if (authLoading || isAdmin) return;
     router.replace("/");

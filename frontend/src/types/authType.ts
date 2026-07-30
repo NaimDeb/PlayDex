@@ -17,6 +17,8 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   error: string | null;
+  /** Vrai tant que la session n'a pas été vérifiée : ne pas décider d'un accès avant. */
+  isLoading: boolean;
 }
 
 export interface LoginFormData {
