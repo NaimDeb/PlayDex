@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import rehypeSafeContent from "@/lib/rehypeSafeContent";
 import { useTranslation } from "@/i18n/TranslationProvider";
 import { colorizeContent, formatReleaseDate } from "@/lib/utils";
+import { steamBbcodeToMarkdown } from "@/lib/patchnoteContent";
 import {
   PATCHNOTE_IMPORTANCE_FALLBACK_STYLE,
   PATCHNOTE_IMPORTANCE_I18N_KEYS,
@@ -91,7 +93,8 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
 
   // Coupe sur une fin de ligne : tronquer au milieu d'une liste ou d'un titre casse le rendu.
   const preview = useMemo(() => {
-    const raw = patchnote.content ?? "";
+    // Conversion avant la coupe : les blocs Steam deviennent des lignes markdown.
+    const raw = steamBbcodeToMarkdown(patchnote.content ?? "");
     if (raw.length <= PREVIEW_MAX_LENGTH) return colorizeContent(raw);
 
     const cut = raw.slice(0, PREVIEW_MAX_LENGTH);
@@ -222,7 +225,7 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
 
       <div className="prose prose-sm max-w-none text-sm text-off-white/70 leading-relaxed
         mb-4 max-h-40 overflow-hidden patchnote-content">
-        <ReactMarkdown rehypePlugins={[rehypeRaw]} components={PREVIEW_MARKDOWN_COMPONENTS}>
+        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSafeContent]} components={PREVIEW_MARKDOWN_COMPONENTS}>
           {preview}
         </ReactMarkdown>
       </div>

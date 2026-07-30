@@ -4,8 +4,9 @@ import React, { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import rehypeSafeContent from "@/lib/rehypeSafeContent";
 import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
-import { colorizeContent } from "@/lib/utils";
+import { formatPatchnoteContent } from "@/lib/patchnoteContent";
 import { useTranslation } from "@/i18n/TranslationProvider";
 import { PATCHNOTE_IMPORTANCE_STYLES } from "@/constants/patchnote.constants";
 
@@ -182,7 +183,7 @@ export default function PatchnoteDetailPage() {
 
   const formattedDate = formatDate(patchnote?.releasedAt ?? patchnote?.createdAt);
   const colorizedContent = useMemo(
-    () => colorizeContent(patchnote?.content ?? ""),
+    () => formatPatchnoteContent(patchnote?.content ?? ""),
     [patchnote?.content]
   );
 
@@ -279,7 +280,7 @@ export default function PatchnoteDetailPage() {
         <div className="px-6 py-6">
           <div className="prose prose-sm sm:prose-base max-w-none text-off-white patchnote-content">
             <ReactMarkdown
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[rehypeRaw, rehypeSafeContent]}
               components={{
                 span: (props) => <span {...props} />,
                 // Style headers inside the markdown
