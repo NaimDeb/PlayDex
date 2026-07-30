@@ -35,12 +35,22 @@ describe('rehypeSafeContent', () => {
   });
 
   it('strips event handlers from allowed tags', () => {
-    const { container } = renderContent('<img src="x" onerror="alert(1)" alt="boom">');
+    const { container } = renderContent('<a href="/a" onclick="alert(1)" title="ok">clic</a>');
 
-    const image = container.querySelector('img');
-    expect(image).not.toBeNull();
-    expect(image?.getAttribute('onerror')).toBeNull();
-    expect(image?.getAttribute('alt')).toBe('boom');
+    const link = container.querySelector('a');
+    expect(link?.getAttribute('onclick')).toBeNull();
+    expect(link?.getAttribute('href')).toBe('/a');
+    expect(link?.getAttribute('title')).toBe('ok');
+  });
+
+  // Une img distante livre l'IP de chaque lecteur à qui a écrit la patchnote.
+  it('drops images, markdown and raw HTML alike', () => {
+    const { container } = renderContent(
+      '![](https://tracker.test/pixel.gif)\n\n<img src="https://tracker.test/b.gif" alt="x">',
+    );
+
+    expect(container.querySelectorAll('img')).toHaveLength(0);
+    expect(container.innerHTML).not.toContain('tracker.test');
   });
 
   it('strips inline styles used to overlay the page', () => {

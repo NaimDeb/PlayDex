@@ -14,19 +14,22 @@ type ContentNode = RootContent | Element["children"][number];
 const ALLOWED_TAGS = new Set([
   "p", "br", "hr", "blockquote", "pre", "code", "span", "em", "strong", "del",
   "h1", "h2", "h3", "h4", "h5", "h6",
-  "ul", "ol", "li", "a", "img",
+  "ul", "ol", "li", "a",
   "table", "thead", "tbody", "tr", "th", "td",
 ]);
 
-/** Balises dont les enfants ne sont pas du texte lisible : on jette le tout. */
+/**
+ * Balises retirées avec leur contenu : rien de lisible dedans, ou requête vers
+ * un tiers. Une img chargée depuis un domaine quelconque livre l'IP de chaque
+ * lecteur à qui a écrit la patchnote.
+ */
 const DROPPED_TAGS = new Set([
-  "script", "style", "noscript", "template", "textarea", "title", "head",
+  "script", "style", "noscript", "template", "textarea", "title", "head", "img",
 ]);
 
 /** Tout attribut absent de cette liste saute, y compris les on* et style. */
 const ALLOWED_ATTRIBUTES: Record<string, ReadonlySet<string>> = {
   a: new Set(["href", "title"]),
-  img: new Set(["src", "alt", "title"]),
   span: new Set(["className"]),
   code: new Set(["className"]),
   pre: new Set(["className"]),

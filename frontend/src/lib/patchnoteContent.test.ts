@@ -2,9 +2,21 @@ import { describe, it, expect } from 'vitest';
 import { steamBbcodeToMarkdown, formatPatchnoteContent } from './patchnoteContent';
 
 describe('steamBbcodeToMarkdown', () => {
-  it('converts images, including the Steam placeholder host', () => {
-    expect(steamBbcodeToMarkdown('[img]{STEAM_CLAN_IMAGE}/40/banner.png[/img]').trim()).toBe(
-      '![](https://clan.cloudflare.steamstatic.com/images/40/banner.png)',
+  it('removes images, URL included', () => {
+    expect(
+      steamBbcodeToMarkdown('Avant [img]{STEAM_CLAN_IMAGE}/40/banner.png[/img] apres'),
+    ).toBe('Avant  apres');
+  });
+
+  it('removes an image inside a list without leaving its URL', () => {
+    expect(
+      steamBbcodeToMarkdown('[list][*][img]https://a.test/pixel.gif[/img]un[/list]').trim(),
+    ).toBe('- un');
+  });
+
+  it('still rewrites the Steam placeholder found in a link', () => {
+    expect(steamBbcodeToMarkdown('[url={STEAM_CLAN_IMAGE}/40/a.png]voir[/url]')).toBe(
+      '[voir](https://clan.cloudflare.steamstatic.com/images/40/a.png)',
     );
   });
 

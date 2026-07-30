@@ -2,10 +2,10 @@ import { colorizeContent } from "./utils";
 
 /**
  * Les patchnotes importées de Steam sont écrites en BBCode : sans conversion,
- * les [img], [list] et compagnie s'affichent tels quels dans le rendu markdown.
+ * les [list] et compagnie s'affichent tels quels dans le rendu markdown.
  */
 
-/** Steam sert les images de ses patchnotes derrière ce placeholder. */
+/** Le placeholder Steam se retrouve aussi dans des liens : sans réécriture, l'URL est morte. */
 const STEAM_IMAGE_HOST = "https://clan.cloudflare.steamstatic.com/images";
 
 /** Balises Steam sans équivalent markdown, ou restées orphelines : seul le contenu est gardé. */
@@ -38,6 +38,9 @@ function toListBlock(items: string, marker: string): string {
 
 export function steamBbcodeToMarkdown(content: string): string {
   return content
+    // Avant les blocs : une image dans un [list] doit disparaître avec son URL,
+    // sinon LEFTOVER_TAGS retire la balise et laisse le lien en texte.
+    .replace(/\[img\][\s\S]*?\[\/img\]/gi, "")
     .replace(/\{STEAM_CLAN(?:_LOC)?_IMAGE\}/g, STEAM_IMAGE_HOST)
     .replace(
       /\[h([1-6])\]([\s\S]*?)\[\/h\1\]/gi,
@@ -59,7 +62,6 @@ export function steamBbcodeToMarkdown(content: string): string {
     )
     // Après les blocs : dedans, [p] est une ligne, dehors c'est un paragraphe.
     .replace(/\[p\]([\s\S]*?)\[\/p\]/gi, (_match, text: string) => `\n\n${text.trim()}\n\n`)
-    .replace(/\[img\]\s*([^[\]]*?)\s*\[\/img\]/gi, "\n\n![]($1)\n\n")
     .replace(/\[url=["']?([^\]"']+)["']?\]([\s\S]*?)\[\/url\]/gi, "[$2]($1)")
     .replace(/\[url\]\s*([^[\]]*?)\s*\[\/url\]/gi, "[$1]($1)")
     .replace(
