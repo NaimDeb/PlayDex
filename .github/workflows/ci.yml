@@ -46,6 +46,10 @@ jobs:
         CORS_ALLOW_ORIGIN='^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$'
         MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0
         LOCK_DSN=flock
+        MAILER_DSN=null://null
+        MAILER_FROM=no-reply@playdex.local
+        FRONTEND_URL=http://localhost:3000
+        BACKEND_URL=http://localhost:8000
         EOF
     
     - name: Install dependencies
