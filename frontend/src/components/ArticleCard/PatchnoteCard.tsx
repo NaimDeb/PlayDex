@@ -67,7 +67,6 @@ const PREVIEW_MARKDOWN_COMPONENTS = {
   a: ({ children }: { children?: React.ReactNode }) => (
     <span className="text-primary">{children}</span>
   ),
-  img: () => null,
 };
 
 export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProps) {
