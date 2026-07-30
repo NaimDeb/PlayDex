@@ -31,6 +31,16 @@ vi.mock('@/lib/api/authService', () => ({
   },
 }));
 
+// Mock TranslationProvider: AuthProvider calls useTranslation, which throws
+// without a surrounding TranslationProvider. We only need `t` here.
+vi.mock('@/i18n/TranslationProvider', () => ({
+  useTranslation: () => ({
+    locale: 'fr',
+    setLocale: vi.fn(),
+    t: (key: string) => key,
+  }),
+}));
+
 function wrapper({ children }: { children: React.ReactNode }) {
   return <AuthProvider>{children}</AuthProvider>;
 }
@@ -62,6 +72,32 @@ describe('AuthProvider', () => {
 
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.user).toEqual(user);
+    expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
+  it('login redirects to the requested page', async () => {
+    const user = { id: 1, email: 'test@test.com', username: 'testuser', roles: ['ROLE_USER'] };
+    mockLogin.mockResolvedValue({ user, token: 'abc' });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.login({ email: 'test@test.com', password: 'password' }, '/article/42');
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/article/42');
+  });
+
+  it('login ignores an off-site redirect target', async () => {
+    const user = { id: 1, email: 'test@test.com', username: 'testuser', roles: ['ROLE_USER'] };
+    mockLogin.mockResolvedValue({ user, token: 'abc' });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.login({ email: 'test@test.com', password: 'password' }, 'https://evil.com');
+    });
+
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 

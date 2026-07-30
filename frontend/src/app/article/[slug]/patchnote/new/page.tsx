@@ -5,7 +5,8 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { redirect } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
+import { loginHref } from "@/lib/navigation";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import { useAuth } from "@/providers/AuthProvider";
@@ -44,6 +45,7 @@ export default function NewPatchnotePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const { showMessage } = useFlashMessage();
   const { t } = useTranslation();
@@ -332,7 +334,7 @@ export default function NewPatchnotePage({
               </button>
             ) : (
               <Link
-                href="/login"
+                href={loginHref(pathname)}
                 className="
                   bg-primary hover:bg-secondary
                   text-white font-semibold

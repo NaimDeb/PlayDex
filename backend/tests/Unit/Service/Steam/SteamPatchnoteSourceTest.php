@@ -137,4 +137,45 @@ class SteamPatchnoteSourceTest extends TestCase
         $source = $this->createSource(new MockHttpClient());
         $this->assertSame([], $source->fetchPatchnotes(new Game()));
     }
+
+    /**
+     * @dataProvider provideContentsWithoutText
+     */
+    public function testHasTextContentRejectsContentWithoutText(?string $content): void
+    {
+        $this->assertFalse(SteamPatchnoteSource::hasTextContent($content));
+    }
+
+    /**
+     * @return iterable<string, array{0: string|null}>
+     */
+    public static function provideContentsWithoutText(): iterable
+    {
+        yield 'null' => [null];
+        yield 'chaîne vide' => [''];
+        yield 'espaces' => ["  \n\t "];
+        yield 'espace insécable' => ["\u{00A0}"];
+        yield 'image BBCode seule' => ['[img]https://example.com/banner.png[/img]'];
+        yield 'balises HTML vides' => ['<p></p><br/>'];
+        yield 'entité HTML espace' => ['&nbsp;&nbsp;'];
+    }
+
+    /**
+     * @dataProvider provideContentsWithText
+     */
+    public function testHasTextContentAcceptsRealPatchnotes(string $content): void
+    {
+        $this->assertTrue(SteamPatchnoteSource::hasTextContent($content));
+    }
+
+    /**
+     * @return iterable<string, array{0: string}>
+     */
+    public static function provideContentsWithText(): iterable
+    {
+        yield 'texte brut' => ['Correction du crash au démarrage.'];
+        yield 'texte avec BBCode' => ['[h1]Patch 1.2[/h1] Équilibrage des armes.'];
+        yield 'texte avec HTML' => ['<p>Nouvelle carte disponible</p>'];
+        yield 'image + texte' => ['[img]banner.png[/img] Notes de version'];
+    }
 }

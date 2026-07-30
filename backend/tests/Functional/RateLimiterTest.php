@@ -13,6 +13,9 @@ class RateLimiterTest extends WebTestCase
     protected function setUp(): void
     {
         $this->client = static::createClient();
+        // Reset the rate-limiter counters so this test is independent of any
+        // login/API attempts made by previously-run tests (shared IP key).
+        static::getContainer()->get('app.limiter_storage')->clear();
     }
 
     public function testApiResponseIncludesRateLimitHeaders(): void

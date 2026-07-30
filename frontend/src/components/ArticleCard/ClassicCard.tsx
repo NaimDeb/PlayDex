@@ -1,4 +1,4 @@
-import { changeIgdbImageFormat, IgdbImageFormat } from "@/lib/utils";
+import { changeIgdbImageFormat, formatReleaseDate, IgdbImageFormat } from "@/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { FollowButton } from "../FollowButton";
@@ -79,7 +79,7 @@ export function ClassicCard({
         <div className="absolute bottom-3 left-3 right-3 text-white z-10">
           <p className="text-md font-bold leading-tight truncate">{title}</p>
           <p className="text-gray-400 text-xs mt-1">
-            sortie : {new Date(releasedAt).toLocaleDateString("fr-FR")}
+            sortie : {formatReleaseDate(releasedAt, "inconnue")}
           </p>
         </div>
       </div>

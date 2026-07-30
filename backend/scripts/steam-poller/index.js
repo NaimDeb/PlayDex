@@ -7,6 +7,25 @@ const LAST_CHANGE_FILE = path.resolve(__dirname, "../../var/steam_last_changenum
 const EVENT_TYPE_UPDATE = 12;
 const COMMUNITY_EVENTS_URL = "https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/";
 
+// Fallback : si lancé à la main (`node index.js`), Node ne lit pas le .env de Symfony.
+// On charge alors STEAM_* depuis backend/.env (sans écraser ce qui est déjà dans l'env,
+// ex. les variables passées par PHP).
+(function loadEnvFallback() {
+    const envPath = path.resolve(__dirname, "../../.env");
+    const needed = ["STEAM_USERNAME", "STEAM_PASSWORD", "STEAM_GUARD_CODE"];
+    if (!fs.existsSync(envPath) || needed.every((k) => process.env[k])) return;
+    for (const line of fs.readFileSync(envPath, "utf-8").split(/\r?\n/)) {
+        const m = line.match(/^\s*(STEAM_USERNAME|STEAM_PASSWORD|STEAM_GUARD_CODE)\s*=\s*(.*?)\s*$/);
+        if (m && !process.env[m[1]]) {
+            let v = m[2];
+            if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+                v = v.slice(1, -1);
+            }
+            process.env[m[1]] = v;
+        }
+    }
+})();
+
 const username = process.env.STEAM_USERNAME || "";
 const password = process.env.STEAM_PASSWORD || "";
 
@@ -15,7 +34,11 @@ if (!username || !password) {
     process.exit(1);
 }
 
-const client = new SteamUser();
+const client = new SteamUser({
+    // Persiste le token machine -> Steam Guard n'est demandé qu'UNE fois par appareil.
+    // En Docker, monter ce dossier en volume pour le garder entre redémarrages.
+    dataDirectory: path.resolve(__dirname, "../../var/steam-user"),
+});
 
 let lastChangenumber = 0;
 if (fs.existsSync(LAST_CHANGE_FILE)) {
@@ -106,6 +129,26 @@ client.on("disconnected", () => {
 
 client.on("error", (err) => {
     process.stderr.write(`Steam error: ${err.message}\n`);
+    process.exit(1);
+});
+
+client.on("steamGuard", (domain, callback) => {
+    const where = domain ? `email (${domain})` : "authenticator mobile";
+
+    // Code optionnel via variable d'env (pour scripter).
+    const envCode = (process.env.STEAM_GUARD_CODE || "").trim();
+    if (envCode) {
+        process.stderr.write(`Steam Guard: code depuis STEAM_GUARD_CODE (${where})\n`);
+        callback(envCode);
+        return;
+    }
+
+    // Ce script est NON-interactif (appelé par PHP) : impossible de saisir un code ici.
+    // Le 1er login (saisie du code + enregistrement du token appareil) se fait via firstLogin.js.
+    process.stderr.write(
+        `Steam Guard requis (${where}) et aucun token d'appareil enregistré.\n` +
+        `Lance d'abord, une seule fois :  node backend/scripts/steam-poller/firstLogin.js\n`
+    );
     process.exit(1);
 });
 

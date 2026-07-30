@@ -124,13 +124,14 @@ class IgdbDataProcessorService
     public function insertOrUpdateGames(array $games, array $gameIdMap, Connection $connection): array
     {
         $gameStmt = $connection->prepare('
-            INSERT INTO game (api_id, title, description, released_at, image_url, last_updated_at) 
-            VALUES (:apiId, :title, :description, :releasedAt, :imageUrl, :lastUpdatedAt) 
-            ON DUPLICATE KEY UPDATE 
+            INSERT INTO game (api_id, title, description, released_at, image_url, steam_id, last_updated_at)
+            VALUES (:apiId, :title, :description, :releasedAt, :imageUrl, :steamId, :lastUpdatedAt)
+            ON DUPLICATE KEY UPDATE
             title = :title,
             description = :description,
             released_at = :releasedAt,
             image_url = :imageUrl,
+            steam_id = COALESCE(:steamId, steam_id),
             last_updated_at = :lastUpdatedAt
         ');
 
@@ -145,6 +146,8 @@ class IgdbDataProcessorService
                 ? 'https:' . $game['cover']['url']
                 : null;
 
+            $steamId = $this->extractSteamId($game);
+
             // Insert or update the game
             $gameStmt->executeQuery([
                 'apiId' => $game['id'],
@@ -152,6 +155,7 @@ class IgdbDataProcessorService
                 'description' => $game['summary'] ?? null,
                 'releasedAt' => $releasedAt,
                 'imageUrl' => $imageUrl,
+                'steamId' => $steamId,
                 'lastUpdatedAt' => date('Y-m-d H:i:s')
             ]);
 
@@ -163,6 +167,26 @@ class IgdbDataProcessorService
         }
         
         return [$gameIdMap, $newGameIds];
+    }
+
+    /**
+     * Extract the Steam app id from an IGDB game's external_games (category 1 = Steam).
+     */
+    private function extractSteamId(array $game): ?int
+    {
+        if (!isset($game['external_games']) || !is_array($game['external_games'])) {
+            return null;
+        }
+
+        foreach ($game['external_games'] as $external) {
+            // IGDB external_game category: 1 = Steam
+            if (($external['category'] ?? null) === 1 && isset($external['uid'])) {
+                $steamId = (int) $external['uid'];
+                return $steamId > 0 ? $steamId : null;
+            }
+        }
+
+        return null;
     }
 
     /**

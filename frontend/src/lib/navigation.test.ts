@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { navigateToSearch, navigateToRandomGame, updateSearchParams } from './navigation';
+import {
+  navigateToSearch,
+  navigateToRandomGame,
+  updateSearchParams,
+  sanitizeRedirectPath,
+  loginHref,
+} from './navigation';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
 function createMockRouter(): AppRouterInstance {
@@ -12,6 +18,43 @@ function createMockRouter(): AppRouterInstance {
     prefetch: vi.fn(),
   };
 }
+
+describe('sanitizeRedirectPath', () => {
+  it('keeps internal paths', () => {
+    expect(sanitizeRedirectPath('/article/42')).toBe('/article/42');
+    expect(sanitizeRedirectPath('/search?q=doom')).toBe('/search?q=doom');
+  });
+
+  it('falls back to home when there is no path', () => {
+    expect(sanitizeRedirectPath(null)).toBe('/');
+    expect(sanitizeRedirectPath(undefined)).toBe('/');
+    expect(sanitizeRedirectPath('')).toBe('/');
+  });
+
+  it('rejects off-site targets', () => {
+    expect(sanitizeRedirectPath('https://evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('//evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('/\\evil.com')).toBe('/');
+    expect(sanitizeRedirectPath('javascript:alert(1)')).toBe('/');
+  });
+});
+
+describe('loginHref', () => {
+  it('carries the current page as redirect target', () => {
+    expect(loginHref('/article/42')).toBe('/login?redirect=%2Farticle%2F42');
+  });
+
+  it('omits the redirect for home and auth pages', () => {
+    expect(loginHref('/')).toBe('/login');
+    expect(loginHref('/login')).toBe('/login');
+    expect(loginHref('/register')).toBe('/login');
+    expect(loginHref(null)).toBe('/login');
+  });
+
+  it('omits the redirect for off-site targets', () => {
+    expect(loginHref('https://evil.com')).toBe('/login');
+  });
+});
 
 describe('navigateToSearch', () => {
   it('builds correct URL with category and query', () => {

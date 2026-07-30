@@ -44,6 +44,34 @@ export const formatDateToLocal = (
 };
 
 /**
+ * Formats a release date, tolerating missing or malformed values.
+ * Some games come back from the API without a release date (or with an
+ * unparsable one), which would otherwise render as "Invalid Date".
+ * @param date - Date value coming from the API (ISO string, Date, null…)
+ * @param fallback - Text to return when the date is missing or unparsable
+ * @param options - Intl options forwarded to toLocaleDateString
+ * @param locale - Locale code (default: 'fr-FR')
+ * @returns Formatted date string, or `fallback` if the date is unusable
+ * @example
+ * formatReleaseDate('2024-01-15', 'inconnue') // "15/01/2024"
+ * formatReleaseDate('', 'inconnue')           // "inconnue"
+ * formatReleaseDate('not-a-date', 'inconnue') // "inconnue"
+ */
+export function formatReleaseDate(
+  date: string | Date | null | undefined,
+  fallback: string,
+  options?: Intl.DateTimeFormatOptions,
+  locale: string = 'fr-FR',
+): string {
+  if (!date) return fallback;
+
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+
+  return parsed.toLocaleDateString(locale, options);
+}
+
+/**
  * Formats the time difference between a given date and now in French
  * Returns a human-readable string like "Il y a 2 jours" or "Il y a 3 ans"
  * @param date - Target date to calculate difference from (Date object or ISO string)

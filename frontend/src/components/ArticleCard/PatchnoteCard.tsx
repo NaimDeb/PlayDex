@@ -1,15 +1,24 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { colorizeContent, formatReleaseDate } from "@/lib/utils";
+import {
+  PATCHNOTE_IMPORTANCE_FALLBACK_STYLE,
+  PATCHNOTE_IMPORTANCE_I18N_KEYS,
+  PATCHNOTE_IMPORTANCE_STYLES,
+} from "@/constants/patchnote.constants";
 
 // Champs optionnels pour ne pas casser les usages existants
 interface PatchnoteCardProps {
   id?: number;
   title: string;
   content: string;
+  smallDescription?: string;
   releasedAt?: Date | string;
   importance?: string;
   lineCount?: number;
@@ -26,16 +35,41 @@ interface PatchnoteCardComponentProps {
   baseUrl?: string;
 }
 
-const IMPORTANCE_LABELS: Record<string, string> = {
-  major:  "Patch majeur",
-  minor:  "Patch mineur",
-  hotfix: "Hotfix",
-};
+/** Longueur max de l'aperçu, avant coupure sur une fin de ligne. */
+const PREVIEW_MAX_LENGTH = 400;
 
-const IMPORTANCE_COLORS: Record<string, string> = {
-  major:  "bg-purple-600 text-purple-100",
-  minor:  "bg-blue-700 text-blue-100",
-  hotfix: "bg-orange-700 text-orange-100",
+/**
+ * Rendu markdown compact de l'aperçu : mêmes règles que la page patchnote,
+ * en plus petit. Sans ça, la card affichait la source markdown brute.
+ */
+const PREVIEW_MARKDOWN_COMPONENTS = {
+  span: (props: React.ComponentPropsWithoutRef<"span">) => <span {...props} />,
+  h1: ({ children }: { children?: React.ReactNode }) => (
+    <h4 className="text-sm font-bold text-off-white mt-3 mb-1.5 first:mt-0">{children}</h4>
+  ),
+  h2: ({ children }: { children?: React.ReactNode }) => (
+    <h4 className="text-sm font-bold text-off-white mt-3 mb-1.5 first:mt-0">{children}</h4>
+  ),
+  h3: ({ children }: { children?: React.ReactNode }) => (
+    <h5 className="text-xs font-semibold text-off-white/80 mt-2 mb-1">{children}</h5>
+  ),
+  p: ({ children }: { children?: React.ReactNode }) => (
+    <p className="mb-2 last:mb-0">{children}</p>
+  ),
+  ul: ({ children }: { children?: React.ReactNode }) => (
+    <ul className="space-y-1 mb-2 list-none pl-0">{children}</ul>
+  ),
+  li: ({ children }: { children?: React.ReactNode }) => (
+    <li className="flex items-start gap-2 leading-relaxed">
+      <span aria-hidden="true" className="mt-[6px] shrink-0 w-1 h-1 rounded-full bg-off-white/30" />
+      <span>{children}</span>
+    </li>
+  ),
+  // Un lien dans l'aperçu ouvrirait une page hors du site au clic sur la card.
+  a: ({ children }: { children?: React.ReactNode }) => (
+    <span className="text-primary">{children}</span>
+  ),
+  img: () => null,
 };
 
 export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProps) {
@@ -59,25 +93,34 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
     return () => document.removeEventListener("mousedown", handleClick);
   }, [menuOpen]);
 
-  const truncated = patchnote.content.length > 200
-    ? patchnote.content.substring(0, 200) + "…"
-    : patchnote.content;
+  // Aperçu markdown : on coupe sur une fin de ligne pour ne pas tronquer une
+  // liste ou un titre au milieu, ce qui casserait le rendu.
+  const preview = useMemo(() => {
+    const raw = patchnote.content ?? "";
+    if (raw.length <= PREVIEW_MAX_LENGTH) return colorizeContent(raw);
+
+    const cut = raw.slice(0, PREVIEW_MAX_LENGTH);
+    const lastBreak = cut.lastIndexOf("\n");
+    return colorizeContent(`${lastBreak > 0 ? cut.slice(0, lastBreak) : cut}\n\n…`);
+  }, [patchnote.content]);
 
   const formattedDate = patchnote.releasedAt
-    ? new Date(patchnote.releasedAt).toLocaleDateString("fr-FR")
-    : null;
+    ? formatReleaseDate(patchnote.releasedAt, "")
+    : "";
 
-  const importanceLabel = patchnote.importance
-    ? (IMPORTANCE_LABELS[patchnote.importance] ?? patchnote.importance)
-    : null;
+  const importanceKey = patchnote.importance ?? "";
+  const importanceLabel = PATCHNOTE_IMPORTANCE_I18N_KEYS[importanceKey]
+    ? t(PATCHNOTE_IMPORTANCE_I18N_KEYS[importanceKey])
+    : t("patchnote.undefined");
 
-  const importanceColor = patchnote.importance
-    ? (IMPORTANCE_COLORS[patchnote.importance] ?? "bg-gray-600 text-gray-200")
-    : null;
+  const importanceStyle =
+    PATCHNOTE_IMPORTANCE_STYLES[importanceKey as keyof typeof PATCHNOTE_IMPORTANCE_STYLES]
+    ?? PATCHNOTE_IMPORTANCE_FALLBACK_STYLE;
 
   return (
     <article
-      className="bg-[#2a2a2a] rounded-lg p-4 text-white relative h-full flex flex-col cursor-pointer"
+      className={`bg-off-gray border border-off-white/10 border-l-4 ${importanceStyle.accent}
+        rounded-sm p-4 text-off-white relative h-full flex flex-col overflow-hidden cursor-pointer`}
       onClick={() => window.location.href = patchnoteUrl}
     >
 
@@ -95,8 +138,13 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
         {/* ··· menu */}
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
-            className="text-gray-400 hover:text-white px-1 leading-none text-lg"
-            onClick={() => setMenuOpen((v) => !v)}
+            className="text-off-white/50 hover:text-off-white px-1 leading-none text-lg"
+            // Sans stopPropagation, le clic remonte jusqu'à la card et navigue
+            // vers la patchnote au lieu d'ouvrir le menu.
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen((v) => !v);
+            }}
             aria-label="Options"
           >
             •••
@@ -108,7 +156,10 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
                 <Link
                   href={`${patchnoteUrl}/edit`}
                   className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-gray-300 hover:text-white"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }}
                 >
                   {t("patchnote.edit")}
                 </Link>
@@ -117,7 +168,10 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
                 <Link
                   href={`${patchnoteUrl}/modifications`}
                   className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-gray-300 hover:text-white"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }}
                 >
                   {t("patchnote.viewModifications")}
                 </Link>
@@ -126,7 +180,10 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
                 <Link
                   href={`/report/patchnote/${patchnote.id}`}
                   className="block px-3 py-2 rounded hover:bg-[#2a2a2a] text-red-400 hover:text-red-300"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }}
                 >
                   {t("patchnote.report")}
                 </Link>
@@ -137,17 +194,15 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
       </div>
 
       {/* ── Row 2 : date + importance badge ─────────────────── */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex flex-wrap items-center gap-3 mb-3">
         {formattedDate && (
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-off-white/50">
             Date&nbsp;: {formattedDate}
           </span>
         )}
-        {importanceLabel && importanceColor && (
-          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${importanceColor}`}>
-            {importanceLabel}
-          </span>
-        )}
+        <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-sm ${importanceStyle.badge}`}>
+          {importanceLabel}
+        </span>
       </div>
 
       {/* ── Row 3 : stats (changements / buffs / nerfs) ─────── */}
@@ -171,24 +226,35 @@ export function PatchnoteCard({ patchnote, baseUrl }: PatchnoteCardComponentProp
         </p>
       )}
 
-      {/* ── Row 4 : content (always truncated) ──────────────── */}
-      <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line mb-4 line-clamp-4 sm:line-clamp-none">
-        {truncated}
-      </p>
+      {/* ── Row 4 : résumé ──────────────────────────────────── */}
+      {patchnote.smallDescription && (
+        <p className="text-sm font-medium text-off-white/80 leading-relaxed mb-3">
+          {patchnote.smallDescription}
+        </p>
+      )}
 
-      {/* ── Row 5 : footer ──────────────────────────────────── */}
+      {/* ── Row 5 : content preview (markdown, tronqué) ─────── */}
+      <div className="prose prose-sm max-w-none text-sm text-off-white/70 leading-relaxed
+        mb-4 max-h-40 overflow-hidden patchnote-content">
+        <ReactMarkdown rehypePlugins={[rehypeRaw]} components={PREVIEW_MARKDOWN_COMPONENTS}>
+          {preview}
+        </ReactMarkdown>
+      </div>
+
+      {/* ── Row 6 : footer ──────────────────────────────────── */}
       <div className="flex items-center justify-between mt-auto">
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-off-white/40">
           {patchnote.lineCount ? `${patchnote.lineCount} lignes...` : ""}
         </span>
 
         <Link
           href={patchnoteUrl}
-          className="hidden sm:inline-block px-4 py-1.5 text-sm font-semibold rounded
-            bg-secondary hover:bg-primary text-white transition-colors"
+          className="hidden sm:inline-flex items-center justify-center px-5 py-2 text-sm
+            font-semibold font-montserrat bg-primary hover:bg-secondary text-off-white
+            transition-colors duration-150"
           onClick={(e) => e.stopPropagation()}
         >
-          Voir la patchnote →
+          {t("patchnote.viewPatchnote")}
         </Link>
       </div>
 

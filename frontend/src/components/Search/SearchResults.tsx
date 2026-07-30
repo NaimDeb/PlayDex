@@ -94,7 +94,6 @@ function Pagination({
   );
 
   const showEllipsis = totalPages > MAX_VISIBLE_PAGES;
-  const showLastPage = showEllipsis && !visiblePages.includes(totalPages);
 
   return (
     <div className="mt-8 flex justify-center items-center gap-1 text-white text-sm select-none">

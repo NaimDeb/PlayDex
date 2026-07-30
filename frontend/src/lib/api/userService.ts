@@ -90,6 +90,28 @@ class UserService {
     }
   }
 
+  /**
+   * Calls the PATCH endpoint /me/notifications to toggle the email notifications
+   * sent when a followed game gets a new patchnote.
+   * @param enabled - Whether the user wants to receive those emails
+   * @returns The persisted preference
+   */
+  async updateEmailNotifications(enabled: boolean): Promise<boolean> {
+    const config = authUtils.getAuthorization();
+
+    try {
+      const response = await apiClient.patch(
+        "/me/notifications",
+        { emailNotifications: enabled },
+        config
+      );
+      return response.data.emailNotifications;
+    } catch (error) {
+      console.error("Error updating email notifications:", error);
+      throw error;
+    }
+  }
+
   async getUserById(id: number) {
     // Appel public sans header d'authentification
     try {

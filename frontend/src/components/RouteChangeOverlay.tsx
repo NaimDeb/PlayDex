@@ -15,7 +15,18 @@ export function RouteChangeOverlay() {
   // Listen for clicks on internal links
   const handleClick = useCallback(
     (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest("a");
+      const target = e.target as HTMLElement;
+
+      // Contrôles imbriqués dans un lien (bouton "Suivre" d'une card, par ex.) :
+      // ils annulent la navigation via preventDefault, mais ce listener est en
+      // phase de capture et s'exécute avant. Sans cette garde, l'overlay
+      // s'affiche pour une navigation qui n'aura jamais lieu — et ne se ferme
+      // donc jamais, puisqu'il attend un changement de route.
+      if (target.closest("button, input, select, textarea, [data-no-route-overlay]")) {
+        return;
+      }
+
+      const anchor = target.closest("a");
       if (!anchor) return;
 
       const href = anchor.getAttribute("href");

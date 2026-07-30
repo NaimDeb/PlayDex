@@ -19,6 +19,7 @@ use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Doctrine\Orm\Filter\ExistsFilter;
+use App\Filter\NormalizedSearchFilter;
 use App\State\Provider\GameLatestProvider;
 use App\Filter\NotNullReleasedAtFilter;
 
@@ -56,11 +57,11 @@ use App\Filter\NotNullReleasedAtFilter;
 )]
 
 #[ApiFilter(SearchFilter::class, properties: [
-    'title' => 'partial',
     'description' => 'partial',
     'genres.name' => 'exact',
     'companies.name' => 'partial'
 ])]
+#[ApiFilter(NormalizedSearchFilter::class, properties: ['title'])]
 #[ApiFilter(DateFilter::class, properties: ['releasedAt', 'lastUpdatedAt'])]
 #[ApiFilter(OrderFilter::class, properties: [
     'title',

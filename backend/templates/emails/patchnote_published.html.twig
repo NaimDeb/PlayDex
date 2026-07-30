@@ -1,0 +1,72 @@
+{# Email envoyé aux abonnés d'un jeu lors de la publication d'une patchnote. #}
+{# Styles en inline : les clients mail ignorent largement les feuilles externes. #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ gameTitle }} — nouvelle mise à jour</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f7;font-family:Arial,Helvetica,sans-serif;color:#1f2933;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f7;padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                   style="max-width:560px;background-color:#ffffff;border-radius:8px;padding:32px;">
+                <tr>
+                    <td>
+                        <p style="margin:0 0 16px;font-size:14px;color:#7b8794;">PlayDex</p>
+
+                        <h1 style="margin:0 0 8px;font-size:22px;line-height:1.3;">
+                            Nouvelle mise à jour pour {{ gameTitle }}
+                        </h1>
+
+                        <p style="margin:0 0 24px;font-size:16px;line-height:1.5;">
+                            Bonjour {{ username }}, une patchnote vient d'être publiée sur un jeu que tu suis.
+                        </p>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="background-color:#f9fafb;border-left:4px solid #3b82f6;border-radius:4px;padding:16px;margin-bottom:24px;">
+                            <tr>
+                                <td>
+                                    <p style="margin:0 0 8px;font-size:17px;font-weight:bold;">{{ patchnoteTitle }}</p>
+
+                                    {% if releasedAt %}
+                                        <p style="margin:0 0 8px;font-size:13px;color:#7b8794;">
+                                            Publiée le {{ releasedAt|date('d/m/Y') }}
+                                        </p>
+                                    {% endif %}
+
+                                    {% if patchnoteSummary %}
+                                        <p style="margin:0;font-size:15px;line-height:1.5;">{{ patchnoteSummary }}</p>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+                            <tr>
+                                <td style="background-color:#3b82f6;border-radius:6px;">
+                                    <a href="{{ patchnoteUrl }}"
+                                       style="display:inline-block;padding:12px 24px;font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;">
+                                        Lire la patchnote
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <hr style="border:none;border-top:1px solid #e4e7eb;margin:0 0 16px;">
+
+                        <p style="margin:0;font-size:12px;line-height:1.5;color:#7b8794;">
+                            Tu reçois cet email parce que tu suis {{ gameTitle }} sur PlayDex.<br>
+                            <a href="{{ unsubscribeUrl }}" style="color:#3b82f6;">Ne plus recevoir ces emails</a>
+                            &nbsp;·&nbsp;
+                            <a href="{{ preferencesUrl }}" style="color:#3b82f6;">Gérer mes préférences</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
