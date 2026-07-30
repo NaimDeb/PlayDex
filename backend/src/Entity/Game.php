@@ -37,6 +37,7 @@ use App\Filter\NotNullReleasedAtFilter;
             normalizationContext: ['groups' => ['game:read']],
             paginationEnabled: true,
             paginationItemsPerPage: 10,
+            forceEager: false,
             cacheHeaders: ['max_age' => 60, 'shared_max_age' => 600],
         ),
         new Get(
