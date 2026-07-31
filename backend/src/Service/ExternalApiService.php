@@ -181,7 +181,7 @@ class ExternalApiService
     public function getIgdbGameById(int $igdbId): ?array
     {
         $body = $this->buildQueryBody([
-            'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url',
+            'fields' => 'id, name, platforms.*, summary, involved_companies.company.name, first_release_date, genres.id, cover.url, external_games.category, external_games.uid',
             'where' => 'id = ' . $igdbId,
             'limit' => 1,
         ]);

@@ -5,7 +5,8 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { redirect, useParams } from "next/navigation";
+import { redirect, useParams, usePathname } from "next/navigation";
+import { loginHref } from "@/lib/navigation";
 import { Patchnote } from "@/types/patchNoteType";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
@@ -18,6 +19,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useFormCache } from "@/hooks/useFormCache";
 import { FormField, FIELD_CLASS } from "@/components/shared/FormField";
 import { MDEditorStyles } from "@/components/shared/MDEditorStyles";
+import { SAFE_PREVIEW_OPTIONS } from "@/lib/rehypeSafeContent";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,6 +38,7 @@ interface PatchnoteFormState {
 
 export default function EditPatchnotePage(): React.ReactElement {
   const params = useParams();
+  const pathname = usePathname();
   const slug = params.slug as string;
   const id = params.id as string;
 
@@ -43,6 +46,7 @@ export default function EditPatchnotePage(): React.ReactElement {
   const [gameReleaseDate, setGameReleaseDate] = useState<string>("");
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
   const [conflict, setConflict] = useState<{ serverContent: string } | null>(null);
 
   const [form, setForm] = useState<PatchnoteFormState>({
@@ -59,7 +63,7 @@ export default function EditPatchnotePage(): React.ReactElement {
   const { isAuthenticated } = useAuth();
 
   const cacheKey = `playdex-edit-patchnote-${id}`;
-  const { loadCachedForm, clearCache } = useFormCache(cacheKey, form);
+  const { loadCachedForm, clearCache } = useFormCache(cacheKey, form, isHydrated);
 
   // ── Setters helpers ──
 
@@ -97,6 +101,7 @@ export default function EditPatchnotePage(): React.ReactElement {
         version: patchnoteData.version ?? 0,
         userContent: patchnoteData.content ?? "",
       });
+      setIsHydrated(true);
     };
 
     fetchData().catch((err) => console.error("[EditPatchnote] fetchData:", err));
@@ -271,6 +276,7 @@ export default function EditPatchnotePage(): React.ReactElement {
                 onChange={(val) => setField("userContent", val ?? "")}
                 height={500}
                 preview={typeof window !== "undefined" && window.innerWidth < 640 ? "edit" : "live"}
+                previewOptions={SAFE_PREVIEW_OPTIONS}
                 textareaProps={{
                   autoCapitalize: "none",
                   disabled: isLoading,
@@ -312,7 +318,7 @@ export default function EditPatchnotePage(): React.ReactElement {
               </button>
             ) : (
               <Link
-                href="/login"
+                href={loginHref(pathname)}
                 className="
                   bg-primary hover:bg-secondary
                   text-white font-semibold

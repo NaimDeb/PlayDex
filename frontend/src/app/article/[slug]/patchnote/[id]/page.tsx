@@ -4,9 +4,11 @@ import React, { useMemo, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
+import rehypeSafeContent from "@/lib/rehypeSafeContent";
 import { usePatchnoteLayout } from "@/contexts/PatchnoteLayoutContext";
-import { colorizeContent } from "@/lib/utils";
+import { formatPatchnoteContent } from "@/lib/patchnoteContent";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { PATCHNOTE_IMPORTANCE_STYLES } from "@/constants/patchnote.constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,19 +29,11 @@ export type PatchType = "Patch Majeur" | "Patch Mineur" | "Hotfix";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Mêmes classes que les cards de patchnote (cf. constants/patchnote.constants).
 const PATCH_TYPE_STYLES: Record<PatchType, { badge: string; accent: string }> = {
-  "Patch Majeur": {
-    badge:  "bg-primary/20 text-primary border border-primary/40",
-    accent: "border-l-primary",
-  },
-  "Patch Mineur": {
-    badge:  "bg-off-white/10 text-off-white/70 border border-off-white/20",
-    accent: "border-l-off-white/30",
-  },
-  Hotfix: {
-    badge:  "bg-red-500/20 text-red-400 border border-red-500/40",
-    accent: "border-l-red-500",
-  },
+  "Patch Majeur": PATCHNOTE_IMPORTANCE_STYLES.major,
+  "Patch Mineur": PATCHNOTE_IMPORTANCE_STYLES.minor,
+  Hotfix: PATCHNOTE_IMPORTANCE_STYLES.hotfix,
 };
 
 const FALLBACK_PATCH_TYPE: PatchType = "Patch Mineur";
@@ -189,7 +183,7 @@ export default function PatchnoteDetailPage() {
 
   const formattedDate = formatDate(patchnote?.releasedAt ?? patchnote?.createdAt);
   const colorizedContent = useMemo(
-    () => colorizeContent(patchnote?.content ?? ""),
+    () => formatPatchnoteContent(patchnote?.content ?? ""),
     [patchnote?.content]
   );
 
@@ -286,7 +280,7 @@ export default function PatchnoteDetailPage() {
         <div className="px-6 py-6">
           <div className="prose prose-sm sm:prose-base max-w-none text-off-white patchnote-content">
             <ReactMarkdown
-              rehypePlugins={[rehypeRaw]}
+              rehypePlugins={[rehypeRaw, rehypeSafeContent]}
               components={{
                 span: (props) => <span {...props} />,
                 // Style headers inside the markdown

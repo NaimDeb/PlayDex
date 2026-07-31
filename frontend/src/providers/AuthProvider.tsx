@@ -13,9 +13,11 @@ import { useRouter } from "next/navigation";
 import authService from "@/lib/api/authService";
 import { AuthState, LoginFormData, RegisterFormData } from "@/types/authType";
 import { useTranslation } from "@/i18n/TranslationProvider";
+import { sanitizeRedirectPath } from "@/lib/navigation";
 
 interface AuthContextType extends AuthState {
-  login: (data: LoginFormData) => Promise<void>;
+  /** @param redirectTo - page sur laquelle revenir après connexion (accueil par défaut) */
+  login: (data: LoginFormData, redirectTo?: string) => Promise<void>;
   register: (data: RegisterFormData) => Promise<void>;
   logout: () => void;
 }
@@ -26,6 +28,7 @@ const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   error: null,
+  isLoading: true,
 };
 
 // connecte user, redirige vers home et cree un context avec le token
@@ -43,11 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user,
             isAuthenticated: true,
             error: null,
+            isLoading: false,
           });
+          return;
         }
+        setState({ ...initialState, isLoading: false });
       } catch {
         // Si l'appel échoue, on reste déconnecté
-        setState(initialState);
+        setState({ ...initialState, isLoading: false });
       }
     };
 
@@ -61,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * @param data - Les données de connexion de l'utilisateur
    */
   const login = useCallback(
-    async (data: LoginFormData) => {
+    async (data: LoginFormData, redirectTo?: string) => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
       try {
         const res = await authService.login(data);
@@ -69,8 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           user: res.user,
           error: null,
           isAuthenticated: true,
+          isLoading: false,
         });
-        router.push("/");
+        router.push(sanitizeRedirectPath(redirectTo));
       } catch (error: unknown) {
         const err = error as { response?: { data?: { message?: string }; status?: number }; message?: string };
         const message = !err?.response
@@ -80,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...prev,
           error: message,
           isAuthenticated: false,
+          isLoading: false,
         }));
       }
     },
@@ -106,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ...prev,
           error: errorMessage,
           isAuthenticated: false,
+          isLoading: false,
         }));
         throw error;
       }
@@ -120,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = useCallback(() => {
     authService.logout();
-    setState(initialState);
+    setState({ ...initialState, isLoading: false });
     router.push("/");
   }, [router]);
 

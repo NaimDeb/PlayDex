@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@/providers/AuthProvider";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { loginHref } from "@/lib/navigation";
 import { Patchnote } from "@/types/patchNoteType";
 import { Extension } from "@/types/gameType";
 import { PatchnoteCard } from "@/components/ArticleCard/PatchnoteCard";
@@ -165,6 +166,7 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
   const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const router              = useRouter();
+  const pathname            = usePathname();
 
   const [dateFrom,     setDateFrom]     = useState<string>("");
   const [dateTo,       setDateTo]       = useState<string>("");
@@ -221,9 +223,8 @@ export const UpdatesTimelineSection: React.FC<UpdatesTimelineSectionProps> = ({
 
   const handleAddPatchnote = (): void => {
     setAddLoading(true);
-    if (!isAuthenticated) { void router.push("/login"); return; }
-    const path = typeof window !== "undefined" ? window.location.pathname : "";
-    void router.push(`${path}/patchnote/new`);
+    if (!isAuthenticated) { void router.push(loginHref(pathname)); return; }
+    void router.push(`${pathname}/patchnote/new`);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────

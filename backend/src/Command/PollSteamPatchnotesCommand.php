@@ -8,6 +8,7 @@ use App\Config\SteamConfig;
 use App\Entity\Patchnote;
 use App\Repository\GameRepository;
 use App\Repository\PatchnoteRepository;
+use App\Service\Notification\PatchnoteNotifier;
 use App\Service\Steam\SteamBotUserProvider;
 use App\Service\Steam\SteamPatchnoteSource;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,6 +16,7 @@ use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
@@ -31,8 +33,19 @@ class PollSteamPatchnotesCommand extends Command
         private readonly EntityManagerInterface $em,
         private readonly CacheItemPoolInterface $cache,
         private readonly SteamBotUserProvider $botUserProvider,
+        private readonly PatchnoteNotifier $notifier,
     ) {
         parent::__construct();
+    }
+
+    protected function configure(): void
+    {
+        $this->addOption(
+            'no-notify',
+            null,
+            InputOption::VALUE_NONE,
+            'Ne pas envoyer les emails de notification aux abonnés (utile pour un rattrapage)',
+        );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -50,13 +63,22 @@ class PollSteamPatchnotesCommand extends Command
 
         $io->info(sprintf('Received %d patchnote(s) from Steam poller.', count($rawPatchnotes)));
 
+        $notificationsEnabled = !$input->getOption('no-notify');
+        if (!$notificationsEnabled) {
+            $io->note('Notifications désactivées (--no-notify).');
+        }
+
         $botUser = $this->botUserProvider->getBotUser();
         $created = 0;
+        $notified = 0;
+        /** @var Patchnote[] $pendingNotifications en attente de flush, id non encore assigné */
+        $pendingNotifications = [];
         $skipped = 0;
         $skipCache = 0;
         $skipDb = 0;
         $skipUnknown = 0;
         $skipInvalid = 0;
+        $skipEmpty = 0;
         $pendingFlush = 0;
 
         foreach ($rawPatchnotes as $data) {
@@ -71,7 +93,14 @@ class PollSteamPatchnotesCommand extends Command
                 continue;
             }
 
-            // Cache check: skip recently processed GIDs (chemin rapide, sans requête jeu)
+            if (!SteamPatchnoteSource::hasTextContent($data['content'] ?? null)) {
+                $skipped++;
+                $skipEmpty++;
+                $io->writeln(sprintf('  - appid=%d gid=%s "%s" — SKIP (contenu vide)', $appId, $gid, $title));
+                continue;
+            }
+
+            // Placé avant la recherche du jeu : un GID déjà traité ne coûte qu'un accès cache.
             $cacheKey = 'steam_gid_' . $gid;
             $cacheItem = $this->cache->getItem($cacheKey);
             if ($cacheItem->isHit()) {
@@ -121,6 +150,7 @@ class PollSteamPatchnotesCommand extends Command
             $this->em->persist($patchnote);
             $created++;
             $pendingFlush++;
+            $pendingNotifications[] = $patchnote;
             $io->writeln(sprintf('  ✓ [%s] appid=%d gid=%s "%s" — CRÉÉ', $gameName, $appId, $gid, $title));
 
             // Cache the GID
@@ -131,6 +161,8 @@ class PollSteamPatchnotesCommand extends Command
             if ($pendingFlush >= SteamConfig::FLUSH_BATCH_SIZE) {
                 $this->em->flush();
                 $pendingFlush = 0;
+                $notified += $this->notifyFollowers($pendingNotifications, $notificationsEnabled, $io);
+                $pendingNotifications = [];
             }
         }
 
@@ -138,18 +170,60 @@ class PollSteamPatchnotesCommand extends Command
         if ($pendingFlush > 0) {
             $this->em->flush();
         }
+        $notified += $this->notifyFollowers($pendingNotifications, $notificationsEnabled, $io);
 
         $io->success(sprintf(
-            '[%s] Terminé. Créés: %d — Skippés: %d (déjà en base: %d, cache: %d, jeu inconnu: %d, invalides: %d).',
+            '[%s] Terminé. Créés: %d — Skippés: %d (déjà en base: %d, cache: %d, jeu inconnu: %d,'
+                . ' invalides: %d, contenu vide: %d) — Emails envoyés: %d.',
             date('Y-m-d H:i:s'),
             $created,
             $skipped,
             $skipDb,
             $skipCache,
             $skipUnknown,
-            $skipInvalid
+            $skipInvalid,
+            $skipEmpty,
+            $notified
         ));
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * À n'appeler qu'après un flush : l'email référence l'id de la patchnote.
+     * Une erreur d'envoi n'interrompt pas le poll, sinon les patchnotes suivantes seraient perdues.
+     *
+     * @param Patchnote[] $patchnotes
+     *
+     * @return int nombre d'emails envoyés
+     */
+    private function notifyFollowers(array $patchnotes, bool $enabled, SymfonyStyle $io): int
+    {
+        if (!$enabled || $patchnotes === []) {
+            return 0;
+        }
+
+        $total = 0;
+
+        foreach ($patchnotes as $patchnote) {
+            try {
+                $sent = $this->notifier->notifyNewPatchnote($patchnote);
+            } catch (\Throwable $e) {
+                $io->warning(sprintf(
+                    'Notification échouée pour la patchnote #%d : %s',
+                    (int) $patchnote->getId(),
+                    $e->getMessage()
+                ));
+                continue;
+            }
+
+            if ($sent > 0) {
+                $io->writeln(sprintf('    → %d email(s) envoyé(s) pour la patchnote #%d', $sent, (int) $patchnote->getId()));
+            }
+
+            $total += $sent;
+        }
+
+        return $total;
     }
 }

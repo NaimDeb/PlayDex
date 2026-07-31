@@ -75,6 +75,32 @@ describe('AuthProvider', () => {
     expect(mockPush).toHaveBeenCalledWith('/');
   });
 
+  it('login redirects to the requested page', async () => {
+    const user = { id: 1, email: 'test@test.com', username: 'testuser', roles: ['ROLE_USER'] };
+    mockLogin.mockResolvedValue({ user, token: 'abc' });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.login({ email: 'test@test.com', password: 'password' }, '/article/42');
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/article/42');
+  });
+
+  it('login ignores an off-site redirect target', async () => {
+    const user = { id: 1, email: 'test@test.com', username: 'testuser', roles: ['ROLE_USER'] };
+    mockLogin.mockResolvedValue({ user, token: 'abc' });
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+
+    await act(async () => {
+      await result.current.login({ email: 'test@test.com', password: 'password' }, 'https://evil.com');
+    });
+
+    expect(mockPush).toHaveBeenCalledWith('/');
+  });
+
   it('login sets error on failure', async () => {
     mockLogin.mockRejectedValue({ message: 'Invalid credentials' });
 

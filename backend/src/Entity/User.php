@@ -209,6 +209,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
+    /** Activé par défaut : suivre un jeu implique vouloir être prévenu. */
+    #[ORM\Column(options: ['default' => true])]
+    #[Groups(['user:read', 'user:update'])]
+    private bool $emailNotifications = true;
+
 
 
     public function __construct()
@@ -557,6 +562,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, SoftDel
     public function setNewPassword(?string $newPassword): static
     {
         $this->newPassword = $newPassword;
+
+        return $this;
+    }
+
+    public function isEmailNotifications(): bool
+    {
+        return $this->emailNotifications;
+    }
+
+    public function setEmailNotifications(bool $emailNotifications): static
+    {
+        $this->emailNotifications = $emailNotifications;
 
         return $this;
     }

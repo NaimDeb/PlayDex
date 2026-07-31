@@ -1,20 +1,31 @@
-/**
- * Navigation utility functions using Next.js router
- * These replace window.location anti-patterns with proper Next.js navigation
- * @module lib/navigation
- */
-
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 
+export const DEFAULT_REDIRECT_PATH = '/';
+
 /**
- * Navigates to the search page with specified category and query
- * @param router - Next.js App Router instance from useRouter()
- * @param category - Search category (jeux, extensions, genre, entreprise)
- * @param query - Search query string
- * @example
- * const router = useRouter();
- * navigateToSearch(router, 'jeux', 'minecraft');
+ * Rejects anything that is not an internal path: a crafted link would bounce a
+ * freshly authenticated user off-site.
  */
+export function sanitizeRedirectPath(path: string | null | undefined): string {
+  if (!path) return DEFAULT_REDIRECT_PATH;
+  if (!path.startsWith('/') || path.startsWith('//')) return DEFAULT_REDIRECT_PATH;
+  // Some browsers treat "/\evil.com" as protocol-relative.
+  if (path.startsWith('/\\')) return DEFAULT_REDIRECT_PATH;
+
+  return path;
+}
+
+/** No `redirect` param when there is nothing to come back to: home or the auth pages. */
+export function loginHref(currentPath: string | null | undefined): string {
+  const target = sanitizeRedirectPath(currentPath);
+  if (target === DEFAULT_REDIRECT_PATH || target.startsWith('/login') || target.startsWith('/register')) {
+    return '/login';
+  }
+
+  return `/login?redirect=${encodeURIComponent(target)}`;
+}
+
+/** @param category - one of: jeux, extensions, genre, entreprise */
 export function navigateToSearch(
   router: AppRouterInstance,
   category: string,
@@ -27,18 +38,6 @@ export function navigateToSearch(
   router.push(`/search?${params.toString()}`);
 }
 
-/**
- * Navigates to a random game article page
- * If the random ID matches the current game, refreshes the page instead
- * @param router - Next.js App Router instance from useRouter()
- * @param currentGameId - Current game ID to avoid duplicate navigation
- * @param maxGameId - Maximum game ID for random selection
- * @example
- * const router = useRouter();
- * const pathname = usePathname();
- * const currentId = pathname.split("/article/")[1] || null;
- * navigateToRandomGame(router, currentId, MAX_GAME_ID);
- */
 export function navigateToRandomGame(
   router: AppRouterInstance,
   currentGameId: string | null,
@@ -55,17 +54,7 @@ export function navigateToRandomGame(
   router.push(`/article/${randomGameId}`);
 }
 
-/**
- * Updates URL search parameters without full page navigation
- * Useful for filter and pagination state management
- * @param router - Next.js App Router instance from useRouter()
- * @param pathname - Current pathname from usePathname()
- * @param params - Object of search parameters to set
- * @param replaceHistory - If true, replaces history instead of pushing (default: true)
- * @example
- * updateSearchParams(router, '/search', { page: '2', sort: 'date' });
- * // Navigates to: /search?page=2&sort=date
- */
+/** Replaces history by default: filter and pagination steps should not stack up in the back button. */
 export function updateSearchParams(
   router: AppRouterInstance,
   pathname: string,

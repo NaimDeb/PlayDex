@@ -43,6 +43,21 @@ export const formatDateToLocal = (
   return formatter.format(date);
 };
 
+/** Returns `fallback` when the API sends no release date, or one Date cannot parse. */
+export function formatReleaseDate(
+  date: string | Date | null | undefined,
+  fallback: string,
+  options?: Intl.DateTimeFormatOptions,
+  locale: string = 'fr-FR',
+): string {
+  if (!date) return fallback;
+
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return fallback;
+
+  return parsed.toLocaleDateString(locale, options);
+}
+
 /**
  * Formats the time difference between a given date and now in French
  * Returns a human-readable string like "Il y a 2 jours" or "Il y a 3 ans"

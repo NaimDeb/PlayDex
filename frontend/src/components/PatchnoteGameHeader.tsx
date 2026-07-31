@@ -26,7 +26,7 @@ export function PatchnoteGameHeader({ gameTitle, gameSlug, gameImageUrl }: Patch
           alt={gameTitle}
           fill
           className="object-cover"
-          sizes="56px"
+          sizes="(min-width: 640px) 80px, 64px"
         />
       </div>
       <div>

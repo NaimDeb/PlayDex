@@ -5,7 +5,8 @@ import { getIdFromSlug } from "@/lib/gameSlug";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
-import { redirect } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
+import { loginHref } from "@/lib/navigation";
 import MDEditor, { commands as defaultCommands } from "@uiw/react-md-editor";
 import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
 import { useAuth } from "@/providers/AuthProvider";
@@ -20,6 +21,7 @@ import { useTranslation } from "@/i18n/TranslationProvider";
 import { useFormCache } from "@/hooks/useFormCache";
 import { FormField, FIELD_CLASS } from "@/components/shared/FormField";
 import { MDEditorStyles } from "@/components/shared/MDEditorStyles";
+import { SAFE_PREVIEW_OPTIONS } from "@/lib/rehypeSafeContent";
 import { BackButton } from "@/components/BackButton";
 import { Breadcrumbs, BreadcrumbItem } from "@heroui/breadcrumbs";
 import { PatchnoteGameHeader } from "@/components/PatchnoteGameHeader";
@@ -44,6 +46,7 @@ export default function NewPatchnotePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const { showMessage } = useFlashMessage();
   const { t } = useTranslation();
@@ -53,6 +56,7 @@ export default function NewPatchnotePage({
   const [gameReleaseDate, setGameReleaseDate] = useState<string>("");
   const [isPatchNoteTitleChanged, setPatchNoteTitleChanged] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
 
   const [form, setForm] = useState<PatchnoteFormState>({
@@ -64,7 +68,7 @@ export default function NewPatchnotePage({
   });
 
   const cacheKey = `playdex-new-patchnote-${slug}`;
-  const { loadCachedForm, clearCache } = useFormCache(cacheKey, form);
+  const { loadCachedForm, clearCache } = useFormCache(cacheKey, form, isHydrated);
 
   // ── Setters helpers ──
 
@@ -91,11 +95,13 @@ export default function NewPatchnotePage({
       const cached = loadCachedForm();
       if (cached) setForm(cached);
 
+      setIsHydrated(true);
       setIsLoading(false);
     };
 
     fetchGameData().catch((err) => {
       console.error("[NewPatchnote] fetchGameData:", err);
+      setIsHydrated(true);
       setIsLoading(false);
     });
   }, [slug, loadCachedForm]);
@@ -291,6 +297,7 @@ export default function NewPatchnotePage({
                 onChange={(val) => setField("userContent", val ?? "")}
                 height={500}
                 preview={typeof window !== "undefined" && window.innerWidth < 640 ? "edit" : "live"}
+                previewOptions={SAFE_PREVIEW_OPTIONS}
                 textareaProps={{
                   autoCapitalize: "none",
                   disabled: isLoading,
@@ -332,7 +339,7 @@ export default function NewPatchnotePage({
               </button>
             ) : (
               <Link
-                href="/login"
+                href={loginHref(pathname)}
                 className="
                   bg-primary hover:bg-secondary
                   text-white font-semibold

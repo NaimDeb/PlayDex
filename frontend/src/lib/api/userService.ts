@@ -90,6 +90,23 @@ class UserService {
     }
   }
 
+  /** @returns the preference as persisted by the API, not the requested value */
+  async updateEmailNotifications(enabled: boolean): Promise<boolean> {
+    const config = authUtils.getAuthorization();
+
+    try {
+      const response = await apiClient.patch(
+        "/me/notifications",
+        { emailNotifications: enabled },
+        config
+      );
+      return response.data.emailNotifications;
+    } catch (error) {
+      console.error("Error updating email notifications:", error);
+      throw error;
+    }
+  }
+
   async getUserById(id: number) {
     // Appel public sans header d'authentification
     try {

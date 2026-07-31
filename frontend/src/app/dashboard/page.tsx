@@ -6,6 +6,7 @@ import Link from "next/link";
 import adminService from "@/lib/api/adminService";
 import { Patchnote, Modification } from "@/types/patchNoteType";
 import { User, BanUserData } from "@/types/authType";
+import { useAuth } from "@/providers/AuthProvider";
 
 // Enhanced report interface with user details
 interface ReportWithDetails {
@@ -453,6 +454,8 @@ interface ApiError {
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+  const isAdmin = user?.roles?.includes("ROLE_ADMIN") ?? false;
   const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]);
   const [modifications, setModifications] = useState<Modification[]>([]);
   const [reports, setReports] = useState<ReportWithDetails[]>([]);
@@ -542,8 +545,16 @@ export default function AdminDashboard() {
     }
   };
 
+  // Le back refuse les appels admin, mais l'UI doit aussi rester fermée.
+  useEffect(() => {
+    if (authLoading || isAdmin) return;
+    router.replace("/");
+  }, [authLoading, isAdmin, router]);
+
   // Fetch data based on active tab
   useEffect(() => {
+    if (!isAdmin) return;
+
     const fetchData = async () => {
       setLoading(true);
       setError(null);
@@ -590,7 +601,7 @@ export default function AdminDashboard() {
     };
 
     fetchData();
-  }, [activeTab, currentPage, router]);
+  }, [activeTab, currentPage, router, isAdmin]);
 
   // Handle ban user
   const handleBanUser = async (userId: number, banData: BanUserData) => {
@@ -743,6 +754,14 @@ export default function AdminDashboard() {
       </button>
     </div>
   );
+
+  if (authLoading || !isAdmin) {
+    return (
+      <div className="container px-4 py-16 mx-auto text-center text-off-white">
+        {authLoading ? "Chargement..." : "Accès réservé aux administrateurs."}
+      </div>
+    );
+  }
 
   return (
     <div className="container px-4 py-8 mx-auto text-off-white">

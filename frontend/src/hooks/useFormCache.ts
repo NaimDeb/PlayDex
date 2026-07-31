@@ -11,12 +11,17 @@ interface CachedFormData<T> {
 /**
  * Persists form state to localStorage with debounce + 10-minute TTL.
  * Returns `loadCachedForm` to restore data on mount, and auto-saves on changes.
+ *
+ * @param enabled - false tant que le formulaire n'est pas hydraté, sinon l'état
+ * initial vide écrase le brouillon avant sa lecture.
  */
-export function useFormCache<T>(cacheKey: string, form: T) {
+export function useFormCache<T>(cacheKey: string, form: T, enabled = true) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auto-save form changes with debounce
   useEffect(() => {
+    if (!enabled) return;
+
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
@@ -27,7 +32,7 @@ export function useFormCache<T>(cacheKey: string, form: T) {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [cacheKey, form]);
+  }, [cacheKey, form, enabled]);
 
   // Load cached form data (returns null if expired or missing)
   const loadCachedForm = useCallback((): T | null => {

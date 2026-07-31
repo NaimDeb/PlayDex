@@ -9,12 +9,16 @@ export interface User {
   isBanned?: boolean;
   banReason?: string;
   bannedUntil?: string;
+  /** Opt-out des emails envoyés lors des mises à jour des jeux suivis. */
+  emailNotifications?: boolean;
 }
 
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   error: string | null;
+  /** Vrai tant que la session n'a pas été vérifiée : ne pas décider d'un accès avant. */
+  isLoading: boolean;
 }
 
 export interface LoginFormData {

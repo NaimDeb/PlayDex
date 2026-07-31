@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Config\ApiConfig;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Helper\ProgressBar;
 
@@ -179,8 +180,7 @@ class IgdbDataProcessorService
         }
 
         foreach ($game['external_games'] as $external) {
-            // IGDB external_game category: 1 = Steam
-            if (($external['category'] ?? null) === 1 && isset($external['uid'])) {
+            if (($external['category'] ?? null) === ApiConfig::IGDB_EXTERNAL_CATEGORY_STEAM && isset($external['uid'])) {
                 $steamId = (int) $external['uid'];
                 return $steamId > 0 ? $steamId : null;
             }

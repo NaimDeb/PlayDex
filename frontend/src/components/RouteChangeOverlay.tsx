@@ -15,7 +15,15 @@ export function RouteChangeOverlay() {
   // Listen for clicks on internal links
   const handleClick = useCallback(
     (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest("a");
+      const target = e.target as HTMLElement;
+
+      // Capture phase runs before a nested control's preventDefault, so skip
+      // controls inside a link: they cancel the navigation the overlay waits for.
+      if (target.closest("button, input, select, textarea, [data-no-route-overlay]")) {
+        return;
+      }
+
+      const anchor = target.closest("a");
       if (!anchor) return;
 
       const href = anchor.getAttribute("href");

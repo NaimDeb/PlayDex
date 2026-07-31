@@ -13,6 +13,7 @@ final readonly class ApiConfig {
     public const IGDB_RATE_LIMIT_DELAY_US = 250000; // Microsecondes
     public const IGDB_SEARCH_CACHE_TTL = 14400; // 4 hours in seconds
     public const FORBIDDEN_THEMES = 42; // Erotic games
+    public const IGDB_EXTERNAL_CATEGORY_STEAM = 1; // external_games.category : 1 = Steam
 
 // PHP Memory
 
