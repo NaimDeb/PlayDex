@@ -25,8 +25,8 @@ class AuthService {
       // Store the token in a cookie
       // Todo : make it better, check the age in backend, redo the cookie if the user is active, remove the cookie for inactivity.
       const maxAge = data.rememberMe ? (30 * 24 * 60 * 60) : (8 * 60 * 60); // 30 days or 8 hours
-      // ! Todo : add secure in prod
-      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; samesite=strict`;
+      const secure = window.location.protocol === "https:" ? "; secure" : "";
+      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; samesite=strict${secure}`;
 
       // ME API Call for getting user data
       
