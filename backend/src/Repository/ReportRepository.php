@@ -22,10 +22,11 @@ class ReportRepository extends ServiceEntityRepository implements ReportReposito
     {
         return $this->createQueryBuilder('r')
             ->select('COUNT(r.id)')
-            ->andWhere('r.reportableEntity = :entityType')
+            // Couvre les deux formes en base (nom court et FQCN)
+            ->andWhere('r.reportableEntity IN (:entityTypes)')
             ->andWhere('r.reportableId = :entityId')
             ->andWhere('r.isDeleted = false')
-            ->setParameter('entityType', $entityType)
+            ->setParameter('entityTypes', Report::entityNameVariants($entityType))
             ->setParameter('entityId', $entityId)
             ->getQuery()
             ->getSingleScalarResult();

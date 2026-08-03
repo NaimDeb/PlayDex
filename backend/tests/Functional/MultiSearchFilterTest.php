@@ -193,7 +193,7 @@ class MultiSearchFilterTest extends WebTestCase
         $this->assertSame(1, $data['totalItems']);
         $this->assertSame($report->getId(), $data['member'][0]['id']);
 
-        // Ciblage d'une entité précise (utilisé par getReportsForEntity côté front)
+        // Ciblage d'une entité précise par type + id
         $data = $this->getCollection(
             '/api/reports?reportableEntity=Patchnote&reportableId=' . $patchnote->getId(),
             $admin
@@ -203,6 +203,50 @@ class MultiSearchFilterTest extends WebTestCase
             $this->assertStringContainsString('Patchnote', $member['reportableEntity']);
             $this->assertSame($patchnote->getId(), $member['reportableId']);
         }
+    }
+
+    public function testReportSoftDeletedWhenContentDeleted(): void
+    {
+        $admin = $this->createUser('cascade', ['ROLE_ADMIN']);
+        $game = $this->createGame($this->token . ' Cascade');
+        // createdBy = admin : supprimer son propre contenu ne crée pas de Warning
+        $patchnote = $this->createPatchnote('Patch cascade', $game, $admin, PatchNoteImportance::Minor);
+        $reporter = $this->createUser('rapp2');
+        $this->entityManager->flush();
+
+        // Créé via l'API : le processor doit stocker le nom court, pas le FQCN
+        $this->client->request('POST', '/api/reports', [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor($reporter),
+            'CONTENT_TYPE' => 'application/ld+json',
+        ], json_encode([
+            'reason' => $this->token . ' cascade raison',
+            'reportableId' => $patchnote->getId(),
+            'reportableEntity' => 'Patchnote',
+        ]));
+        $this->assertResponseStatusCodeSame(201);
+        $created = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Patchnote', $created['reportableEntity']);
+        $this->created[] = $this->entityManager->find(Report::class, $created['id']);
+
+        // Ancienne ligne en FQCN : la cascade doit la solder aussi
+        $legacyReport = new Report();
+        $legacyReport->setReportedBy($admin);
+        $legacyReport->setReason($this->token . ' cascade fqcn');
+        $legacyReport->setReportableEntity('App\\Entity\\Patchnote');
+        $legacyReport->setReportableId($patchnote->getId());
+        $legacyReport->setReportedAt(new \DateTimeImmutable());
+        $legacyReport->setIsDeleted(false);
+        $this->persistTracked($legacyReport);
+        $this->entityManager->flush();
+
+        // Supprimer le contenu doit solder les signalements associés, quelle que soit la forme
+        $this->client->request('DELETE', '/api/patchnotes/' . $patchnote->getId(), [], [], [
+            'HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor($admin),
+        ]);
+        $this->assertResponseStatusCodeSame(204);
+
+        $data = $this->getCollection('/api/reports?q=' . $this->token . '%20cascade', $admin);
+        $this->assertSame(0, $data['totalItems']);
     }
 
     protected function tearDown(): void

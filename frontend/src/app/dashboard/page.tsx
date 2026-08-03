@@ -3,6 +3,12 @@
 import React, { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSafeContent from "@/lib/rehypeSafeContent";
+import { colorizeContent } from "@/lib/utils";
+import { steamBbcodeToMarkdown } from "@/lib/patchnoteContent";
+import { PREVIEW_MARKDOWN_COMPONENTS } from "@/components/ArticleCard/PatchnoteCard";
 import adminService, { ADMIN_PAGE_SIZE } from "@/lib/api/adminService";
 import { DebouncedInput } from "@/components/shared/DebouncedInput";
 import { Patchnote, Modification } from "@/types/patchNoteType";
@@ -58,6 +64,7 @@ interface ReportWithDetails {
     type: string;
     id: number;
     title: string;
+    deleted?: boolean;
     owner?: {
       id: number;
       username: string;
@@ -167,6 +174,59 @@ function ConfirmModal({
   );
 }
 
+function PatchnotePreviewModal({
+  patchnote,
+  onClose,
+}: {
+  patchnote: Patchnote | null;
+  onClose: () => void;
+}) {
+  if (!patchnote) return null;
+
+  const content = colorizeContent(steamBbcodeToMarkdown(patchnote.content ?? ""));
+
+  return (
+    <ModalShell
+      title={patchnote.title || "Sans titre"}
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+    >
+      <div className="flex flex-wrap items-center gap-3 mb-4 text-sm text-off-white/60">
+        <span className={importanceBadge(patchnote.importance)}>
+          {patchnote.importance || "N/A"}
+        </span>
+        <span>
+          {typeof patchnote.game === "string"
+            ? patchnote.game
+            : patchnote.game?.title || "Jeu inconnu"}
+        </span>
+        {patchnote.createdBy && <span>par {patchnote.createdBy.username}</span>}
+        {patchnote.releasedAt && (
+          <span>{new Date(patchnote.releasedAt).toLocaleDateString()}</span>
+        )}
+      </div>
+      {patchnote.smallDescription && (
+        <p className="mb-4 text-sm font-medium text-off-white/80">
+          {patchnote.smallDescription}
+        </p>
+      )}
+      <div className="p-4 overflow-y-auto max-h-[55vh] text-sm leading-relaxed border rounded-sm bg-off-black/40 border-off-white/5 text-off-white/70 patchnote-content">
+        <ReactMarkdown
+          rehypePlugins={[rehypeRaw, rehypeSafeContent]}
+          components={PREVIEW_MARKDOWN_COMPONENTS}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+      <div className="flex justify-end mt-6">
+        <button onClick={onClose} className={`${BTN.outlined} ${BTN_MD}`}>
+          Fermer
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 function ReportDetailsModal({
   isOpen,
   report,
@@ -229,6 +289,9 @@ function ReportDetailsModal({
                 <strong className="text-off-white">Type :</strong>{" "}
                 {report.entityDetails.type}
               </p>
+              {report.entityDetails.deleted && (
+                <p className="text-red-400">Ce contenu a déjà été supprimé.</p>
+              )}
               <p>
                 <strong className="text-off-white">Titre :</strong>{" "}
                 {report.entityDetails.title}
@@ -530,7 +593,7 @@ function BanModal({ isOpen, user, onClose, onBan }: BanModalProps) {
 
 // Type utilitaire pour gérer les erreurs d'API avec un champ response.status
 interface ApiError {
-  response?: { status?: number };
+  response?: { status?: number; data?: { detail?: string } };
 }
 
 type TabKey = "patchnotes" | "modifications" | "reports";
@@ -565,6 +628,9 @@ function AdminDashboard() {
   const [reportDetailsModalOpen, setReportDetailsModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] =
     useState<ReportWithDetails | null>(null);
+  const [previewPatchnote, setPreviewPatchnote] = useState<Patchnote | null>(
+    null
+  );
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -705,11 +771,15 @@ function AdminDashboard() {
       onConfirm: async () => {
         try {
           await adminService.deleteReport(reportId);
-          setReports((prev) => prev.filter((r) => r.id !== reportId));
           showMessage("Signalement supprimé avec succès.", "success");
+          fetchData();
         } catch (error) {
           console.error("Error deleting report:", error);
-          showMessage("Erreur lors de la suppression du signalement.", "error");
+          showMessage(
+            (error as ApiError).response?.data?.detail ??
+              "Erreur lors de la suppression du signalement.",
+            "error"
+          );
         }
       },
     });
@@ -723,12 +793,14 @@ function AdminDashboard() {
       onConfirm: async () => {
         try {
           await adminService.deletePatchnote(patchnoteId);
-          setPatchnotes((prev) => prev.filter((p) => p.id !== patchnoteId));
           showMessage("Patchnote supprimée avec succès.", "success");
+          // Côté API, supprimer un contenu solde aussi ses signalements
+          fetchData();
         } catch (error) {
           console.error("Error deleting patchnote:", error);
           showMessage(
-            "Erreur lors de la suppression de la patchnote.",
+            (error as ApiError).response?.data?.detail ??
+              "Erreur lors de la suppression de la patchnote.",
             "error"
           );
         }
@@ -762,14 +834,14 @@ function AdminDashboard() {
       onConfirm: async () => {
         try {
           await adminService.deleteModification(modificationId);
-          setModifications((prev) =>
-            prev.filter((m) => m.id !== modificationId)
-          );
           showMessage("Modification supprimée avec succès.", "success");
+          // Côté API, supprimer un contenu solde aussi ses signalements
+          fetchData();
         } catch (error) {
           console.error("Error deleting modification:", error);
           showMessage(
-            "Erreur lors de la suppression de la modification.",
+            (error as ApiError).response?.data?.detail ??
+              "Erreur lors de la suppression de la modification.",
             "error"
           );
         }
@@ -848,7 +920,6 @@ function AdminDashboard() {
             <button
               key={tab.key}
               onClick={() =>
-                // Changer d'onglet remet la recherche, les filtres et la page à zéro
                 updateParams({
                   tab: tab.key,
                   page: null,
@@ -957,12 +1028,13 @@ function AdminDashboard() {
                               {patchnote.id}
                             </td>
                             <td className="px-4 py-3">
-                              <div
-                                className="max-w-xs truncate"
+                              <button
+                                onClick={() => setPreviewPatchnote(patchnote)}
+                                className="max-w-xs text-left truncate transition-colors hover:text-primary"
                                 title={patchnote.title || ""}
                               >
                                 {patchnote.title || "Sans titre"}
-                              </div>
+                              </button>
                             </td>
                             <td className="px-4 py-3">
                               {typeof patchnote.game === "string"
@@ -1023,17 +1095,25 @@ function AdminDashboard() {
                                 : "N/A"}
                             </td>
                             <td className="px-4 py-3">
-                              <button
-                                onClick={() =>
-                                  handleDeletePatchnote(
-                                    patchnote.id,
-                                    patchnote.title
-                                  )
-                                }
-                                className={`${BTN.danger} ${BTN_SM}`}
-                              >
-                                Supprimer
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setPreviewPatchnote(patchnote)}
+                                  className={`${BTN.outlined} ${BTN_SM}`}
+                                >
+                                  Aperçu
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeletePatchnote(
+                                      patchnote.id,
+                                      patchnote.title
+                                    )
+                                  }
+                                  className={`${BTN.danger} ${BTN_SM}`}
+                                >
+                                  Supprimer
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1310,31 +1390,41 @@ function AdminDashboard() {
                                   >
                                     Supprimer le signalement
                                   </button>
-                                  {cleanEntityType === "Patchnote" && (
-                                    <button
-                                      onClick={() =>
-                                        handleDeletePatchnote(
-                                          report.reportableId,
-                                          report.entityDetails?.title ||
-                                            `Patchnote #${report.reportableId}`
-                                        )
-                                      }
-                                      className={`${BTN.danger} ${BTN_SM}`}
+                                  {report.entityDetails?.deleted ? (
+                                    <span
+                                      className={`${BADGE_BASE} bg-off-white/10 text-off-white/50 border border-off-white/20`}
                                     >
-                                      Supprimer contenu
-                                    </button>
-                                  )}
-                                  {cleanEntityType === "Modification" && (
-                                    <button
-                                      onClick={() =>
-                                        handleDeleteModification(
-                                          report.reportableId
-                                        )
-                                      }
-                                      className={`${BTN.danger} ${BTN_SM}`}
-                                    >
-                                      Supprimer contenu
-                                    </button>
+                                      Contenu supprimé
+                                    </span>
+                                  ) : (
+                                    <>
+                                      {cleanEntityType === "Patchnote" && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeletePatchnote(
+                                              report.reportableId,
+                                              report.entityDetails?.title ||
+                                                `Patchnote #${report.reportableId}`
+                                            )
+                                          }
+                                          className={`${BTN.danger} ${BTN_SM}`}
+                                        >
+                                          Supprimer contenu
+                                        </button>
+                                      )}
+                                      {cleanEntityType === "Modification" && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteModification(
+                                              report.reportableId
+                                            )
+                                          }
+                                          className={`${BTN.danger} ${BTN_SM}`}
+                                        >
+                                          Supprimer contenu
+                                        </button>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               </td>
@@ -1385,6 +1475,12 @@ function AdminDashboard() {
           setReportDetailsModalOpen(false);
           setSelectedReport(null);
         }}
+      />
+
+      {/* Patchnote Preview Modal */}
+      <PatchnotePreviewModal
+        patchnote={previewPatchnote}
+        onClose={() => setPreviewPatchnote(null)}
       />
 
       {/* Confirm Modal */}

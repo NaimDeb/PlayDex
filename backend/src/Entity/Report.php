@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
@@ -52,6 +53,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
 )]
 #[ApiFilter(SearchFilter::class, properties: ['reportableEntity' => 'partial', 'reportableId' => 'exact'])]
+#[ApiFilter(BooleanFilter::class, properties: ['isDeleted'])]
 #[ApiFilter(MultiSearchFilter::class, properties: ['reason', 'reportedBy.username'])]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
 class Report implements SoftDeletableInterface
@@ -146,6 +148,21 @@ class Report implements SoftDeletableInterface
         $this->reportableId = $reportableId;
 
         return $this;
+    }
+
+    /**
+     * La base contient deux formes pour un même type ('Patchnote' et
+     * 'App\Entity\Patchnote') : toute recherche par type doit couvrir les deux.
+     *
+     * @return string[]
+     */
+    public static function entityNameVariants(string $reportableEntity): array
+    {
+        $short = str_contains($reportableEntity, '\\')
+            ? substr(strrchr($reportableEntity, '\\'), 1)
+            : $reportableEntity;
+
+        return [$short, 'App\\Entity\\' . $short];
     }
 
     public function getReportableEntity(): ?string

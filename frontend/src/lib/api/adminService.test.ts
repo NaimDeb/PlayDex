@@ -46,7 +46,7 @@ describe('AdminService', () => {
 
     await adminService.getPatchnotes(3, 'zelda', 'hotfix');
     expect(apiClient.get).toHaveBeenCalledWith(
-      '/patchnotes?page=3&q=zelda&importance=hotfix&itemsPerPage=10',
+      '/patchnotes?page=3&q=zelda&importance=hotfix&itemsPerPage=10&isDeleted=false',
       expect.any(Object)
     );
   });

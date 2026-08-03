@@ -65,12 +65,14 @@ class AdminService {
     importance = ""
   ): Promise<{ member: Patchnote[]; totalItems: number }> {
     const config = authUtils.getAuthorization();
-    // itemsPerPage : la collection publique sert 6 par page, le dashboard en veut 10
+    // itemsPerPage : la collection publique sert 6 par page, le dashboard en veut 10.
+    // isDeleted=false : les admins voient les soft-deleted par défaut, pas le dashboard.
     const url = `/patchnotes${buildQuery({
       page,
       q,
       importance,
       itemsPerPage: ADMIN_PAGE_SIZE,
+      isDeleted: "false",
     })}`;
 
     const response = await apiClient.get(url, config);
