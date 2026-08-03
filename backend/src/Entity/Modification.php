@@ -14,6 +14,7 @@ use App\State\Processor\ModificationDeleteProcessor;
 use App\Interfaces\Entity\SoftDeletableInterface;
 use App\Interfaces\ReportableInterface;
 use App\Repository\ModificationRepository;
+use App\Filter\MultiSearchFilter;
 use App\State\Provider\AdminModificationProvider;
 use App\State\Provider\SoftDeletedStateProvider;
 use App\Repository\ReportRepository;
@@ -47,6 +48,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
             paginationEnabled: true,
             paginationItemsPerPage: 10,
             provider: AdminModificationProvider::class,
+            order: ['createdAt' => 'DESC'],
         ),
         new Delete(
             uriTemplate: '/modifications/{id}',
@@ -57,6 +59,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 )]
 
 #[ApiFilter(SearchFilter::class, properties: ['patchnote.id' => 'exact'])]
+#[ApiFilter(MultiSearchFilter::class, properties: ['user.username', 'patchnote.title', 'patchnote.game.title'])]
 class Modification implements ReportableInterface, SoftDeletableInterface
 {
 

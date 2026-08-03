@@ -5,6 +5,8 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use App\Filter\MultiSearchFilter;
 use App\Config\PatchNoteImportance;
 use App\Repository\PatchnoteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -60,10 +62,13 @@ use App\Traits\TimeStampableTrait;
             paginationEnabled: true,
             paginationItemsPerPage: 6,
             paginationClientItemsPerPage: true,
+            order: ['createdAt' => 'DESC'],
         )
     ]
 )]
 #[ApiFilter(OrderFilter::class, properties: ['createdAt', 'releasedAt'])]
+#[ApiFilter(SearchFilter::class, properties: ['importance' => 'exact'])]
+#[ApiFilter(MultiSearchFilter::class, properties: ['title', 'game.title', 'createdBy.username'])]
 class Patchnote implements ReportableInterface, SoftDeletableInterface, OwnableInterface
 {
     use SoftDeletableTrait;

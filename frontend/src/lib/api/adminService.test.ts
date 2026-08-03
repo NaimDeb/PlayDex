@@ -23,7 +23,7 @@ describe('AdminService', () => {
     vi.clearAllMocks();
   });
 
-  it('getReports fetches with optional pagination', async () => {
+  it('getReports fetches with pagination, search and entity filter', async () => {
     vi.mocked(apiClient.get).mockResolvedValue({
       data: { member: [], totalItems: 0 },
     });
@@ -32,8 +32,23 @@ describe('AdminService', () => {
     expect(apiClient.get).toHaveBeenCalledWith('/reports?page=2', expect.any(Object));
 
     vi.clearAllMocks();
-    await adminService.getReports();
-    expect(apiClient.get).toHaveBeenCalledWith('/reports', expect.any(Object));
+    await adminService.getReports(1, 'spam', 'Patchnote');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/reports?page=1&q=spam&reportableEntity=Patchnote',
+      expect.any(Object)
+    );
+  });
+
+  it('getPatchnotes forwards search, importance and admin page size', async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: { member: [], totalItems: 0 },
+    });
+
+    await adminService.getPatchnotes(3, 'zelda', 'hotfix');
+    expect(apiClient.get).toHaveBeenCalledWith(
+      '/patchnotes?page=3&q=zelda&importance=hotfix&itemsPerPage=10',
+      expect.any(Object)
+    );
   });
 
   it('getModifications uses admin endpoint', async () => {

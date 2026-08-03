@@ -2,10 +2,13 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
+use App\Filter\MultiSearchFilter;
 use App\State\Processor\ReportProcessor;
 use App\State\Processor\ReportDeleteProcessor;
 use App\Interfaces\Entity\SoftDeletableInterface;
@@ -27,6 +30,9 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: "is_granted('ROLE_ADMIN')",
             securityMessage: 'Only admins can view reports.',
             provider: AdminReportProvider::class,
+            paginationEnabled: true,
+            paginationItemsPerPage: 10,
+            order: ['reportedAt' => 'DESC'],
         ),
         new Post(
             uriTemplate: '/reports',
@@ -45,6 +51,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
     ],
 )]
+#[ApiFilter(SearchFilter::class, properties: ['reportableEntity' => 'partial', 'reportableId' => 'exact'])]
+#[ApiFilter(MultiSearchFilter::class, properties: ['reason', 'reportedBy.username'])]
 #[ORM\Entity(repositoryClass: ReportRepository::class)]
 class Report implements SoftDeletableInterface
 {
@@ -53,6 +61,7 @@ class Report implements SoftDeletableInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['report:read'])]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'reports')]

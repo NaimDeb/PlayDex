@@ -8,47 +8,70 @@ type ReportData = {
   reportableId: number;
   reportableEntity: string;
   id?: number;
-  createdAt?: string;
+  reportedAt?: string;
   // Add other report fields as needed
 };
 
+/** Taille de page unique côté dashboard (alignée sur l'API pour chaque collection) */
+export const ADMIN_PAGE_SIZE = 10;
+
+function buildQuery(
+  params: Record<string, string | number | undefined>
+): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") search.set(key, String(value));
+  }
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
 class AdminService {
   /**
-   * Gets all reports with optional pagination
+   * Gets reports, newest first, with optional search and entity type filter
    */
   async getReports(
-    page?: number
+    page = 1,
+    q = "",
+    reportableEntity = ""
   ): Promise<{ member: ReportData[]; totalItems: number }> {
     const config = authUtils.getAuthorization();
-    const url = page ? `/reports?page=${page}` : "/reports";
+    const url = `/reports${buildQuery({ page, q, reportableEntity })}`;
 
     const response = await apiClient.get(url, config);
     return response.data;
   }
 
   /**
-   * Gets all modifications with optional pagination
+   * Gets modifications, newest first, with optional search
    */
   async getModifications(
-    page?: number
+    page = 1,
+    q = ""
   ): Promise<{ member: Modification[]; totalItems: number }> {
     const config = authUtils.getAuthorization();
-    const url = page
-      ? `/admin/modifications?page=${page}`
-      : "/admin/modifications";
+    const url = `/admin/modifications${buildQuery({ page, q })}`;
 
     const response = await apiClient.get(url, config);
     return response.data;
   }
 
   /**
-   * Gets all patchnotes with optional pagination
+   * Gets patchnotes, newest first, with optional search and importance filter
    */
   async getPatchnotes(
-    page?: number
+    page = 1,
+    q = "",
+    importance = ""
   ): Promise<{ member: Patchnote[]; totalItems: number }> {
     const config = authUtils.getAuthorization();
-    const url = page ? `/patchnotes?page=${page}` : "/patchnotes";
+    // itemsPerPage : la collection publique sert 6 par page, le dashboard en veut 10
+    const url = `/patchnotes${buildQuery({
+      page,
+      q,
+      importance,
+      itemsPerPage: ADMIN_PAGE_SIZE,
+    })}`;
 
     const response = await apiClient.get(url, config);
     return response.data;
@@ -87,7 +110,10 @@ class AdminService {
   ): Promise<{ member: ReportData[]; totalItems: number }> {
     const config = authUtils.getAuthorization();
     const response = await apiClient.get(
-      `/reports?reportableEntity=${entityType}&reportableId=${entityId}`,
+      `/reports${buildQuery({
+        reportableEntity: entityType,
+        reportableId: entityId,
+      })}`,
       config
     );
     return response.data;
