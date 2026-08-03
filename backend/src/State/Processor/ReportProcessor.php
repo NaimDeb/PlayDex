@@ -41,16 +41,17 @@ class ReportProcessor extends AbstractProcessor
         $existingReport = $this->entityManager->getRepository(Report::class)->findOneBy([
             'reportedBy' => $user,
             'reportableId' => $reportableId,
-            'reportableEntity' => $data->getReportableEntity(),
+            'reportableEntity' => Report::entityNameVariants($data->getReportableEntity()),
         ]);
 
         if ($existingReport) {
             throw new \InvalidArgumentException('You have already reported this entity.');
         }
 
+        // reportableEntity reste en nom court ; les lectures couvrent
+        // les deux formes via Report::entityNameVariants().
         $data->setReportedBy($user);
         $data->setReportedAt(new \DateTimeImmutable());
-        $data->setReportableEntity($reportableEntityClass);
 
         $this->persist($data);
 

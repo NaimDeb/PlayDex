@@ -18,6 +18,12 @@ class GamePatchnotesProvider implements ProviderInterface
         /** @var ?Game $game */
         $game = $this->gameRepository->find($uriVariables['id']);
 
-        return $game ? $game->getPatchnotes() : [];
+        if (!$game) {
+            return [];
+        }
+
+        return $game->getPatchnotes()
+            ->filter(fn($patchnote) => !$patchnote->isDeleted())
+            ->getValues();
     }
 }
