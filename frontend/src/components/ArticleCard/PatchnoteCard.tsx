@@ -40,7 +40,7 @@ interface PatchnoteCardComponentProps {
 const PREVIEW_MAX_LENGTH = 400;
 
 /** Mêmes règles de rendu que la page patchnote, en plus petit. */
-const PREVIEW_MARKDOWN_COMPONENTS = {
+export const PREVIEW_MARKDOWN_COMPONENTS = {
   span: (props: React.ComponentPropsWithoutRef<"span">) => <span {...props} />,
   h1: ({ children }: { children?: React.ReactNode }) => (
     <h4 className="text-sm font-bold text-off-white mt-3 mb-1.5 first:mt-0">{children}</h4>

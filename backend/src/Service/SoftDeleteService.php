@@ -54,8 +54,9 @@ class SoftDeleteService
      */
     public function softDeleteRelatedReports(string $reportableEntity, int $reportableId): void
     {
+        // Couvre les deux formes en base (nom court et FQCN)
         $reports = $this->entityManager->getRepository(Report::class)->findBy([
-            'reportableEntity' => $reportableEntity,
+            'reportableEntity' => Report::entityNameVariants($reportableEntity),
             'reportableId' => $reportableId,
             'isDeleted' => false
         ]);

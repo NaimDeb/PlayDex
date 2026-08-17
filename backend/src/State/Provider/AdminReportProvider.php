@@ -24,6 +24,11 @@ final class AdminReportProvider implements ProviderInterface
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
+        // Exclut les soft-deleted en SQL : sinon la pagination et totalItems les comptent
+        if ($operation instanceof CollectionOperationInterface) {
+            $context['filters']['isDeleted'] = $context['filters']['isDeleted'] ?? 'false';
+        }
+
         // Get data from the default provider
         $data = $this->collectionProvider->provide($operation, $uriVariables, $context);
 
@@ -68,6 +73,7 @@ final class AdminReportProvider implements ProviderInterface
                     'type' => 'Patchnote',
                     'id' => $patchnote->getId(),
                     'title' => $patchnote->getTitle(),
+                    'deleted' => $patchnote->isDeleted(),
                     'owner' => $patchnote->getCreatedBy() ? [
                         'id' => $patchnote->getCreatedBy()->getId(),
                         'username' => $patchnote->getCreatedBy()->getUsername(),
@@ -86,6 +92,9 @@ final class AdminReportProvider implements ProviderInterface
                     'type' => 'Modification',
                     'id' => $modification->getId(),
                     'title' => $modification->getPatchnote() ? $modification->getPatchnote()->getTitle() : 'Patchnote supprimée',
+                    // Une modification dont la patchnote est supprimée n'est plus supprimable non plus
+                    'deleted' => $modification->isDeleted()
+                        || ($modification->getPatchnote() && $modification->getPatchnote()->isDeleted()),
                     'owner' => $modification->getUser() ? [
                         'id' => $modification->getUser()->getId(),
                         'username' => $modification->getUser()->getUsername(),

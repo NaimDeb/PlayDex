@@ -127,7 +127,10 @@ class GameService {
 
   // Should be /games/latest endpoint but it gives me a 404 error for some reason
   async getLatestPatchnotes(): Promise<Array<Patchnote>> {
-    const response = await apiClient.get("/patchnotes?order[createdAt]=desc&itemsPerPage=2");
+    // isDeleted=false : les admins voient les soft-deleted par défaut
+    const response = await apiClient.get(
+      "/patchnotes?order[createdAt]=desc&itemsPerPage=2&isDeleted=false"
+    );
     return response.data.member;
   }
 

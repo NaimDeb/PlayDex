@@ -1,12 +1,53 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import adminService from "@/lib/api/adminService";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSafeContent from "@/lib/rehypeSafeContent";
+import { colorizeContent } from "@/lib/utils";
+import { steamBbcodeToMarkdown } from "@/lib/patchnoteContent";
+import { PREVIEW_MARKDOWN_COMPONENTS } from "@/components/ArticleCard/PatchnoteCard";
+import adminService, { ADMIN_PAGE_SIZE } from "@/lib/api/adminService";
+import { DebouncedInput } from "@/components/shared/DebouncedInput";
 import { Patchnote, Modification } from "@/types/patchNoteType";
 import { User, BanUserData } from "@/types/authType";
 import { useAuth } from "@/providers/AuthProvider";
+import { useFlashMessage } from "@/components/FlashMessage/FlashMessageProvider";
+import { Pagination } from "@/components/shared/Pagination";
+import {
+  PATCHNOTE_IMPORTANCE_STYLES,
+  PATCHNOTE_IMPORTANCE_FALLBACK_STYLE,
+} from "@/constants/patchnote.constants";
+
+// Vocabulaire de boutons aligné sur ActionButton de la page patchnote
+const BTN_BASE =
+  "inline-block rounded-sm font-montserrat font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-40 disabled:pointer-events-none";
+const BTN = {
+  primary: `${BTN_BASE} bg-primary hover:bg-secondary text-off-white`,
+  outlined: `${BTN_BASE} border border-off-white/30 text-off-white/80 hover:border-off-white/60 hover:bg-off-white/5`,
+  danger: `${BTN_BASE} bg-red-500/10 border border-red-500/40 text-red-400 hover:bg-red-500/20`,
+  warning: `${BTN_BASE} border border-yellow-400/40 text-yellow-400 hover:bg-yellow-400/10`,
+} as const;
+const BTN_SM = "px-3 py-1 text-xs";
+const BTN_MD = "px-4 py-2 text-sm";
+
+const BADGE_BASE = "inline-block px-2.5 py-0.5 rounded-sm text-xs font-semibold";
+const BANNED_BADGE = `${BADGE_BASE} bg-red-500/20 text-red-400 border border-red-500/40`;
+
+const TABLE_HEAD_ROW =
+  "text-left text-xs font-montserrat font-semibold uppercase tracking-wider text-off-white/60 bg-off-black/40 border-b border-off-white/10";
+const TABLE_ROW =
+  "border-b border-off-white/5 last:border-b-0 hover:bg-off-white/5 transition-colors";
+
+function importanceBadge(importance?: string | null) {
+  const style =
+    PATCHNOTE_IMPORTANCE_STYLES[
+      importance as keyof typeof PATCHNOTE_IMPORTANCE_STYLES
+    ] ?? PATCHNOTE_IMPORTANCE_FALLBACK_STYLE;
+  return `${BADGE_BASE} ${style.badge}`;
+}
 
 // Enhanced report interface with user details
 interface ReportWithDetails {
@@ -14,7 +55,7 @@ interface ReportWithDetails {
   reason: string;
   reportableId: number;
   reportableEntity: string;
-  createdAt?: string;
+  reportedAt?: string;
   reportedBy?: {
     id: number;
     username: string;
@@ -23,6 +64,7 @@ interface ReportWithDetails {
     type: string;
     id: number;
     title: string;
+    deleted?: boolean;
     owner?: {
       id: number;
       username: string;
@@ -36,6 +78,40 @@ interface ReportWithDetails {
       title: string;
     };
   };
+}
+
+interface ModalShellProps {
+  title: string;
+  onClose: () => void;
+  maxWidth?: string;
+  children: React.ReactNode;
+}
+
+function ModalShell({
+  title,
+  onClose,
+  maxWidth = "max-w-2xl",
+  children,
+}: ModalShellProps) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-fast">
+      <div
+        className={`w-full ${maxWidth} max-h-[85vh] overflow-y-auto bg-off-gray border border-off-white/10 rounded-sm text-off-white`}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-off-white/10">
+          <h3 className="text-lg font-bold font-montserrat">{title}</h3>
+          <button
+            onClick={onClose}
+            className="text-2xl leading-none text-off-white/50 hover:text-off-white"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 // Ban form modal component
@@ -60,6 +136,97 @@ interface ReportDetailsModalProps {
   onClose: () => void;
 }
 
+// Confirmation maison : ConfirmDialog (shadcn) rend un panneau clair,
+// hors DA sur un site dark-only.
+interface ConfirmState {
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+}
+
+function ConfirmModal({
+  state,
+  onClose,
+}: {
+  state: ConfirmState | null;
+  onClose: () => void;
+}) {
+  if (!state) return null;
+
+  return (
+    <ModalShell title="Confirmation" onClose={onClose} maxWidth="max-w-md">
+      <p className="text-off-white/80">{state.message}</p>
+      <div className="flex justify-end gap-2 mt-6">
+        <button onClick={onClose} className={`${BTN.outlined} ${BTN_MD}`}>
+          Annuler
+        </button>
+        <button
+          onClick={() => {
+            state.onConfirm();
+            onClose();
+          }}
+          className={`${BTN.danger} ${BTN_MD}`}
+        >
+          {state.confirmLabel}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
+function PatchnotePreviewModal({
+  patchnote,
+  onClose,
+}: {
+  patchnote: Patchnote | null;
+  onClose: () => void;
+}) {
+  if (!patchnote) return null;
+
+  const content = colorizeContent(steamBbcodeToMarkdown(patchnote.content ?? ""));
+
+  return (
+    <ModalShell
+      title={patchnote.title || "Sans titre"}
+      onClose={onClose}
+      maxWidth="max-w-3xl"
+    >
+      <div className="flex flex-wrap items-center gap-3 mb-4 text-sm text-off-white/60">
+        <span className={importanceBadge(patchnote.importance)}>
+          {patchnote.importance || "N/A"}
+        </span>
+        <span>
+          {typeof patchnote.game === "string"
+            ? patchnote.game
+            : patchnote.game?.title || "Jeu inconnu"}
+        </span>
+        {patchnote.createdBy && <span>par {patchnote.createdBy.username}</span>}
+        {patchnote.releasedAt && (
+          <span>{new Date(patchnote.releasedAt).toLocaleDateString()}</span>
+        )}
+      </div>
+      {patchnote.smallDescription && (
+        <p className="mb-4 text-sm font-medium text-off-white/80">
+          {patchnote.smallDescription}
+        </p>
+      )}
+      <div className="p-4 overflow-y-auto max-h-[55vh] text-sm leading-relaxed border rounded-sm bg-off-black/40 border-off-white/5 text-off-white/70 patchnote-content">
+        <ReactMarkdown
+          rehypePlugins={[rehypeRaw, rehypeSafeContent]}
+          components={PREVIEW_MARKDOWN_COMPONENTS}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+      <div className="flex justify-end mt-6">
+        <button onClick={onClose} className={`${BTN.outlined} ${BTN_MD}`}>
+          Fermer
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 function ReportDetailsModal({
   isOpen,
   report,
@@ -80,116 +247,108 @@ function ReportDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-2xl p-6 mx-4 bg-gray-800 rounded-lg">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">
-            Détails du signalement #{report.id}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-2xl text-gray-400 hover:text-white"
-          >
-            ×
-          </button>
+    <ModalShell title={`Détails du signalement #${report.id}`} onClose={onClose}>
+      <div className="space-y-4">
+        {/* Signalement info */}
+        <div className="p-4 border rounded-sm bg-off-black/40 border-off-white/5">
+          <h4 className="mb-3 font-semibold font-montserrat">
+            Informations du signalement
+          </h4>
+          <div className="space-y-2 text-sm text-off-white/70">
+            <p>
+              <strong className="text-off-white">Élément signalé :</strong>{" "}
+              {getEntityDisplayName(report)}
+            </p>
+            <p>
+              <strong className="text-off-white">Raison :</strong>{" "}
+              {report.reason}
+            </p>
+            <p>
+              <strong className="text-off-white">Date :</strong>{" "}
+              {report.reportedAt
+                ? new Date(report.reportedAt).toLocaleString()
+                : "N/A"}
+            </p>
+            {report.reportedBy && (
+              <p>
+                <strong className="text-off-white">Signalé par :</strong>{" "}
+                {report.reportedBy.username}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="space-y-4">
-          {/* Signalement info */}
-          <div className="p-4 bg-gray-700 rounded-lg">
-            <h4 className="mb-3 text-lg font-semibold text-white">
-              Informations du signalement
+        {/* Entity details */}
+        {report.entityDetails && (
+          <div className="p-4 border rounded-sm bg-off-black/40 border-off-white/5">
+            <h4 className="mb-3 font-semibold font-montserrat">
+              Détails de l&apos;élément signalé
             </h4>
-            <div className="space-y-2 text-gray-300">
+            <div className="space-y-2 text-sm text-off-white/70">
               <p>
-                <strong>Élément signalé:</strong> {getEntityDisplayName(report)}
+                <strong className="text-off-white">Type :</strong>{" "}
+                {report.entityDetails.type}
               </p>
+              {report.entityDetails.deleted && (
+                <p className="text-red-400">Ce contenu a déjà été supprimé.</p>
+              )}
               <p>
-                <strong>Raison:</strong> {report.reason}
+                <strong className="text-off-white">Titre :</strong>{" "}
+                {report.entityDetails.title}
               </p>
-              <p>
-                <strong>Date:</strong>{" "}
-                {report.createdAt
-                  ? new Date(report.createdAt).toLocaleString()
-                  : "N/A"}
-              </p>
-              {report.reportedBy && (
+              {report.entityDetails.game && (
                 <p>
-                  <strong>Signalé par:</strong> {report.reportedBy.username}
+                  <strong className="text-off-white">Jeu :</strong>{" "}
+                  {report.entityDetails.game.title}
+                </p>
+              )}
+              {report.entityDetails.patchnote && (
+                <p>
+                  <strong className="text-off-white">Patchnote :</strong>{" "}
+                  {report.entityDetails.patchnote.title}
+                </p>
+              )}
+              {report.entityDetails.owner && (
+                <p>
+                  <strong className="text-off-white">Créé par :</strong>{" "}
+                  {report.entityDetails.owner.username}
                 </p>
               )}
             </div>
           </div>
-
-          {/* Entity details */}
-          {report.entityDetails && (
-            <div className="p-4 bg-gray-700 rounded-lg">
-              <h4 className="mb-3 text-lg font-semibold text-white">
-                Détails de l&apos;élément signalé
-              </h4>
-              <div className="space-y-2 text-gray-300">
-                <p>
-                  <strong>Type:</strong> {report.entityDetails.type}
-                </p>
-                <p>
-                  <strong>Titre:</strong> {report.entityDetails.title}
-                </p>
-                {report.entityDetails.game && (
-                  <p>
-                    <strong>Jeu:</strong> {report.entityDetails.game.title}
-                  </p>
-                )}
-                {report.entityDetails.patchnote && (
-                  <p>
-                    <strong>Patchnote:</strong>{" "}
-                    {report.entityDetails.patchnote.title}
-                  </p>
-                )}
-                {report.entityDetails.owner && (
-                  <p>
-                    <strong>Créé par:</strong>{" "}
-                    {report.entityDetails.owner.username}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-between mt-6">
-          <div className="flex space-x-2">
-            {/* Redirection buttons based on entity type */}
-            {report.entityDetails?.type === "Patchnote" &&
-              report.entityDetails.game && (
-                <Link
-                  href={`/article/${report.entityDetails.game.id}/patchnote/${report.reportableId}`}
-                  className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
-                  onClick={onClose}
-                >
-                  Voir la patchnote
-                </Link>
-              )}
-            {report.entityDetails?.type === "Modification" &&
-              report.entityDetails?.patchnote &&
-              report.entityDetails.game && (
-                <Link
-                  href={`/article/${report.entityDetails.game.id}/patchnote/${report.entityDetails.patchnote.id}/modifications`}
-                  className="px-4 py-2 text-white bg-green-600 rounded hover:bg-green-700"
-                  onClick={onClose}
-                >
-                  Voir les modifications
-                </Link>
-              )}
-          </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-white bg-gray-600 rounded hover:bg-gray-700"
-          >
-            Fermer
-          </button>
-        </div>
+        )}
       </div>
-    </div>
+
+      <div className="flex justify-between mt-6">
+        <div className="flex gap-2">
+          {/* Redirection buttons based on entity type */}
+          {report.entityDetails?.type === "Patchnote" &&
+            report.entityDetails.game && (
+              <Link
+                href={`/article/${report.entityDetails.game.id}/patchnote/${report.reportableId}`}
+                className={`${BTN.primary} ${BTN_MD}`}
+                onClick={onClose}
+              >
+                Voir la patchnote
+              </Link>
+            )}
+          {report.entityDetails?.type === "Modification" &&
+            report.entityDetails?.patchnote &&
+            report.entityDetails.game && (
+              <Link
+                href={`/article/${report.entityDetails.game.id}/patchnote/${report.entityDetails.patchnote.id}/modifications`}
+                className={`${BTN.primary} ${BTN_MD}`}
+                onClick={onClose}
+              >
+                Voir les modifications
+              </Link>
+            )}
+        </div>
+        <button onClick={onClose} className={`${BTN.outlined} ${BTN_MD}`}>
+          Fermer
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -202,26 +361,26 @@ function ModificationDetailsModal({
 
   const formatDifference = (diff: Array<[number, string]>) => {
     return diff.map(([type, text], index) => {
-      let className = "p-1 font-mono text-sm rounded";
+      let className = "p-1 font-mono text-sm rounded-sm";
       let label = "";
 
       switch (type) {
         case -1:
-          className += " bg-red-100 text-red-800 line-through";
+          className += " bg-debuff/10 text-red-400 line-through";
           label = "Supprimé";
           break;
         case 1:
-          className += " bg-green-100 text-green-800";
+          className += " bg-buff/10 text-green-400";
           label = "Ajouté";
           break;
         default:
-          className += " bg-gray-100 text-gray-800";
+          className += " bg-off-white/5 text-off-white/60";
           label = "Inchangé";
       }
 
       return (
         <div key={index} className="mb-2">
-          <span className="px-2 py-1 mr-2 text-xs text-gray-700 bg-gray-200 rounded-full">
+          <span className="px-2 py-0.5 mr-2 text-xs rounded-sm bg-off-white/10 text-off-white/60">
             {label}
           </span>
           <span className={className}>{text}</span>
@@ -231,122 +390,105 @@ function ModificationDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-white">
-            Détails de la modification #{modification.id}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-2xl text-gray-400 hover:text-white"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Patchnote info */}
-          <div className="p-4 bg-gray-700 rounded-lg">
-            <h4 className="mb-3 text-lg font-semibold text-white">
-              Patchnote concernée
-            </h4>
-            {modification.patchnote ? (
-              <div className="text-gray-300">
-                <p>
-                  <strong>Titre:</strong> {modification.patchnote.title}
-                </p>
-                <p>
-                  <strong>Jeu:</strong>{" "}
-                  {typeof modification.patchnote.game === "object"
-                    ? modification.patchnote.game.title
-                    : modification.patchnote.game}
-                </p>
-                <p>
-                  <strong>Importance:</strong>
-                  <span
-                    className={`ml-2 px-2 py-1 rounded text-xs ${
-                      modification.patchnote.importance === "hotfix"
-                        ? "bg-red-600"
-                        : modification.patchnote.importance === "major"
-                        ? "bg-orange-600"
-                        : "bg-blue-600"
-                    }`}
-                  >
-                    {modification.patchnote.importance}
-                  </span>
-                </p>
-              </div>
-            ) : (
-              <p className="text-gray-400">Patchnote supprimée</p>
-            )}
-          </div>
-
-          {/* Modification info */}
-          <div className="p-4 bg-gray-700 rounded-lg">
-            <h4 className="mb-3 text-lg font-semibold text-white">
-              Informations
-            </h4>
-            <div className="text-gray-300">
+    <ModalShell
+      title={`Détails de la modification #${modification.id}`}
+      onClose={onClose}
+      maxWidth="max-w-4xl"
+    >
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Patchnote info */}
+        <div className="p-4 border rounded-sm bg-off-black/40 border-off-white/5">
+          <h4 className="mb-3 font-semibold font-montserrat">
+            Patchnote concernée
+          </h4>
+          {modification.patchnote ? (
+            <div className="space-y-2 text-sm text-off-white/70">
               <p>
-                <strong>Utilisateur:</strong>{" "}
-                {modification.user?.username || "Inconnu"}
+                <strong className="text-off-white">Titre :</strong>{" "}
+                {modification.patchnote.title}
               </p>
               <p>
-                <strong>Date:</strong>{" "}
-                {new Date(modification.createdAt).toLocaleString()}
+                <strong className="text-off-white">Jeu :</strong>{" "}
+                {typeof modification.patchnote.game === "object"
+                  ? modification.patchnote.game.title
+                  : modification.patchnote.game}
               </p>
               <p>
-                <strong>Changements:</strong>{" "}
-                {modification.difference?.length || 0}
+                <strong className="text-off-white">Importance :</strong>{" "}
+                <span
+                  className={importanceBadge(modification.patchnote.importance)}
+                >
+                  {modification.patchnote.importance}
+                </span>
               </p>
-              {modification.reportCount !== undefined && (
-                <p>
-                  <strong>Signalements:</strong> {modification.reportCount}
-                </p>
-              )}
             </div>
-          </div>
+          ) : (
+            <p className="text-sm text-off-white/50">Patchnote supprimée</p>
+          )}
         </div>
 
-        {/* Differences */}
-        <div className="mt-6">
-          <h4 className="mb-3 text-lg font-semibold text-white">Différences</h4>
-          <div className="p-4 overflow-y-auto bg-gray-700 rounded-lg max-h-96">
-            {modification.difference && modification.difference.length > 0 ? (
-              formatDifference(modification.difference)
-            ) : (
-              <p className="text-gray-400">Aucune différence enregistrée</p>
+        {/* Modification info */}
+        <div className="p-4 border rounded-sm bg-off-black/40 border-off-white/5">
+          <h4 className="mb-3 font-semibold font-montserrat">Informations</h4>
+          <div className="space-y-2 text-sm text-off-white/70">
+            <p>
+              <strong className="text-off-white">Utilisateur :</strong>{" "}
+              {modification.user?.username || "Inconnu"}
+            </p>
+            <p>
+              <strong className="text-off-white">Date :</strong>{" "}
+              {new Date(modification.createdAt).toLocaleString()}
+            </p>
+            <p>
+              <strong className="text-off-white">Changements :</strong>{" "}
+              {modification.difference?.length || 0}
+            </p>
+            {modification.reportCount !== undefined && (
+              <p>
+                <strong className="text-off-white">Signalements :</strong>{" "}
+                {modification.reportCount}
+              </p>
             )}
           </div>
-        </div>
-
-        <div className="flex justify-between mt-6">
-          <div className="flex space-x-2">
-            {/* Redirection button to patchnote */}
-            {modification.patchnote && (
-              <Link
-                href={`/article/${
-                  typeof modification.patchnote.game === "object"
-                    ? modification.patchnote.game.id
-                    : modification.patchnote.game
-                }/patchnote/${modification.patchnote.id}`}
-                className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
-                onClick={onClose}
-              >
-                Voir la patchnote
-              </Link>
-            )}
-          </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-white bg-gray-600 rounded hover:bg-gray-700"
-          >
-            Fermer
-          </button>
         </div>
       </div>
-    </div>
+
+      {/* Differences */}
+      <div className="mt-6">
+        <h4 className="mb-3 font-semibold font-montserrat">Différences</h4>
+        <div className="p-4 overflow-y-auto border rounded-sm bg-off-black/40 border-off-white/5 max-h-96">
+          {modification.difference && modification.difference.length > 0 ? (
+            formatDifference(modification.difference)
+          ) : (
+            <p className="text-sm text-off-white/50">
+              Aucune différence enregistrée
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex justify-between mt-6">
+        <div className="flex gap-2">
+          {/* Redirection button to patchnote */}
+          {modification.patchnote && (
+            <Link
+              href={`/article/${
+                typeof modification.patchnote.game === "object"
+                  ? modification.patchnote.game.id
+                  : modification.patchnote.game
+              }/patchnote/${modification.patchnote.id}`}
+              className={`${BTN.primary} ${BTN_MD}`}
+              onClick={onClose}
+            >
+              Voir la patchnote
+            </Link>
+          )}
+        </div>
+        <button onClick={onClose} className={`${BTN.outlined} ${BTN_MD}`}>
+          Fermer
+        </button>
+      </div>
+    </ModalShell>
   );
 }
 
@@ -380,90 +522,103 @@ function BanModal({ isOpen, user, onClose, onBan }: BanModalProps) {
 
   if (!isOpen) return null;
 
+  const inputClasses =
+    "w-full px-3 py-2 bg-off-black/40 border border-off-white/20 rounded-sm text-off-white focus:outline-none focus:border-primary/60";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm ban-modal">
-      <div className="w-full max-w-md p-6 mx-4 bg-gray-800 rounded-lg">
-        <h3 className="mb-4 text-xl font-bold text-white">
-          Bannir l&apos;utilisateur {user.username}
-        </h3>
-        <form onSubmit={handleSubmit}>
+    <ModalShell
+      title={`Bannir l'utilisateur ${user.username}`}
+      onClose={onClose}
+      maxWidth="max-w-md"
+    >
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-semibold font-montserrat text-off-white/80">
+            Raison du bannissement
+          </label>
+          <textarea
+            value={banReason}
+            onChange={(e) => setBanReason(e.target.value)}
+            className={inputClasses}
+            rows={3}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="flex items-center gap-2 text-sm text-off-white/80">
+            <input
+              type="checkbox"
+              checked={isPermanent}
+              onChange={(e) => setIsPermanent(e.target.checked)}
+              className="accent-primary"
+            />
+            Bannissement permanent
+          </label>
+        </div>
+        {!isPermanent && (
           <div className="mb-4">
-            <label className="block mb-2 text-sm font-bold text-gray-300">
-              Raison du bannissement
+            <label className="block mb-2 text-sm font-semibold font-montserrat text-off-white/80">
+              Banni jusqu&apos;au
             </label>
-            <textarea
-              value={banReason}
-              onChange={(e) => setBanReason(e.target.value)}
-              className="w-full px-3 py-2 text-white bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-              rows={3}
-              required
+            <input
+              type="date"
+              value={bannedUntil}
+              onChange={(e) => setBannedUntil(e.target.value)}
+              className={inputClasses}
+              required={!isPermanent}
             />
           </div>
-          <div className="mb-4">
-            <label className="flex items-center text-gray-300">
-              <input
-                type="checkbox"
-                checked={isPermanent}
-                onChange={(e) => setIsPermanent(e.target.checked)}
-                className="mr-2"
-              />
-              Bannissement permanent
-            </label>
-          </div>
-          {!isPermanent && (
-            <div className="mb-4">
-              <label className="block mb-2 text-sm font-bold text-gray-300">
-                Banni jusqu&apos;au
-              </label>
-              <input
-                type="date"
-                value={bannedUntil}
-                onChange={(e) => setBannedUntil(e.target.value)}
-                className="w-full px-3 py-2 text-white bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                required={!isPermanent}
-              />
-            </div>
-          )}
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-white bg-gray-600 rounded admin-btn hover:bg-gray-700"
-              disabled={loading}
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-white bg-red-600 rounded admin-btn hover:bg-red-700 disabled:opacity-50"
-              disabled={loading || !banReason.trim()}
-            >
-              {loading ? "Bannissement..." : "Bannir"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        )}
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`${BTN.outlined} ${BTN_MD}`}
+            disabled={loading}
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className={`${BTN.danger} ${BTN_MD}`}
+            disabled={loading || !banReason.trim()}
+          >
+            {loading ? "Bannissement..." : "Bannir"}
+          </button>
+        </div>
+      </form>
+    </ModalShell>
   );
 }
 
 // Type utilitaire pour gérer les erreurs d'API avec un champ response.status
 interface ApiError {
-  response?: { status?: number };
+  response?: { status?: number; data?: { detail?: string } };
 }
 
-export default function AdminDashboard() {
+type TabKey = "patchnotes" | "modifications" | "reports";
+const TABS: TabKey[] = ["patchnotes", "modifications", "reports"];
+
+const SELECT_CLASSES =
+  "px-3 py-2 bg-off-gray border border-off-white/20 rounded-sm text-off-white focus:outline-none focus:border-primary/60 [color-scheme:dark]";
+
+const SEARCH_PLACEHOLDERS: Record<TabKey, string> = {
+  patchnotes: "Rechercher par titre, jeu ou auteur...",
+  modifications: "Rechercher par utilisateur, patchnote ou jeu...",
+  reports: "Rechercher par raison ou utilisateur...",
+};
+
+function AdminDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
+  const { showMessage } = useFlashMessage();
   const isAdmin = user?.roles?.includes("ROLE_ADMIN") ?? false;
   const [patchnotes, setPatchnotes] = useState<Patchnote[]>([]);
   const [modifications, setModifications] = useState<Modification[]>([]);
   const [reports, setReports] = useState<ReportWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<
-    "patchnotes" | "modifications" | "reports"
-  >("patchnotes");
   const [banModalOpen, setBanModalOpen] = useState(false);
   const [selectedUserToBan, setSelectedUserToBan] = useState<User | null>(null);
   const [modificationDetailsModalOpen, setModificationDetailsModalOpen] =
@@ -473,18 +628,49 @@ export default function AdminDashboard() {
   const [reportDetailsModalOpen, setReportDetailsModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] =
     useState<ReportWithDetails | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [previewPatchnote, setPreviewPatchnote] = useState<Patchnote | null>(
+    null
+  );
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
-  const itemsPerPage = 10;
+
+  // L'état de navigation vit dans l'URL : rechargeable, partageable, back/forward ok.
+  const tabParam = searchParams.get("tab") as TabKey | null;
+  const activeTab: TabKey =
+    tabParam && TABS.includes(tabParam) ? tabParam : "patchnotes";
+  const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
+  const searchTerm = searchParams.get("q") ?? "";
+  const importanceFilter = searchParams.get("importance") ?? "";
+  const entityFilter = searchParams.get("entity") ?? "";
+
+  const updateParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [key, value] of Object.entries(patch)) {
+        if (value) params.set(key, value);
+        else params.delete(key);
+      }
+      const qs = params.toString();
+      router.replace(qs ? `/dashboard?${qs}` : "/dashboard", { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => updateParams({ page: page > 1 ? String(page) : null }),
+    [updateParams]
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => updateParams({ q: value || null, page: null }),
+    [updateParams]
+  );
 
   // Helper function to check if a user is banned
   const isUserBanned = (
     user: { isBanned?: boolean; bannedUntil?: string } | null | undefined
   ): boolean => {
     if (!user) return false;
-
-    console.log("Checking user ban status:", user); // Debug log
 
     // Check if explicitly banned
     if (user.isBanned === true) return true;
@@ -499,31 +685,38 @@ export default function AdminDashboard() {
     return false;
   };
 
-  // Fetch data function
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       switch (activeTab) {
-        case "patchnotes":
-          const patchnotesData = await adminService.getPatchnotes(currentPage);
-          console.log("Patchnotes data received:", patchnotesData); // Debug log
+        case "patchnotes": {
+          const patchnotesData = await adminService.getPatchnotes(
+            currentPage,
+            searchTerm,
+            importanceFilter
+          );
           setPatchnotes(patchnotesData.member);
           setTotalItems(patchnotesData.totalItems);
           break;
+        }
 
-        case "modifications":
+        case "modifications": {
           const modificationsData = await adminService.getModifications(
-            currentPage
+            currentPage,
+            searchTerm
           );
-          console.log("Modifications data received:", modificationsData); // Debug log
           setModifications(modificationsData.member);
           setTotalItems(modificationsData.totalItems);
           break;
+        }
 
-        case "reports":
-          const reportsData = await adminService.getReports(currentPage);
-          // Transform reports data to include patchnote details if needed
+        case "reports": {
+          const reportsData = await adminService.getReports(
+            currentPage,
+            searchTerm,
+            entityFilter
+          );
           const reportsWithDetails: ReportWithDetails[] =
             reportsData.member.map((report) => ({
               ...report,
@@ -532,6 +725,7 @@ export default function AdminDashboard() {
           setReports(reportsWithDetails);
           setTotalItems(reportsData.totalItems);
           break;
+        }
       }
     } catch (err) {
       const error = err as ApiError;
@@ -543,7 +737,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, currentPage, searchTerm, importanceFilter, entityFilter, router]);
 
   // Le back refuse les appels admin, mais l'UI doit aussi rester fermée.
   useEffect(() => {
@@ -554,93 +748,64 @@ export default function AdminDashboard() {
   // Fetch data based on active tab
   useEffect(() => {
     if (!isAdmin) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        switch (activeTab) {
-          case "patchnotes":
-            const patchnotesData = await adminService.getPatchnotes(
-              currentPage
-            );
-            setPatchnotes(patchnotesData.member);
-            setTotalItems(patchnotesData.totalItems);
-            break;
-
-          case "modifications":
-            const modificationsData = await adminService.getModifications(
-              currentPage
-            );
-            setModifications(modificationsData.member);
-            setTotalItems(modificationsData.totalItems);
-            break;
-
-          case "reports":
-            const reportsData = await adminService.getReports(currentPage);
-            // Transform reports data to include patchnote details if needed
-            const reportsWithDetails: ReportWithDetails[] =
-              reportsData.member.map((report) => ({
-                ...report,
-                id: report.id || 0,
-              }));
-            setReports(reportsWithDetails);
-            setTotalItems(reportsData.totalItems);
-            break;
-        }
-      } catch (err) {
-        const error = err as ApiError;
-        if (error.response?.status === 403) {
-          router.replace("/login");
-          return;
-        }
-        setError("Erreur lors du chargement des données administrateur.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, [activeTab, currentPage, router, isAdmin]);
+  }, [isAdmin, fetchData]);
 
   // Handle ban user
   const handleBanUser = async (userId: number, banData: BanUserData) => {
     try {
       await adminService.banUser(userId, banData);
-      alert("Utilisateur banni avec succès.");
+      showMessage("Utilisateur banni avec succès.", "success");
       fetchData(); // Refresh data
     } catch (error) {
       console.error("Error banning user:", error);
-      alert("Erreur lors du bannissement de l'utilisateur.");
+      showMessage("Erreur lors du bannissement de l'utilisateur.", "error");
     }
   };
 
   // Delete report
-  const handleDeleteReport = async (reportId: number) => {
-    if (!window.confirm("Supprimer ce signalement ?")) return;
-
-    try {
-      await adminService.deleteReport(reportId);
-      setReports((prev) => prev.filter((r) => r.id !== reportId));
-      alert("Signalement supprimé avec succès.");
-    } catch (error) {
-      console.error("Error deleting report:", error);
-      alert("Erreur lors de la suppression du signalement.");
-    }
+  const handleDeleteReport = (reportId: number) => {
+    setConfirmState({
+      message: "Supprimer ce signalement ?",
+      confirmLabel: "Supprimer",
+      onConfirm: async () => {
+        try {
+          await adminService.deleteReport(reportId);
+          showMessage("Signalement supprimé avec succès.", "success");
+          fetchData();
+        } catch (error) {
+          console.error("Error deleting report:", error);
+          showMessage(
+            (error as ApiError).response?.data?.detail ??
+              "Erreur lors de la suppression du signalement.",
+            "error"
+          );
+        }
+      },
+    });
   };
 
   // Delete patchnote
-  const handleDeletePatchnote = async (patchnoteId: number, title: string) => {
-    if (!window.confirm(`Supprimer la patchnote "${title}" ?`)) return;
-
-    try {
-      await adminService.deletePatchnote(patchnoteId);
-      setPatchnotes((prev) => prev.filter((p) => p.id !== patchnoteId));
-      alert("Patchnote supprimée avec succès.");
-    } catch (error) {
-      console.error("Error deleting patchnote:", error);
-      alert("Erreur lors de la suppression de la patchnote.");
-    }
+  const handleDeletePatchnote = (patchnoteId: number, title: string) => {
+    setConfirmState({
+      message: `Supprimer la patchnote "${title}" ?`,
+      confirmLabel: "Supprimer",
+      onConfirm: async () => {
+        try {
+          await adminService.deletePatchnote(patchnoteId);
+          showMessage("Patchnote supprimée avec succès.", "success");
+          // Côté API, supprimer un contenu solde aussi ses signalements
+          fetchData();
+        } catch (error) {
+          console.error("Error deleting patchnote:", error);
+          showMessage(
+            (error as ApiError).response?.data?.detail ??
+              "Erreur lors de la suppression de la patchnote.",
+            "error"
+          );
+        }
+      },
+    });
   };
 
   // Open ban modal
@@ -662,17 +827,26 @@ export default function AdminDashboard() {
   };
 
   // Delete modification
-  const handleDeleteModification = async (modificationId: number) => {
-    if (!window.confirm("Supprimer cette modification ?")) return;
-
-    try {
-      await adminService.deleteModification(modificationId);
-      setModifications((prev) => prev.filter((m) => m.id !== modificationId));
-      alert("Modification supprimée avec succès.");
-    } catch (error) {
-      console.error("Error deleting modification:", error);
-      alert("Erreur lors de la suppression de la modification.");
-    }
+  const handleDeleteModification = (modificationId: number) => {
+    setConfirmState({
+      message: "Supprimer cette modification ?",
+      confirmLabel: "Supprimer",
+      onConfirm: async () => {
+        try {
+          await adminService.deleteModification(modificationId);
+          showMessage("Modification supprimée avec succès.", "success");
+          // Côté API, supprimer un contenu solde aussi ses signalements
+          fetchData();
+        } catch (error) {
+          console.error("Error deleting modification:", error);
+          showMessage(
+            (error as ApiError).response?.data?.detail ??
+              "Erreur lors de la suppression de la modification.",
+            "error"
+          );
+        }
+      },
+    });
   };
 
   // View reports for modification
@@ -683,140 +857,137 @@ export default function AdminDashboard() {
         modificationId
       );
       if (reportsData.member.length === 0) {
-        alert("Aucun signalement trouvé pour cette modification.");
+        showMessage("Aucun signalement trouvé pour cette modification.", "info");
         return;
       }
-      // For now, just show an alert with the count
-      alert(
-        `${reportsData.member.length} signalement(s) trouvé(s) pour cette modification.`
+      showMessage(
+        `${reportsData.member.length} signalement(s) trouvé(s) pour cette modification.`,
+        "info"
       );
     } catch (error) {
       console.error("Error fetching reports:", error);
-      alert("Erreur lors de la récupération des signalements.");
+      showMessage("Erreur lors de la récupération des signalements.", "error");
     }
   };
 
-  // Filter data based on search term
-  const filteredPatchnotes = patchnotes.filter(
-    (patchnote) =>
-      searchTerm === "" ||
-      patchnote.id.toString().includes(searchTerm.toLowerCase()) ||
-      patchnote.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (typeof patchnote.game === "string"
-        ? patchnote.game.toLowerCase().includes(searchTerm.toLowerCase())
-        : patchnote.game?.title
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase())) ||
-      patchnote.createdBy?.username
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
-
-  const filteredModifications = modifications.filter(
-    (modification) =>
-      searchTerm === "" ||
-      modification.id.toString().includes(searchTerm.toLowerCase()) ||
-      modification.user?.username
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase())
-  );
-
-  const filteredReports = reports.filter(
-    (report) =>
-      searchTerm === "" ||
-      report.id.toString().includes(searchTerm.toLowerCase()) ||
-      report.reportableId.toString().includes(searchTerm.toLowerCase()) ||
-      report.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportableEntity.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Pagination
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(totalItems / ADMIN_PAGE_SIZE));
 
-  const renderPagination = () => (
-    <div className="flex items-center justify-center mt-6 space-x-2">
-      <button
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className="px-3 py-1 text-white bg-gray-700 rounded pagination-btn disabled:opacity-50"
+  const hasActiveFilters = Boolean(
+    searchTerm || importanceFilter || entityFilter
+  );
+
+  const emptyRow = (colSpan: number) => (
+    <tr>
+      <td
+        colSpan={colSpan}
+        className="px-4 py-10 text-center text-off-white/50"
       >
-        Précédent
-      </button>
-      <span className="text-gray-300">
-        Page {currentPage} sur {totalPages}
-      </span>
-      <button
-        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-        disabled={currentPage === totalPages}
-        className="px-3 py-1 text-white bg-gray-700 rounded pagination-btn disabled:opacity-50"
-      >
-        Suivant
-      </button>
-    </div>
+        {hasActiveFilters
+          ? "Aucun résultat pour ces filtres"
+          : "Aucun élément à afficher"}
+      </td>
+    </tr>
   );
 
   if (authLoading || !isAdmin) {
     return (
-      <div className="container px-4 py-16 mx-auto text-center text-off-white">
+      <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 py-16 text-center text-off-white/70">
         {authLoading ? "Chargement..." : "Accès réservé aux administrateurs."}
       </div>
     );
   }
 
   return (
-    <div className="container px-4 py-8 mx-auto text-off-white">
-      <h1 className="mb-8 text-4xl font-bold text-center text-primary">
-        Dashboard Administrateur
-      </h1>
+    <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-10 py-10 text-off-white">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold font-montserrat">
+          Dashboard administrateur
+        </h1>
+        <p className="mt-1 text-off-white/50">
+          Modération des patchnotes, modifications et signalements
+        </p>
+      </header>
 
       {/* Tab Navigation */}
-      <div className="mb-8">
-        <div className="border-b border-gray-600">
-          <nav className="flex -mb-px space-x-8">
-            {[
-              { key: "patchnotes", label: "Patchnotes" },
-              { key: "modifications", label: "Modifications" },
-              { key: "reports", label: "Signalements" },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => {
-                  setActiveTab(tab.key as typeof activeTab);
-                  setCurrentPage(1);
-                  setSearchTerm(""); // Reset search when switching tabs
-                }}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.key
-                    ? "border-primary text-primary"
-                    : "border-transparent text-gray-300 hover:text-gray-200 hover:border-gray-300"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+      <div className="mb-6 border-b border-off-white/10">
+        <nav className="flex gap-6 -mb-px">
+          {[
+            { key: "patchnotes", label: "Patchnotes" },
+            { key: "modifications", label: "Modifications" },
+            { key: "reports", label: "Signalements" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() =>
+                updateParams({
+                  tab: tab.key,
+                  page: null,
+                  q: null,
+                  importance: null,
+                  entity: null,
+                })
+              }
+              className={`pb-3 px-1 border-b-2 text-sm font-montserrat font-semibold transition-colors ${
+                activeTab === tab.key
+                  ? "border-primary text-primary"
+                  : "border-transparent text-off-white/60 hover:text-off-white hover:border-off-white/30"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <input
-            type="text"
-            placeholder="Rechercher par ID, titre, nom d'utilisateur..."
+      {/* Search + filters (server-side) */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        <div className="relative w-full max-w-md">
+          <DebouncedInput
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 text-white bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            onChange={handleSearchChange}
+            placeholder={SEARCH_PLACEHOLDERS[activeTab]}
+            className="w-full px-4 py-2 border rounded-sm bg-off-gray border-off-white/20 text-off-white placeholder:text-off-white/40 focus:outline-none focus:border-primary/60"
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm("")}
-              className="absolute text-gray-400 transform -translate-y-1/2 right-3 top-1/2 hover:text-white"
+              onClick={() => handleSearchChange("")}
+              className="absolute -translate-y-1/2 text-off-white/50 right-3 top-1/2 hover:text-off-white"
+              aria-label="Effacer la recherche"
             >
               ✕
             </button>
           )}
         </div>
+        {activeTab === "patchnotes" && (
+          <select
+            value={importanceFilter}
+            onChange={(e) =>
+              updateParams({ importance: e.target.value || null, page: null })
+            }
+            className={SELECT_CLASSES}
+            aria-label="Filtrer par importance"
+          >
+            <option value="">Toutes les importances</option>
+            <option value="major">Majeure</option>
+            <option value="minor">Mineure</option>
+            <option value="hotfix">Hotfix</option>
+          </select>
+        )}
+        {activeTab === "reports" && (
+          <select
+            value={entityFilter}
+            onChange={(e) =>
+              updateParams({ entity: e.target.value || null, page: null })
+            }
+            className={SELECT_CLASSES}
+            aria-label="Filtrer par type d'élément signalé"
+          >
+            <option value="">Tous les types</option>
+            <option value="Patchnote">Patchnotes</option>
+            <option value="Modification">Modifications</option>
+          </select>
+        )}
       </div>
 
       {loading ? (
@@ -824,25 +995,21 @@ export default function AdminDashboard() {
           <div className="w-12 h-12 border-b-2 rounded-full animate-spin border-primary"></div>
         </div>
       ) : error ? (
-        <p className="py-8 text-center text-red-500">{error}</p>
+        <p className="py-8 text-center text-red-400">{error}</p>
       ) : (
         <>
           {/* Patchnotes Tab */}
           {activeTab === "patchnotes" && (
             <section>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-semibold">
-                  Patchnotes (
-                  {searchTerm
-                    ? `${filteredPatchnotes.length} sur ${totalItems}`
-                    : totalItems}
-                  )
+                  Patchnotes ({totalItems})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-gray-800 rounded-lg">
+              <div className="overflow-x-auto border rounded-sm bg-off-gray border-off-white/10">
+                <table className="min-w-full">
                   <thead>
-                    <tr className="text-left text-gray-300 bg-gray-700">
+                    <tr className={TABLE_HEAD_ROW}>
                       <th className="px-4 py-3">ID</th>
                       <th className="px-4 py-3">Titre</th>
                       <th className="px-4 py-3">Jeu</th>
@@ -853,119 +1020,126 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredPatchnotes.map((patchnote) => (
-                      <tr
-                        key={patchnote.id}
-                        className="border-b border-gray-700 hover:bg-gray-750"
-                      >
-                        <td className="px-4 py-3 font-mono text-sm">
-                          {patchnote.id}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div
-                            className="max-w-xs truncate"
-                            title={patchnote.title || ""}
-                          >
-                            {patchnote.title || "Sans titre"}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {typeof patchnote.game === "string"
-                            ? patchnote.game
-                            : patchnote.game?.title || "N/A"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {patchnote.importance ? (
-                            <span
-                              className={`px-2 py-1 rounded text-xs font-semibold ${
-                                patchnote.importance === "hotfix"
-                                  ? "bg-red-600"
-                                  : patchnote.importance === "major"
-                                  ? "bg-orange-600"
-                                  : "bg-blue-600"
-                              }`}
-                            >
-                              {patchnote.importance}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">N/A</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {patchnote.createdBy ? (
-                            <div className="flex items-center space-x-2">
-                              <span>{patchnote.createdBy.username}</span>
-                              {isUserBanned(patchnote.createdBy) ? (
-                                <span className="px-2 py-1 text-xs text-white bg-red-600 rounded">
-                                  Banni
+                    {patchnotes.length === 0
+                      ? emptyRow(7)
+                      : patchnotes.map((patchnote) => (
+                          <tr key={patchnote.id} className={TABLE_ROW}>
+                            <td className="px-4 py-3 font-mono text-sm text-off-white/70">
+                              {patchnote.id}
+                            </td>
+                            <td className="px-4 py-3">
+                              <button
+                                onClick={() => setPreviewPatchnote(patchnote)}
+                                className="max-w-xs text-left truncate transition-colors hover:text-primary"
+                                title={patchnote.title || ""}
+                              >
+                                {patchnote.title || "Sans titre"}
+                              </button>
+                            </td>
+                            <td className="px-4 py-3">
+                              {typeof patchnote.game === "string"
+                                ? patchnote.game
+                                : patchnote.game?.title || "N/A"}
+                            </td>
+                            <td className="px-4 py-3">
+                              {patchnote.importance ? (
+                                <span
+                                  className={importanceBadge(
+                                    patchnote.importance
+                                  )}
+                                >
+                                  {patchnote.importance}
                                 </span>
                               ) : (
+                                <span className="text-xs text-off-white/40">
+                                  N/A
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3">
+                              {patchnote.createdBy ? (
+                                <div className="flex items-center gap-2">
+                                  <span>{patchnote.createdBy.username}</span>
+                                  {isUserBanned(patchnote.createdBy) ? (
+                                    <span className={BANNED_BADGE}>Banni</span>
+                                  ) : (
+                                    <button
+                                      onClick={() =>
+                                        openBanModal({
+                                          id: patchnote.createdBy!.id,
+                                          username:
+                                            patchnote.createdBy!.username,
+                                          email: "",
+                                          roles: [],
+                                          createdAt: "",
+                                          contributionsCount: 0,
+                                        })
+                                      }
+                                      className={`${BTN.warning} ${BTN_SM}`}
+                                    >
+                                      Bannir
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-off-white/40">
+                                  Inconnu
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-off-white/50">
+                              {patchnote.releasedAt
+                                ? new Date(
+                                    patchnote.releasedAt
+                                  ).toLocaleDateString()
+                                : "N/A"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setPreviewPatchnote(patchnote)}
+                                  className={`${BTN.outlined} ${BTN_SM}`}
+                                >
+                                  Aperçu
+                                </button>
                                 <button
                                   onClick={() =>
-                                    openBanModal({
-                                      id: patchnote.createdBy!.id,
-                                      username: patchnote.createdBy!.username,
-                                      email: "",
-                                      roles: [],
-                                      createdAt: "",
-                                      contributionsCount: 0,
-                                    })
+                                    handleDeletePatchnote(
+                                      patchnote.id,
+                                      patchnote.title
+                                    )
                                   }
-                                  className="px-2 py-1 text-xs text-white bg-yellow-600 rounded hover:bg-yellow-700"
+                                  className={`${BTN.danger} ${BTN_SM}`}
                                 >
-                                  Bannir
+                                  Supprimer
                                 </button>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">Inconnu</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-400">
-                          {patchnote.releasedAt
-                            ? new Date(
-                                patchnote.releasedAt
-                              ).toLocaleDateString()
-                            : "N/A"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() =>
-                              handleDeletePatchnote(
-                                patchnote.id,
-                                patchnote.title
-                              )
-                            }
-                            className="px-3 py-1 text-sm font-semibold text-white bg-red-600 rounded hover:bg-red-700"
-                          >
-                            Supprimer
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                   </tbody>
                 </table>
               </div>
-              {renderPagination()}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             </section>
           )}
 
           {/* Modifications Tab */}
           {activeTab === "modifications" && (
             <section>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-semibold">
-                  Modifications (
-                  {searchTerm
-                    ? `${filteredModifications.length} sur ${totalItems}`
-                    : totalItems}
-                  )
+                  Modifications ({totalItems})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-gray-800 rounded-lg">
+              <div className="overflow-x-auto border rounded-sm bg-off-gray border-off-white/10">
+                <table className="min-w-full">
                   <thead>
-                    <tr className="text-left text-gray-300 bg-gray-700">
+                    <tr className={TABLE_HEAD_ROW}>
                       <th className="px-4 py-3">ID</th>
                       <th className="px-4 py-3">Utilisateur</th>
                       <th className="px-4 py-3">Patchnote</th>
@@ -976,152 +1150,159 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredModifications.map((modification) => (
-                      <tr
-                        key={modification.id}
-                        className="border-b border-gray-700 hover:bg-gray-750"
-                      >
-                        <td className="px-4 py-3 font-mono text-sm">
-                          {modification.id}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center space-x-2">
-                            <span>
-                              {modification.user?.username ||
-                                "Utilisateur inconnu"}
-                            </span>
-                            {isUserBanned(modification.user) ? (
-                              <span className="px-2 py-1 text-xs text-white bg-red-600 rounded">
-                                Banni
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() =>
-                                  openBanModal({
-                                    id: modification.user?.id || 0,
-                                    username:
-                                      modification.user?.username || "Inconnu",
-                                    email: "",
-                                    roles: [],
-                                    createdAt: "",
-                                    contributionsCount: 0,
-                                  })
-                                }
-                                className="px-2 py-1 text-xs text-white bg-yellow-600 rounded admin-btn hover:bg-yellow-700"
-                              >
-                                Bannir
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {modification.patchnote ? (
-                            <div className="max-w-xs">
-                              <div
-                                className="text-sm font-medium truncate"
-                                title={modification.patchnote.title || ""}
-                              >
-                                {modification.patchnote.title || "Sans titre"}
+                    {modifications.length === 0
+                      ? emptyRow(7)
+                      : modifications.map((modification) => (
+                          <tr key={modification.id} className={TABLE_ROW}>
+                            <td className="px-4 py-3 font-mono text-sm text-off-white/70">
+                              {modification.id}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <span>
+                                  {modification.user?.username ||
+                                    "Utilisateur inconnu"}
+                                </span>
+                                {isUserBanned(modification.user) ? (
+                                  <span className={BANNED_BADGE}>Banni</span>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      openBanModal({
+                                        id: modification.user?.id || 0,
+                                        username:
+                                          modification.user?.username ||
+                                          "Inconnu",
+                                        email: "",
+                                        roles: [],
+                                        createdAt: "",
+                                        contributionsCount: 0,
+                                      })
+                                    }
+                                    className={`${BTN.warning} ${BTN_SM}`}
+                                  >
+                                    Bannir
+                                  </button>
+                                )}
                               </div>
-                              <div className="text-xs text-gray-400">
-                                {typeof modification.patchnote.game === "object"
-                                  ? modification.patchnote.game.title
-                                  : modification.patchnote.game}
+                            </td>
+                            <td className="px-4 py-3">
+                              {modification.patchnote ? (
+                                <div className="max-w-xs">
+                                  <div
+                                    className="text-sm font-medium truncate"
+                                    title={modification.patchnote.title || ""}
+                                  >
+                                    {modification.patchnote.title ||
+                                      "Sans titre"}
+                                  </div>
+                                  <div className="text-xs text-off-white/50">
+                                    {typeof modification.patchnote.game ===
+                                    "object"
+                                      ? modification.patchnote.game.title
+                                      : modification.patchnote.game}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-sm text-off-white/40">
+                                  Patchnote supprimée
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-off-white/50">
+                              {modification.createdAt
+                                ? new Date(
+                                    modification.createdAt
+                                  ).toLocaleString()
+                                : "N/A"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-off-white/50">
+                                  {modification.difference?.length || 0}{" "}
+                                  changement(s)
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    openModificationDetailsModal(modification)
+                                  }
+                                  className={`${BTN.outlined} ${BTN_SM}`}
+                                >
+                                  Voir détails
+                                </button>
                               </div>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400">
-                              Patchnote supprimée
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-400">
-                          {modification.createdAt
-                            ? new Date(modification.createdAt).toLocaleString()
-                            : "N/A"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-400">
-                              {modification.difference?.length || 0}{" "}
-                              changement(s)
-                            </span>
-                            <button
-                              onClick={() =>
-                                openModificationDetailsModal(modification)
-                              }
-                              className="px-2 py-1 text-xs text-white bg-blue-600 rounded hover:bg-blue-700"
-                            >
-                              Voir détails
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-400">
-                              {modification.reportCount || 0}
-                            </span>
-                            {(modification.reportCount || 0) > 0 && (
-                              <button
-                                onClick={() =>
-                                  handleViewModificationReports(modification.id)
-                                }
-                                className="px-2 py-1 text-xs text-white bg-purple-600 rounded hover:bg-purple-700"
-                              >
-                                Voir signalements
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 space-x-2">
-                          {modification.patchnote && (
-                            <Link
-                              href={`/article/${
-                                typeof modification.patchnote.game === "object"
-                                  ? modification.patchnote.game.id
-                                  : modification.patchnote.game
-                              }/patchnote/${
-                                modification.patchnote.id
-                              }/modifications`}
-                              className="inline-block px-3 py-1 mr-2 text-sm font-semibold text-white bg-blue-600 rounded admin-btn hover:bg-blue-700"
-                            >
-                              Voir page
-                            </Link>
-                          )}
-                          <button
-                            onClick={() =>
-                              handleDeleteModification(modification.id)
-                            }
-                            className="px-3 py-1 text-sm font-semibold text-white bg-red-600 rounded hover:bg-red-700"
-                          >
-                            Supprimer
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-off-white/50">
+                                  {modification.reportCount || 0}
+                                </span>
+                                {(modification.reportCount || 0) > 0 && (
+                                  <button
+                                    onClick={() =>
+                                      handleViewModificationReports(
+                                        modification.id
+                                      )
+                                    }
+                                    className={`${BTN.outlined} ${BTN_SM}`}
+                                  >
+                                    Voir signalements
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                {modification.patchnote && (
+                                  <Link
+                                    href={`/article/${
+                                      typeof modification.patchnote.game ===
+                                      "object"
+                                        ? modification.patchnote.game.id
+                                        : modification.patchnote.game
+                                    }/patchnote/${
+                                      modification.patchnote.id
+                                    }/modifications`}
+                                    className={`${BTN.primary} ${BTN_SM}`}
+                                  >
+                                    Voir page
+                                  </Link>
+                                )}
+                                <button
+                                  onClick={() =>
+                                    handleDeleteModification(modification.id)
+                                  }
+                                  className={`${BTN.danger} ${BTN_SM}`}
+                                >
+                                  Supprimer
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                   </tbody>
                 </table>
               </div>
-              {renderPagination()}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             </section>
           )}
 
           {/* Reports Tab */}
           {activeTab === "reports" && (
             <section>
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-semibold">
-                  Signalements (
-                  {searchTerm
-                    ? `${filteredReports.length} sur ${totalItems}`
-                    : totalItems}
-                  )
+                  Signalements ({totalItems})
                 </h2>
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-gray-800 rounded-lg">
+              <div className="overflow-x-auto border rounded-sm bg-off-gray border-off-white/10">
+                <table className="min-w-full">
                   <thead>
-                    <tr className="text-left text-gray-300 bg-gray-700">
+                    <tr className={TABLE_HEAD_ROW}>
                       <th className="px-4 py-3">ID</th>
                       <th className="px-4 py-3">Élément signalé</th>
                       <th className="px-4 py-3">Signalé par</th>
@@ -1131,113 +1312,133 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredReports.map((report) => {
-                      // Clean entity type name
-                      const cleanEntityType = report.reportableEntity.includes(
-                        "\\"
-                      )
-                        ? report.reportableEntity.split("\\").pop() ||
-                          report.reportableEntity
-                        : report.reportableEntity;
+                    {reports.length === 0
+                      ? emptyRow(6)
+                      : reports.map((report) => {
+                          // Clean entity type name
+                          const cleanEntityType =
+                            report.reportableEntity.includes("\\")
+                              ? report.reportableEntity.split("\\").pop() ||
+                                report.reportableEntity
+                              : report.reportableEntity;
 
-                      return (
-                        <tr
-                          key={report.id}
-                          className="border-b border-gray-700 hover:bg-gray-750"
-                        >
-                          <td className="px-4 py-3 font-mono text-sm">
-                            {report.id}
-                          </td>
-                          <td className="px-4 py-3">
-                            <button
-                              onClick={() => openReportDetailsModal(report)}
-                              className="text-left transition-colors hover:text-blue-400"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs font-semibold ${
-                                    cleanEntityType === "Patchnote"
-                                      ? "bg-blue-600"
-                                      : "bg-green-600"
-                                  } text-white`}
+                          return (
+                            <tr key={report.id} className={TABLE_ROW}>
+                              <td className="px-4 py-3 font-mono text-sm text-off-white/70">
+                                {report.id}
+                              </td>
+                              <td className="px-4 py-3">
+                                <button
+                                  onClick={() => openReportDetailsModal(report)}
+                                  className="text-left transition-colors hover:opacity-80"
                                 >
-                                  {cleanEntityType} n°{report.reportableId}
-                                </span>
-                              </div>
-                              {report.entityDetails && (
-                                <div className="max-w-xs mt-1 text-xs text-gray-400 truncate">
-                                  {report.entityDetails.title}
+                                  <span
+                                    className={`${BADGE_BASE} ${
+                                      cleanEntityType === "Patchnote"
+                                        ? "bg-primary/20 text-primary border border-primary/40"
+                                        : "bg-green-500/20 text-green-400 border border-green-500/40"
+                                    }`}
+                                  >
+                                    {cleanEntityType} n°{report.reportableId}
+                                  </span>
+                                  {report.entityDetails && (
+                                    <div className="max-w-xs mt-1 text-xs truncate text-off-white/50">
+                                      {report.entityDetails.title}
+                                    </div>
+                                  )}
+                                </button>
+                              </td>
+                              <td className="px-4 py-3">
+                                {report.reportedBy ? (
+                                  <span className="text-off-white/80">
+                                    {report.reportedBy.username}
+                                  </span>
+                                ) : (
+                                  <span className="text-off-white/40">
+                                    Inconnu
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div
+                                  className="max-w-xs truncate"
+                                  title={report.reason}
+                                >
+                                  {report.reason}
                                 </div>
-                              )}
-                            </button>
-                          </td>
-                          <td className="px-4 py-3">
-                            {report.reportedBy ? (
-                              <span className="text-gray-300">
-                                {report.reportedBy.username}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">Inconnu</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div
-                              className="max-w-xs truncate"
-                              title={report.reason}
-                            >
-                              {report.reason}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-400">
-                            {report.createdAt
-                              ? new Date(report.createdAt).toLocaleString()
-                              : "N/A"}
-                          </td>
-                          <td className="px-4 py-3 space-x-2">
-                            <button
-                              onClick={() => openReportDetailsModal(report)}
-                              className="px-3 py-1 text-sm font-semibold text-white bg-blue-600 rounded hover:bg-blue-700"
-                            >
-                              Voir détails
-                            </button>
-                            <button
-                              onClick={() => handleDeleteReport(report.id)}
-                              className="px-3 py-1 text-sm font-semibold text-white bg-red-600 rounded hover:bg-red-700"
-                            >
-                              Supprimer le signalement
-                            </button>
-                            {cleanEntityType === "Patchnote" && (
-                              <button
-                                onClick={() =>
-                                  handleDeletePatchnote(
-                                    report.reportableId,
-                                    report.entityDetails?.title ||
-                                      `Patchnote #${report.reportableId}`
-                                  )
-                                }
-                                className="px-3 py-1 text-sm font-semibold text-white bg-orange-600 rounded hover:bg-orange-700"
-                              >
-                                Supprimer contenu
-                              </button>
-                            )}
-                            {cleanEntityType === "Modification" && (
-                              <button
-                                onClick={() =>
-                                  handleDeleteModification(report.reportableId)
-                                }
-                                className="px-3 py-1 text-sm font-semibold text-white bg-orange-600 rounded hover:bg-orange-700"
-                              >
-                                Supprimer contenu
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                              </td>
+                              <td className="px-4 py-3 text-sm text-off-white/50">
+                                {report.reportedAt
+                                  ? new Date(report.reportedAt).toLocaleString()
+                                  : "N/A"}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                    onClick={() =>
+                                      openReportDetailsModal(report)
+                                    }
+                                    className={`${BTN.outlined} ${BTN_SM}`}
+                                  >
+                                    Voir détails
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteReport(report.id)
+                                    }
+                                    className={`${BTN.danger} ${BTN_SM}`}
+                                  >
+                                    Supprimer le signalement
+                                  </button>
+                                  {report.entityDetails?.deleted ? (
+                                    <span
+                                      className={`${BADGE_BASE} bg-off-white/10 text-off-white/50 border border-off-white/20`}
+                                    >
+                                      Contenu supprimé
+                                    </span>
+                                  ) : (
+                                    <>
+                                      {cleanEntityType === "Patchnote" && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeletePatchnote(
+                                              report.reportableId,
+                                              report.entityDetails?.title ||
+                                                `Patchnote #${report.reportableId}`
+                                            )
+                                          }
+                                          className={`${BTN.danger} ${BTN_SM}`}
+                                        >
+                                          Supprimer contenu
+                                        </button>
+                                      )}
+                                      {cleanEntityType === "Modification" && (
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteModification(
+                                              report.reportableId
+                                            )
+                                          }
+                                          className={`${BTN.danger} ${BTN_SM}`}
+                                        >
+                                          Supprimer contenu
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                   </tbody>
                 </table>
               </div>
-              {renderPagination()}
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             </section>
           )}
         </>
@@ -1275,6 +1476,27 @@ export default function AdminDashboard() {
           setSelectedReport(null);
         }}
       />
+
+      {/* Patchnote Preview Modal */}
+      <PatchnotePreviewModal
+        patchnote={previewPatchnote}
+        onClose={() => setPreviewPatchnote(null)}
+      />
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
+  );
+}
+
+// useSearchParams impose une frontière Suspense au prerender
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminDashboard />
+    </Suspense>
   );
 }

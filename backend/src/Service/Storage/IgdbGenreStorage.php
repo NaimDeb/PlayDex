@@ -36,7 +36,7 @@ class IgdbGenreStorage implements DataStorageInterface
                 ON DUPLICATE KEY UPDATE 
                 name = VALUES(name)';
 
-        $stmt = $this->dbService->prepareInsertStatement($connection, $sql);
+            $stmt = $this->dbService->prepareInsertStatement($connection, $sql);
 
         $this->dbService->executeTransaction(
             $connection,

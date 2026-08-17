@@ -20,6 +20,12 @@ final class AdminModificationProvider implements ProviderInterface
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
     {
+        // Exclut les soft-deleted en SQL : sinon la pagination et totalItems les comptent
+        if ($operation instanceof CollectionOperationInterface) {
+            $context['filters']['isDeleted'] = $context['filters']['isDeleted'] ?? 'false';
+            $context['filters']['patchnote.isDeleted'] = $context['filters']['patchnote.isDeleted'] ?? 'false';
+        }
+
         // Get data from the default provider
         $data = $this->collectionProvider->provide($operation, $uriVariables, $context);
 
